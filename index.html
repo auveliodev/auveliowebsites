@@ -417,7 +417,7 @@ class Component extends DCLogic {
     }
     this.setState({ switching: true });
     clearTimeout(this._swap);
-    this.starPulse = 0.5;   // subtle star flare as content swaps
+    this.starPulse = 1.0;   // stars flare and accelerate as content swaps
     this._swap = setTimeout(() => this.setState({ section: key, switching: false }), 130);
   }
 
@@ -813,9 +813,9 @@ class Component extends DCLogic {
         attribute float aSeed; uniform float uTime, uPulse; varying float vTw;
         void main(){
           vTw = 0.35 + 0.65 * (0.5 + 0.5 * sin(uTime * (0.4 + aSeed) + aSeed * 30.0));
-          vTw *= 1.0 + uPulse * (0.20 + aSeed * 0.25);    // gentle flare on section change
+          vTw *= 1.0 + uPulse * (0.35 + aSeed * 0.40);    // dynamic flare on section change
           vec4 mv = modelViewMatrix * vec4(position, 1.0);
-          gl_PointSize = (0.5 + aSeed * 0.9) * (34.0 / -mv.z) * 3.0 * (1.0 + uPulse * 0.25);
+          gl_PointSize = (0.5 + aSeed * 0.9) * (34.0 / -mv.z) * 3.0 * (1.0 + uPulse * 0.70);
           gl_Position = projectionMatrix * mv;
         }`,
       fragmentShader: `
@@ -823,7 +823,7 @@ class Component extends DCLogic {
         void main(){
           float d = length(gl_PointCoord - 0.5);
           if (d > 0.5) discard;
-          gl_FragColor = vec4(vec3(0.62, 0.74, 0.94), smoothstep(0.5, 0.0, d) * vTw * 0.30);
+          gl_FragColor = vec4(vec3(0.55, 0.75, 0.98), smoothstep(0.5, 0.0, d) * min(vTw * 0.26, 0.38));
         }`
     }));
     this.scene.add(this.stars);
