@@ -408,6 +408,10 @@ class Component extends DCLogic {
      swaps, and comes back — so the change is never abrupt */
   goToSection(key) {
     if (this.state.section === key) return;
+    const fromIdx = LINKS.findIndex(l => l.key === this.state.section);
+    const toIdx = LINKS.findIndex(l => l.key === key);
+    this.starDir = fromIdx !== -1 && toIdx !== -1 ? (toIdx >= fromIdx ? 1 : -1) : 1;
+
     if (!this.state.section) {
       // opening from the hero: the content waits for the sphere to burn out
       this._entering = true;
@@ -417,7 +421,7 @@ class Component extends DCLogic {
     }
     this.setState({ switching: true });
     clearTimeout(this._swap);
-    this.starPulse = 1.0;   // stars flare and accelerate as content swaps
+    this.starPulse = 1.0;   // stars flare and accelerate in navigation direction
     this._swap = setTimeout(() => this.setState({ section: key, switching: false }), 130);
   }
 
@@ -576,7 +580,12 @@ class Component extends DCLogic {
       }),
       linkHover: { color: '#e6f6fd' },
       backHover: { borderColor: 'rgba(140,200,230,0.6)', color: '#e6f6fd' },
-      closeSection: e => { e.preventDefault(); this.setState({ section: null }); },
+      closeSection: e => {
+        e.preventDefault();
+        this.starDir = -1;
+        this.starPulse = 0.6;
+        this.setState({ section: null });
+      },
       heroStyle: {
         position: 'absolute', inset: 0, zIndex: 1,
         opacity: open ? 0 : 1,
@@ -625,6 +634,8 @@ class Component extends DCLogic {
     this.reveal = 0;              // 0 = hero pose, 1 = aside pose
     this.burstTime = -1;          // -1 = idle
     this.burstAmount = 0;
+    this.starDir = 1;
+    this.starShiftX = 0;
     this.reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.lowPower = this.reduced || window.innerWidth < 700;
     this.waitForThree();
@@ -632,7 +643,13 @@ class Component extends DCLogic {
       this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
       this.mouse.y = -((e.clientY / window.innerHeight) * 2 - 1);
     };
-    this.onEsc = e => { if (e.key === 'Escape' && this.state.section) this.setState({ section: null }); };
+    this.onEsc = e => {
+      if (e.key === 'Escape' && this.state.section) {
+        this.starDir = -1;
+        this.starPulse = 0.6;
+        this.setState({ section: null });
+      }
+    };
     this.onResize = () => { this.resize(); this.forceUpdate(); };
     window.addEventListener('pointermove', this.onPointerMove, { passive: true });
     window.addEventListener('keydown', this.onEsc);
@@ -813,9 +830,9 @@ class Component extends DCLogic {
         attribute float aSeed; uniform float uTime, uPulse; varying float vTw;
         void main(){
           vTw = 0.35 + 0.65 * (0.5 + 0.5 * sin(uTime * (0.4 + aSeed) + aSeed * 30.0));
-          vTw *= 1.0 + uPulse * (0.42 + aSeed * 0.48);    // punchy flare on section change
+          vTw *= 1.0 + uPulse * (0.34 + aSeed * 0.38);    // balanced flare (~20% softer)
           vec4 mv = modelViewMatrix * vec4(position, 1.0);
-          gl_PointSize = (0.5 + aSeed * 0.9) * (34.0 / -mv.z) * 3.0 * (1.0 + uPulse * 0.90);
+          gl_PointSize = (0.5 + aSeed * 0.9) * (34.0 / -mv.z) * 3.0 * (1.0 + uPulse * 0.72);
           gl_Position = projectionMatrix * mv;
         }`,
       fragmentShader: `
@@ -823,7 +840,7 @@ class Component extends DCLogic {
         void main(){
           float d = length(gl_PointCoord - 0.5);
           if (d > 0.5) discard;
-          gl_FragColor = vec4(vec3(0.55, 0.75, 0.98), smoothstep(0.5, 0.0, d) * min(vTw * 0.30, 0.48));
+          gl_FragColor = vec4(vec3(0.55, 0.75, 0.98), smoothstep(0.5, 0.0, d) * min(vTw * 0.28, 0.39));
         }`
     }));
     this.scene.add(this.stars);
@@ -944,14 +961,16 @@ class Component extends DCLogic {
     this.updateBurst();
     this.updateReveal(dt);
     this.updateFollow(dt);
-    // starfield synced to the planet: same eased position/rotation, damped
+    // starfield synced to the planet + directional navigation pulse & shift
     const st = CONFIG.stars, g = this.group;
-    // star flare decays over ~0.55 s and nudges the field's spin
     this.starPulse = Math.max(0, (this.starPulse || 0) - dt * 2.0);
     this.starPulseUniform.value = easeOutCubic(this.starPulse);
-    this.starDrift = (this.starDrift || 0) + dt * (st.drift + this.starPulse * 0.28);
-    this.stars.position.set(g.position.x * st.posFactor, g.position.y * st.posFactor, 0);
+    const dir = this.starDir || 1;
+    this.starDrift = (this.starDrift || 0) + dt * (st.drift + dir * this.starPulse * 0.38);
+    this.starShiftX = (this.starShiftX || 0) * (1 - Math.min(1, dt * 4.0)) + (dir * this.starPulse * 0.65) * (dt * 4.0);
+    this.stars.position.set(g.position.x * st.posFactor + this.starShiftX, g.position.y * st.posFactor, 0);
     this.stars.rotation.y = g.rotation.y * st.rotFactor + this.starDrift;
+    this.stars.rotation.z = -dir * this.starPulse * 0.04;
     this.stars.rotation.x = g.rotation.x * st.rotFactor;
     this.renderer.render(this.scene, this.camera);
   }
