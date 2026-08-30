@@ -813,9 +813,9 @@ class Component extends DCLogic {
         attribute float aSeed; uniform float uTime, uPulse; varying float vTw;
         void main(){
           vTw = 0.35 + 0.65 * (0.5 + 0.5 * sin(uTime * (0.4 + aSeed) + aSeed * 30.0));
-          vTw *= 1.0 + uPulse * (0.35 + aSeed * 0.40);    // dynamic flare on section change
+          vTw *= 1.0 + uPulse * (0.42 + aSeed * 0.48);    // punchy flare on section change
           vec4 mv = modelViewMatrix * vec4(position, 1.0);
-          gl_PointSize = (0.5 + aSeed * 0.9) * (34.0 / -mv.z) * 3.0 * (1.0 + uPulse * 0.70);
+          gl_PointSize = (0.5 + aSeed * 0.9) * (34.0 / -mv.z) * 3.0 * (1.0 + uPulse * 0.90);
           gl_Position = projectionMatrix * mv;
         }`,
       fragmentShader: `
@@ -823,7 +823,7 @@ class Component extends DCLogic {
         void main(){
           float d = length(gl_PointCoord - 0.5);
           if (d > 0.5) discard;
-          gl_FragColor = vec4(vec3(0.55, 0.75, 0.98), smoothstep(0.5, 0.0, d) * min(vTw * 0.26, 0.38));
+          gl_FragColor = vec4(vec3(0.55, 0.75, 0.98), smoothstep(0.5, 0.0, d) * min(vTw * 0.30, 0.48));
         }`
     }));
     this.scene.add(this.stars);
@@ -946,10 +946,10 @@ class Component extends DCLogic {
     this.updateFollow(dt);
     // starfield synced to the planet: same eased position/rotation, damped
     const st = CONFIG.stars, g = this.group;
-    // star flare decays over ~0.5 s and nudges the field's spin
-    this.starPulse = Math.max(0, (this.starPulse || 0) - dt * 2.2);
+    // star flare decays over ~0.55 s and nudges the field's spin
+    this.starPulse = Math.max(0, (this.starPulse || 0) - dt * 2.0);
     this.starPulseUniform.value = easeOutCubic(this.starPulse);
-    this.starDrift = (this.starDrift || 0) + dt * (st.drift + this.starPulse * 0.22);
+    this.starDrift = (this.starDrift || 0) + dt * (st.drift + this.starPulse * 0.28);
     this.stars.position.set(g.position.x * st.posFactor, g.position.y * st.posFactor, 0);
     this.stars.rotation.y = g.rotation.y * st.rotFactor + this.starDrift;
     this.stars.rotation.x = g.rotation.x * st.rotFactor;
