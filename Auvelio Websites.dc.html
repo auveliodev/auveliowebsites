@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="description" content="AUVELIO WEBSITES — profesjonalne strony internetowe: od prostych wizytówek po zaawansowane doświadczenia 3D i WebGL." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+<style>
+  html, body { margin: 0; padding: 0; background: #03060c; color: #c2d6df; }
+  * { box-sizing: border-box; }
+  a { color: #a8c4d2; text-decoration: none; }
+  a:hover { color: #e6f6fd; }
+  a:focus-visible, button:focus-visible { outline: 2px solid #7fd4f0; outline-offset: 6px; border-radius: 2px; }
+  ::selection { background: rgba(140,200,225,0.25); }
+</style>
+</helmet>
+<div style="position: relative; width: 100%; height: 100vh; background: radial-gradient(100% 78% at 50% 46%, #0a2033 0%, #051221 46%, #03060c 100%); font-family: 'Jost', system-ui, sans-serif; overflow: hidden;">
+
+  <canvas ref="{{ canvasRef }}" aria-hidden="true" role="presentation" style="position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 0;"></canvas>
+
+  <!-- HERO — visible when no section is open -->
+  <div style="{{ heroStyle }}">
+    <div style="display: grid; grid-template-rows: 52vh auto auto 1fr; justify-items: center; height: 100vh; padding: 0 clamp(16px, 3vw, 48px) 4vh; text-align: center; pointer-events: none;">
+      <h1 style="grid-row: 2; margin: 0; font-weight: 200; font-size: clamp(14px, 5.2vw, 92px); line-height: 1; letter-spacing: min(0.3em, 1.4vw); text-indent: min(0.3em, 1.4vw); color: #c2d6df; text-shadow: 0 0 30px rgba(130,195,225,0.35); white-space: nowrap;">AUVELIO WEBSITES</h1>
+      <p style="grid-row: 3; margin: 22px 0 0; font-weight: 200; font-size: clamp(8px, 1.1vw, 17px); letter-spacing: min(0.5em, 1vw); text-indent: min(0.5em, 1vw); color: #cfe2ea; text-shadow: 0 0 10px rgba(4,12,22,0.85), 0 0 26px rgba(120,185,215,0.35); white-space: nowrap;">WEBGL&nbsp; · &nbsp;INTERAKCJE&nbsp; · &nbsp;STRONY 3D</p>
+    </div>
+  </div>
+
+  <!-- SECTION PANEL — the sphere drifts aside and dims, the content takes over -->
+  <div style="{{ panelStyle }}">
+    <div style="width: 100%; max-width: min(1120px, 92vw); max-height: 100%; display: grid; justify-items: center; gap: clamp(14px, 2.2vh, 26px);">
+
+      <!-- one control row: back on the left of the section switcher -->
+      <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; margin-top: -2.5vh;">
+        <sc-for list="{{ tabs }}" as="tab" hint-placeholder-count="5">
+          <button onClick="{{ tab.open }}" data-interactive="true" aria-current="{{ tab.current }}" style="{{ tab.style }}" style-hover="{{ tabHover }}">{{ tab.label }}</button>
+        </sc-for>
+      </div>
+
+      <!-- section header, centred -->
+      <header style="display: grid; justify-items: center; gap: 12px; text-align: center;">
+        <span style="font-size: 10.5px; font-weight: 400; letter-spacing: 0.3em; color: #5fb9d8;">{{ section.eyebrow }}</span>
+        <h2 style="margin: 0; font-weight: 200; font-size: clamp(26px, 2.9vw, 44px); line-height: 1.05; letter-spacing: 0.04em; color: #e3eff5;">{{ section.title }}</h2>
+        <p style="margin: 0; max-width: 74ch; font-weight: 300; font-size: clamp(12.5px, 1vw, 15px); line-height: 1.55; color: #a9c1cd; text-wrap: pretty;">{{ section.lead }}</p>
+      </header>
+
+      <!-- CONTACT FORM — three required fields, one consent, clear errors -->
+      <sc-if value="{{ showForm }}" hint-placeholder-val="{{ false }}">
+        <form onSubmit="{{ submitForm }}" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px 22px; width: 100%; max-width: 900px; padding: 20px 22px; border: 1px solid rgba(140,200,230,0.16); border-radius: 14px; background: rgba(6,20,36,0.76); backdrop-filter: blur(10px); text-align: left;">
+
+          <div style="display: grid; gap: 12px; align-content: start;">
+            <label style="display: grid; gap: 6px;">
+              <span style="{{ labelStyle }}">Imię i nazwisko <span style="color: #6fc9e6;">*</span></span>
+              <input type="text" value="{{ form.name }}" onChange="{{ setName }}" placeholder="np. Anna Kowalska" style="{{ nameFieldStyle }}" style-focus="{{ inputFocus }}" />
+            </label>
+            <label style="display: grid; gap: 6px;">
+              <span style="{{ labelStyle }}">E-mail <span style="color: #6fc9e6;">*</span></span>
+              <input type="email" value="{{ form.email }}" onChange="{{ setEmail }}" placeholder="np. anna@firma.pl" style="{{ emailFieldStyle }}" style-focus="{{ inputFocus }}" />
+            </label>
+            <div style="display: grid; gap: 6px;">
+              <span style="{{ labelStyle }}">Rodzaj projektu</span>
+              <div style="display: flex; flex-wrap: wrap; gap: 7px;">
+                <sc-for list="{{ kinds }}" as="kind" hint-placeholder-count="5">
+                  <button type="button" onClick="{{ kind.pick }}" data-interactive="true" aria-pressed="{{ kind.pressed }}" style="{{ kind.style }}" style-hover="{{ chipHover }}">{{ kind.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: grid; gap: 12px; align-content: start;">
+            <label style="display: grid; gap: 6px;">
+              <span style="{{ labelStyle }}">Czego potrzebujesz? <span style="color: #6fc9e6;">*</span></span>
+              <textarea value="{{ form.message }}" onChange="{{ setMessage }}" rows="4" placeholder="Krótko: co ma robić strona, na kiedy, jaki budżet." style="{{ messageFieldStyle }}" style-focus="{{ inputFocus }}"></textarea>
+              <span style="font-size: 10.5px; font-weight: 300; letter-spacing: 0.02em; color: #6e8b9b;">{{ counter }}</span>
+            </label>
+
+            <!-- animated consent checkbox: the tick draws itself in -->
+            <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer;">
+              <input type="checkbox" checked="{{ form.consent }}" onChange="{{ setConsent }}" style="position: absolute; opacity: 0; width: 1px; height: 1px;" />
+              <span aria-hidden="true" style="{{ boxStyle }}">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" style="display: block;">
+                  <path d="M4 12.5 L9.5 18 L20 6.5" stroke="#06121f" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" style="{{ tickStyle }}"></path>
+                </svg>
+              </span>
+              <span style="font-size: 11.5px; font-weight: 300; line-height: 1.45; color: #a2bdca;">Zgadzam się na kontakt w sprawie tego zapytania. <span style="color: #6fc9e6;">*</span></span>
+            </label>
+
+            <div style="display: grid; gap: 8px;">
+              <button type="submit" data-interactive="true" style="{{ submitStyle }}" style-hover="{{ submitHover }}">{{ submitLabel }}</button>
+              <span style="{{ statusStyle }}">{{ status }}</span>
+            </div>
+          </div>
+        </form>
+      </sc-if>
+
+      <!-- tiles: one idea per card, same shape every time -->
+      <sc-if value="{{ showTiles }}" hint-placeholder-val="{{ true }}">
+      <div style="{{ gridStyle }}" key="{{ section.title }}">
+        <sc-for list="{{ items }}" as="item" hint-placeholder-count="4">
+          <article style="{{ tileStyle }}" style-hover="{{ tileHover }}">
+            <sc-if value="{{ showPreview }}" hint-placeholder-val="{{ false }}">
+              <div style="position: relative; aspect-ratio: 16 / 9; border: 1px solid rgba(140,200,230,0.16); border-radius: 6px; background: linear-gradient(160deg, rgba(12,34,56,0.9) 0%, rgba(6,18,32,0.9) 100%); overflow: hidden;">
+                <div style="display: flex; align-items: center; gap: 5px; padding: 7px 9px; border-bottom: 1px solid rgba(140,200,230,0.12);">
+                  <span style="width: 6px; height: 6px; border-radius: 50%; background: rgba(140,200,230,0.35);"></span>
+                  <span style="width: 6px; height: 6px; border-radius: 50%; background: rgba(140,200,230,0.22);"></span>
+                  <span style="width: 6px; height: 6px; border-radius: 50%; background: rgba(140,200,230,0.16);"></span>
+                </div>
+                <div style="display: grid; place-items: center; height: calc(100% - 24px); font-size: 9.5px; font-weight: 400; letter-spacing: 0.22em; color: #5d87a0;">PODGLĄD</div>
+              </div>
+            </sc-if>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+              <span style="font-size: 10.5px; font-weight: 400; letter-spacing: 0.18em; color: #4f93b3;">{{ item.num }}</span>
+              <span style="padding: 3px 9px; border: 1px solid rgba(140,200,230,0.22); border-radius: 999px; font-size: 9.5px; font-weight: 400; letter-spacing: 0.14em; color: #7fa9bd; white-space: nowrap;">{{ item.meta }}</span>
+            </div>
+            <h3 style="margin: 0; font-weight: 400; font-size: clamp(14px, 1.1vw, 17px); line-height: 1.25; letter-spacing: 0.01em; color: #dfeaf1;">{{ item.name }}</h3>
+            <sc-if value="{{ showDesc }}" hint-placeholder-val="{{ true }}">
+              <p style="margin: 0; font-weight: 300; font-size: 12.5px; line-height: 1.55; color: #93aebc; text-wrap: pretty;">{{ item.desc }}</p>
+            </sc-if>
+          </article>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <button onClick="{{ closeSection }}" data-interactive="true" style="margin-top: clamp(8px, 1.6vh, 20px); display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border: 1px solid rgba(140,200,230,0.30); border-radius: 999px; background: rgba(8,22,38,0.6); color: #b7d0dc; font-family: 'Jost', sans-serif; font-size: 11.5px; font-weight: 300; letter-spacing: 0.2em; cursor: pointer; transition: border-color 220ms ease, color 220ms ease, background 220ms ease;" style-hover="{{ backHover }}">← START</button>
+    </div>
+  </div>
+
+  <!-- MAIN NAV — always available, sits at the bottom -->
+  <div style="{{ bottomStackStyle }}">
+    <nav aria-label="Nawigacja główna" style="display: flex; flex-wrap: wrap; justify-content: center; gap: clamp(20px, 4.5vw, 72px);">
+      <sc-for list="{{ links }}" as="link" hint-placeholder-count="5">
+        <a href="{{ link.href }}" onClick="{{ link.open }}" data-interactive="true" style="{{ link.style }}" style-hover="{{ linkHover }}">{{ link.label }}</a>
+      </sc-for>
+    </nav>
+    <span style="font-size: 11px; font-weight: 300; letter-spacing: 0.12em; color: #7f96a4;">© {{ year }} AUVELIO WEBSITES</span>
+  </div>
+
+  <!-- cinematic letterbox bars -->
+  <div aria-hidden="true" style="{{ barTopStyle }}"></div>
+  <div aria-hidden="true" style="{{ barBottomStyle }}"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;noiseSpeed&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:0.16,&quot;min&quot;:0,&quot;max&quot;:0.8,&quot;step&quot;:0.02,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Kula&quot;},&quot;dispAmp&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:0.11,&quot;min&quot;:0,&quot;max&quot;:0.3,&quot;step&quot;:0.01,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Kula&quot;},&quot;holoIntensity&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:0.32,&quot;min&quot;:0,&quot;max&quot;:1.5,&quot;step&quot;:0.05,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Hologram&quot;},&quot;accentColor&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#35c8f0&quot;,&quot;options&quot;:[&quot;#35c8f0&quot;,&quot;#2f8fe0&quot;,&quot;#3ce0c0&quot;,&quot;#8ab4ff&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Kula&quot;},&quot;followEase&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:0.035,&quot;min&quot;:0.005,&quot;max&quot;:0.2,&quot;step&quot;:0.005,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Motion&quot;}}">
+/* =========================================================================
+   AUVELIO WEBSITES — animated displaced sphere + hologram scanline overlay.
+
+   Displacement technique based on the Codrops tutorial by Anderson Mancini,
+   "Creating an Animated Displaced Sphere with a Custom Three.js Material"
+   — MIT License —
+   https://tympanus.net/codrops/2024/07/09/creating-an-animated-displaced-sphere-with-a-custom-three-js-material/
+   (icosahedron base geometry, animated 3D Perlin displacement, normals
+   recomputed from displaced neighbours.)
+
+   Classic 3D Perlin noise (cnoise) by Stefan Gustavson / Ashima Arts,
+   webgl-noise — MIT License — https://github.com/ashima/webgl-noise
+
+   Hologram overlay implements the standard scanline technique (stripes from
+   the model's Y position + Fresnel rim + subtle vertex wobble), additively
+   blended, written here from the technique description.
+
+   Two independently tunable systems:
+     1) MOUSE FOLLOW    -> CONFIG.follow + updateFollow()
+     2) SECTION REVEAL  -> CONFIG.reveal + updateReveal()
+        Clicking a nav item slides the sphere aside and dims it while the
+        section content fades in. No shatter, no fragments.
+   ========================================================================= */
+
+const CONFIG = {
+  follow: {
+    rangeX: 0.45, rangeY: 0.28,
+    positionEase: 0.035,          // per-frame lerp; lower = laggier
+    tiltX: 0.34, tiltY: 0.45,
+    rotationEase: 0.028,
+    idleSpin: 0.045,
+    offsetX: 0, offsetY: 0.05     // hero rest position (viewport centre)
+  },
+  /* REVEAL — one 0..1 value plays the whole transition, and running it back to
+     0 plays it in reverse (that is what POWRÓT does).
+     rush = how far the sphere charges toward the camera, swell = how much it
+     grows on the way, fadeAt = where along the timeline it burns out. */
+  reveal: {
+    ease: 0.038,                  // outbound: slow charge at the camera
+    easeBack: 0.17,               // return: snaps back into place
+    rush: 3.55, swell: 1.9,
+    fadeAt: 0.62,
+    followDamp: 0.15
+  },
+  sphere: {
+    radius: 1.25,
+    detail: 40, detailMobile: 14,
+    noiseFreq: 1.35,              // uNoiseFreq — displacement scale
+    noiseSpeed: 0.16,             // uNoiseSpeed — calm drift
+    dispAmp: 0.11                 // uDispAmp — displacement strength
+  },
+  holo: {
+    scale: 1.055,
+    stripeFreq: 8.0,              // uStripeFreq — scanline density
+    scanSpeed: 0.5,               // uScanSpeed — upward travel
+    intensity: 0.32,              // uHoloIntensity — brightness
+    fresnelPower: 2.6,            // uFresnelPower — rim tightness
+    glitch: 0.006                 // uGlitch — vertex wobble
+  },
+  // brand palette in place of the tutorial's magenta: deep navy body, cyan accent
+  color: { deep: 0x081426, lit: 0x14425e, accent: 0x35c8f0 },
+  /* INTRO SCALE — one timeline, independent of follow/reveal:
+     starts at 20% less volume (0.8^(1/3) of the radius), grows to full size
+     over growMs, then drifts gently down to settleScale over settleMs. */
+  intro: { startScale: 0.928, growMs: 3000, settleScale: 0.88, settleMs: 14000 },
+  /* BREATHING — slow scale pulse layered on top of the intro timeline.
+     amp = how much it swells (fraction), periodS = one full breath in seconds. */
+  breath: { amp: 0.045, periodS: 6.5 },
+  /* STARS — the field is locked to the sphere's motion: it shifts with the
+     pointer and turns with the planet, just softer (parallax).
+     posFactor: share of the sphere's drift, rotFactor: share of its spin. */
+  stars: { posFactor: 0.45, rotFactor: 0.35, drift: 0.008 },
+  /* BURST — the "wow" on entering a section: the sphere swells and its noise
+     field detonates, then settles into the aside pose.
+     riseMs/fallMs = timing, amp = displacement spike, pop = scale kick,
+     flash = accent light added at the peak. */
+  /* BURST — derived from the reveal timeline (peaks mid-flight, zero at both
+     ends), so it fires on the way out AND, reversed, on the way back.
+     amp = shard displacement, fire = green flame brightness. */
+  burst: { amp: 3.2, fire: 2.6, fireColor: 0x3bff7a }
+};
+
+/* Classic 3D Perlin noise — Stefan Gustavson / Ashima Arts (MIT). */
+const PERLIN_GLSL = `
+vec3 mod289(vec3 x){ return x - floor(x * (1.0 / 289.0)) * 289.0; }
+vec4 mod289(vec4 x){ return x - floor(x * (1.0 / 289.0)) * 289.0; }
+vec4 permute(vec4 x){ return mod289(((x * 34.0) + 1.0) * x); }
+vec4 taylorInvSqrt(vec4 r){ return 1.79284291400159 - 0.85373472095314 * r; }
+vec3 fade(vec3 t){ return t * t * t * (t * (t * 6.0 - 15.0) + 10.0); }
+float cnoise(vec3 P){
+  vec3 Pi0 = floor(P), Pi1 = Pi0 + vec3(1.0);
+  Pi0 = mod289(Pi0); Pi1 = mod289(Pi1);
+  vec3 Pf0 = fract(P), Pf1 = Pf0 - vec3(1.0);
+  vec4 ix = vec4(Pi0.x, Pi1.x, Pi0.x, Pi1.x);
+  vec4 iy = vec4(Pi0.yy, Pi1.yy);
+  vec4 iz0 = Pi0.zzzz, iz1 = Pi1.zzzz;
+  vec4 ixy = permute(permute(ix) + iy);
+  vec4 ixy0 = permute(ixy + iz0), ixy1 = permute(ixy + iz1);
+  vec4 gx0 = ixy0 * (1.0 / 7.0);
+  vec4 gy0 = fract(floor(gx0) * (1.0 / 7.0)) - 0.5;
+  gx0 = fract(gx0);
+  vec4 gz0 = vec4(0.5) - abs(gx0) - abs(gy0);
+  vec4 sz0 = step(gz0, vec4(0.0));
+  gx0 -= sz0 * (step(0.0, gx0) - 0.5);
+  gy0 -= sz0 * (step(0.0, gy0) - 0.5);
+  vec4 gx1 = ixy1 * (1.0 / 7.0);
+  vec4 gy1 = fract(floor(gx1) * (1.0 / 7.0)) - 0.5;
+  gx1 = fract(gx1);
+  vec4 gz1 = vec4(0.5) - abs(gx1) - abs(gy1);
+  vec4 sz1 = step(gz1, vec4(0.0));
+  gx1 -= sz1 * (step(0.0, gx1) - 0.5);
+  gy1 -= sz1 * (step(0.0, gy1) - 0.5);
+  vec3 g000 = vec3(gx0.x, gy0.x, gz0.x), g100 = vec3(gx0.y, gy0.y, gz0.y);
+  vec3 g010 = vec3(gx0.z, gy0.z, gz0.z), g110 = vec3(gx0.w, gy0.w, gz0.w);
+  vec3 g001 = vec3(gx1.x, gy1.x, gz1.x), g101 = vec3(gx1.y, gy1.y, gz1.y);
+  vec3 g011 = vec3(gx1.z, gy1.z, gz1.z), g111 = vec3(gx1.w, gy1.w, gz1.w);
+  vec4 norm0 = taylorInvSqrt(vec4(dot(g000,g000), dot(g010,g010), dot(g100,g100), dot(g110,g110)));
+  g000 *= norm0.x; g010 *= norm0.y; g100 *= norm0.z; g110 *= norm0.w;
+  vec4 norm1 = taylorInvSqrt(vec4(dot(g001,g001), dot(g011,g011), dot(g101,g101), dot(g111,g111)));
+  g001 *= norm1.x; g011 *= norm1.y; g101 *= norm1.z; g111 *= norm1.w;
+  float n000 = dot(g000, Pf0);
+  float n100 = dot(g100, vec3(Pf1.x, Pf0.yz));
+  float n010 = dot(g010, vec3(Pf0.x, Pf1.y, Pf0.z));
+  float n110 = dot(g110, vec3(Pf1.xy, Pf0.z));
+  float n001 = dot(g001, vec3(Pf0.xy, Pf1.z));
+  float n101 = dot(g101, vec3(Pf1.x, Pf0.y, Pf1.z));
+  float n011 = dot(g011, vec3(Pf0.x, Pf1.yz));
+  float n111 = dot(g111, Pf1);
+  vec3 f = fade(Pf0);
+  vec4 n_z = mix(vec4(n000, n100, n010, n110), vec4(n001, n101, n011, n111), f.z);
+  vec2 n_yz = mix(n_z.xy, n_z.zw, f.y);
+  return 2.2 * mix(n_yz.x, n_yz.y, f.x);
+}`;
+
+const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+const easeInOutCubic = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+const KINDS = [
+  { key: 'wizytowka', label: 'Wizytówka' },
+  { key: 'firmowa', label: 'Strona firmowa' },
+  { key: 'sklep', label: 'Sklep' },
+  { key: 'webgl', label: '3D / WebGL' },
+  { key: 'inne', label: 'Jeszcze nie wiem' }
+];
+
+/* one field style, red-tinted when that field is the blocking error */
+const field = bad => ({
+  width: '100%', padding: '10px 12px', fontFamily: "'Jost', sans-serif",
+  fontSize: '13.5px', fontWeight: 300, color: '#e3eff5',
+  background: bad ? 'rgba(40,16,20,0.7)' : 'rgba(6,20,36,0.78)',
+  border: '1px solid ' + (bad ? 'rgba(226,160,160,0.75)' : 'rgba(140,200,230,0.22)'),
+  borderRadius: '8px', outline: 'none',
+  transition: 'border-color 200ms ease, background 200ms ease'
+});
+
+const SECTIONS = {
+  uslugi: {
+    title: 'Usługi',
+    lead: 'Budujemy strony na każdym poziomie złożoności — od jednostronicowej wizytówki, która ma po prostu działać i szybko się ładować, po interaktywne doświadczenia 3D w WebGL. Zakres dobieramy do celu, nie do mody.',
+    items: [
+      { name: 'Strona wizytówka', meta: 'OD 1 STRONY', desc: 'Jedna dobrze zaprojektowana strona: kim jesteś, co robisz, jak się skontaktować. Responsywna, szybka, gotowa do indeksowania w Google.' },
+      { name: 'Strona firmowa', meta: '4–12 PODSTRON', desc: 'Pełna struktura: oferta, realizacje, zespół, kontakt, blog. Panel do samodzielnej edycji treści i podstawowa optymalizacja SEO.' },
+      { name: 'Landing page sprzedażowy', meta: 'KAMPANIE', desc: 'Jedna strona pod konkretną kampanię: czytelna argumentacja, formularz, integracja z analityką i systemem mailingowym.' },
+      { name: 'Sklep internetowy', meta: 'E-COMMERCE', desc: 'Katalog, koszyk, płatności online, wysyłka i faktury. Wdrożenie na sprawdzonym silniku, bez eksperymentów na Twoim budżecie.' },
+      { name: 'Animacje i mikrointerakcje', meta: 'FRONTEND', desc: 'Przejścia, scroll-telling, animowane wykresy i stany interfejsu. Lekkie technicznie, wyłączane przy „reduce motion”.' },
+      { name: 'Doświadczenia 3D i WebGL', meta: 'ZAAWANSOWANE', desc: 'Konfiguratory produktu, interaktywne modele, shadery i scenografia 3D w przeglądarce — bez wtyczek, na Three.js.' },
+      { name: 'Redesign i audyt', meta: 'ISTNIEJĄCE STRONY', desc: 'Przegląd wydajności, dostępności i konwersji istniejącej strony, z listą poprawek uszeregowaną według wpływu na wynik.' },
+      { name: 'Opieka i rozwój', meta: 'ABONAMENT', desc: 'Aktualizacje, kopie zapasowe, monitoring dostępności i comiesięczny pakiet zmian w treści lub układzie.' }
+    ]
+  },
+  portfolio: {
+    title: 'Portfolio',
+    lead: 'Miejsca na realizacje są gotowe — każdy kafel ma ramkę na zrzut strony w proporcji 16:10, nazwę, rok i zakres prac. Wystarczy podmienić podgląd i opis.',
+    items: [
+      { name: 'Projekt 01 — nazwa klienta', meta: '2026 · WEBGL', desc: 'Miejsce na jedno zdanie o celu projektu i efekcie.' },
+      { name: 'Projekt 02 — nazwa klienta', meta: '2026 · STRONA FIRMOWA', desc: 'Miejsce na jedno zdanie o celu projektu i efekcie.' },
+      { name: 'Projekt 03 — nazwa klienta', meta: '2025 · E-COMMERCE', desc: 'Miejsce na jedno zdanie o celu projektu i efekcie.' },
+      { name: 'Projekt 04 — nazwa klienta', meta: '2025 · LANDING PAGE', desc: 'Miejsce na jedno zdanie o celu projektu i efekcie.' },
+      { name: 'Projekt 05 — nazwa klienta', meta: '2025 · REDESIGN', desc: 'Miejsce na jedno zdanie o celu projektu i efekcie.' },
+      { name: 'Projekt 06 — nazwa klienta', meta: '2024 · DATA VIZ', desc: 'Miejsce na jedno zdanie o celu projektu i efekcie.' },
+      { name: 'Projekt 07 — nazwa klienta', meta: '2024 · WIZYTÓWKA', desc: '' },
+      { name: 'Projekt 08 — nazwa klienta', meta: '2024 · ANIMACJE', desc: '' },
+      { name: 'Projekt 09 — nazwa klienta', meta: '2024 · KONFIGURATOR', desc: '' },
+      { name: 'Projekt 10 — nazwa klienta', meta: '2023 · AUDYT', desc: '' }
+    ]
+  },
+  proces: {
+    title: 'Proces',
+    lead: 'Cztery etapy, jasne punkty decyzyjne, wycena znana przed startem prac.',
+    items: [
+      { name: '1. Rozmowa i zakres', meta: '2–4 DNI', desc: 'Cel strony, grupa odbiorców, konkurencja, lista funkcji i budżet. Na koniec: wycena i harmonogram.' },
+      { name: '2. Projekt', meta: '1–3 TYGODNIE', desc: 'Układ, typografia, kolory i kluczowe ekrany. Dwie rundy poprawek w cenie.' },
+      { name: '3. Wdrożenie', meta: '2–6 TYGODNI', desc: 'Kodowanie, treści, testy na urządzeniach, wydajność i dostępność.' },
+      { name: '4. Start i opieka', meta: 'PO WDROŻENIU', desc: 'Publikacja, analityka, szkolenie z panelu i dalsze zmiany w ramach opieki.' }
+    ]
+  },
+  'o-marce': {
+    title: 'O marce',
+    lead: 'AUVELIO WEBSITES to studio projektowania i wdrażania stron internetowych. Pracujemy w małym zespole, prowadzimy niewiele projektów jednocześnie i odpowiadamy za wynik, nie za liczbę godzin.',
+    items: [
+      { name: 'Jak pracujemy', meta: 'ZASADY', desc: 'Jeden opiekun projektu, ustalony zakres, brak niespodzianek w fakturze. Kod i pliki projektowe przechodzą na Twoją własność.' },
+      { name: 'Technologie', meta: 'STACK', desc: 'HTML, CSS i JavaScript pisane ręcznie, Three.js do 3D, sprawdzone silniki CMS i e-commerce tam, gdzie mają sens.' },
+      { name: 'Wydajność i dostępność', meta: 'STANDARD', desc: 'Cel: szybkie ładowanie na telefonie w słabym zasięgu, kontrast zgodny z WCAG AA, obsługa klawiaturą.' }
+    ]
+  },
+  kontakt: {
+    title: 'Kontakt',
+    lead: 'Wypełnij trzy pola i wyślij. Odpowiadamy w ciągu jednego dnia roboczego — pytaniami albo wstępną wyceną.',
+    form: true,
+    items: []
+  }
+};
+
+const LINKS = [
+  { label: 'USŁUGI', key: 'uslugi' },
+  { label: 'PORTFOLIO', key: 'portfolio' },
+  { label: 'PROCES', key: 'proces' },
+  { label: 'O MARCE', key: 'o-marce' },
+  { label: 'KONTAKT', key: 'kontakt' }
+];
+
+class Component extends DCLogic {
+  state = {
+    section: null, switching: false,
+    form: { name: '', email: '', kind: 'firmowa', message: '', consent: false },
+    status: '', statusOk: false, errorField: null, sending: false
+  };
+
+  setField(key, value) {
+    this.setState(s => ({
+      form: Object.assign({}, s.form, { [key]: value }),
+      status: '', statusOk: false,
+      errorField: s.errorField === key ? null : s.errorField
+    }));
+  }
+
+  /* front-end validation only — a real backend still has to validate.
+     One error at a time, the offending field is highlighted. */
+  handleSubmit(e) {
+    e.preventDefault();
+    if (this.state.sending) return;
+    const f = this.state.form;
+    const fail = (errorField, status) => this.setState({ errorField, status, statusOk: false });
+    if (!f.name.trim()) return fail('name', 'Podaj imię i nazwisko.');
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.email)) return fail('email', 'Podaj poprawny adres e-mail.');
+    if (f.message.trim().length < 10) return fail('message', 'Opisz projekt w kilku słowach — minimum 10 znaków.');
+    if (!f.consent) return fail('consent', 'Zaznacz zgodę na kontakt.');
+    this.setState({ sending: true, errorField: null, status: '' });
+    clearTimeout(this._send);
+    this._send = setTimeout(() => this.setState({
+      sending: false, statusOk: true,
+      status: 'Dziękujemy, ' + f.name.trim().split(' ')[0] + ' — odpowiemy w ciągu jednego dnia roboczego.'
+    }), 700);
+  }
+
+  /* switching between sections while the panel is open: the content dips out,
+     swaps, and comes back — so the change is never abrupt */
+  goToSection(key) {
+    if (this.state.section === key) return;
+    if (!this.state.section) {
+      // opening from the hero: the content waits for the sphere to burn out
+      this._entering = true;
+      clearTimeout(this._enter);
+      this._enter = setTimeout(() => { this._entering = false; }, 1400);
+      return this.setState({ section: key, switching: false });
+    }
+    this.setState({ switching: true });
+    clearTimeout(this._swap);
+    this.starPulse = 1;   // stars flare as the content swaps
+    this._swap = setTimeout(() => this.setState({ section: key, switching: false }), 130);
+  }
+
+  renderVals() {
+    const open = !!this.state.section;
+    const sec = SECTIONS[this.state.section] || SECTIONS.uslugi;
+    const navLink = {
+      fontSize: 'clamp(11px, 0.95vw, 15px)', fontWeight: 300, letterSpacing: '0.3em',
+      color: '#a8c4d2', textShadow: '0 0 16px rgba(110,180,215,0.28)',
+      transition: 'color 220ms ease, text-shadow 220ms ease'
+    };
+    const activeLink = Object.assign({}, navLink, { color: '#e6f6fd', textShadow: '0 0 22px rgba(160,220,245,0.6)' });
+    // the panel must fit without scrolling: descriptions are dropped and the
+    // grid gets narrower columns when the free band between the bars is short
+    const vh = typeof window !== 'undefined' ? window.innerHeight : 900;
+    const vw = typeof window !== 'undefined' ? window.innerWidth : 1200;
+    const dense = sec.items.length > 3 && vh < 860;
+    const preview = this.state.section === 'portfolio';
+    return {
+      canvasRef: el => { this.canvas = el; },
+      year: new Date().getFullYear(),
+      section: Object.assign({}, sec, {
+        eyebrow: 'SEKCJA ' + (Math.max(0, LINKS.findIndex(l => l.key === this.state.section)) + 1) + ' Z ' + LINKS.length
+      }),
+      showDesc: !dense && !preview,
+      showPreview: preview,
+      // portfolio cards carry a preview frame, so the one-line copy is dropped
+      showForm: !!sec.form,
+      showTiles: sec.items.length > 0,
+      form: this.state.form,
+      status: this.state.status,
+      setName: e => this.setField('name', e.target.value),
+      setEmail: e => this.setField('email', e.target.value),
+      setKind: e => this.setField('kind', e.target.value),
+      setMessage: e => this.setField('message', e.target.value),
+      setConsent: e => this.setField('consent', e.target.checked),
+      submitForm: e => this.handleSubmit(e),
+      labelStyle: {
+        fontSize: '10.5px', fontWeight: 400, letterSpacing: '0.16em',
+        textTransform: 'uppercase', color: '#7fa9bd'
+      },
+      nameFieldStyle: field(this.state.errorField === 'name'),
+      emailFieldStyle: field(this.state.errorField === 'email'),
+      messageFieldStyle: Object.assign(field(this.state.errorField === 'message'), {
+        lineHeight: 1.5, resize: 'none'
+      }),
+      inputFocus: { borderColor: 'rgba(53,200,240,0.75)', background: 'rgba(9,29,50,0.9)' },
+      counter: this.state.form.message.trim().length + ' / min. 10 znaków',
+      chipHover: { borderColor: 'rgba(140,200,230,0.5)', color: '#e6f6fd' },
+      kinds: KINDS.map(k => {
+        const on = this.state.form.kind === k.key;
+        return {
+          label: k.label,
+          pressed: on ? 'true' : 'false',
+          pick: () => this.setField('kind', k.key),
+          style: {
+            padding: '7px 13px', borderRadius: '999px', cursor: 'pointer',
+            fontFamily: "'Jost', sans-serif", fontSize: '11px', fontWeight: 300, letterSpacing: '0.08em',
+            border: '1px solid ' + (on ? 'rgba(53,200,240,0.65)' : 'rgba(140,200,230,0.18)'),
+            background: on ? 'rgba(21,74,102,0.75)' : 'rgba(8,22,38,0.5)',
+            color: on ? '#eafaff' : '#93b2c2',
+            transition: 'border-color 200ms ease, background 200ms ease, color 200ms ease'
+          }
+        };
+      }),
+      // checkbox: box springs and fills, tick strokes itself in
+      boxStyle: {
+        flex: 'none', display: 'grid', placeItems: 'center',
+        width: '20px', height: '20px', marginTop: '1px', borderRadius: '6px',
+        border: '1px solid ' + (this.state.form.consent ? 'rgba(53,200,240,0.9)'
+          : this.state.errorField === 'consent' ? 'rgba(226,160,160,0.8)' : 'rgba(140,200,230,0.3)'),
+        background: this.state.form.consent ? '#35c8f0' : 'rgba(6,20,36,0.8)',
+        transform: this.state.form.consent ? 'scale(1.06)' : 'scale(1)',
+        transition: 'background 200ms ease, border-color 200ms ease, transform 260ms cubic-bezier(0.34,1.56,0.64,1)'
+      },
+      tickStyle: {
+        strokeDasharray: 26,
+        strokeDashoffset: this.state.form.consent ? 0 : 26,
+        transition: 'stroke-dashoffset 300ms cubic-bezier(0.65,0,0.35,1) 60ms'
+      },
+      submitLabel: this.state.sending ? 'WYSYŁANIE…' : this.state.statusOk ? '✓ WYSŁANE' : 'WYŚLIJ ZAPYTANIE',
+      submitStyle: {
+        justifySelf: 'start', padding: '12px 24px', borderRadius: '999px',
+        cursor: this.state.sending ? 'progress' : 'pointer',
+        fontFamily: "'Jost', sans-serif", fontSize: '11.5px', fontWeight: 400, letterSpacing: '0.2em',
+        border: '1px solid ' + (this.state.statusOk ? 'rgba(124,224,176,0.8)' : 'rgba(53,200,240,0.65)'),
+        background: this.state.statusOk ? 'rgba(24,86,66,0.8)' : 'rgba(21,74,102,0.75)',
+        color: '#eafaff',
+        opacity: this.state.sending ? 0.75 : 1,
+        transition: 'border-color 220ms ease, background 260ms ease, opacity 200ms ease'
+      },
+      submitHover: { borderColor: 'rgba(120,225,255,0.9)', background: 'rgba(28,96,131,0.85)' },
+      statusStyle: {
+        minHeight: '16px', fontSize: '12px', fontWeight: 300, lineHeight: 1.4,
+        color: this.state.statusOk ? '#7ce0b0' : '#e2a0a0',
+        opacity: this.state.status ? 1 : 0,
+        transform: this.state.status ? 'none' : 'translateY(-4px)',
+        transition: 'opacity 240ms ease, transform 240ms ease'
+      },
+      items: sec.items.map((it, i) => Object.assign({}, it, { num: String(i + 1).padStart(2, '0') })),
+      gridStyle: {
+        display: 'grid', width: '100%',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(' + (vw < 700 ? 220 : preview ? 210 : dense ? 195 : 260) + 'px, 1fr))',
+        gap: dense ? '10px' : '14px'
+      },
+      tileStyle: {
+        display: 'grid', gap: '9px', alignContent: 'start', textAlign: 'left',
+        padding: dense ? '14px 16px' : '17px 18px',
+        border: '1px solid rgba(140,200,230,0.16)', borderRadius: '10px',
+        background: 'rgba(6,20,36,0.78)', backdropFilter: 'blur(8px)',
+        transition: 'border-color 240ms ease, background 240ms ease, transform 240ms ease'
+      },
+      tileHover: {
+        borderColor: 'rgba(140,200,230,0.42)',
+        background: 'rgba(9,29,50,0.9)',
+        transform: 'translateY(-2px)'
+      },
+      tabHover: { borderColor: 'rgba(140,200,230,0.5)', color: '#e6f6fd' },
+      navbarStyle: {
+        position: 'absolute', left: 0, right: 0, top: '6vh', zIndex: 5,
+        display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center',
+        gap: '10px', padding: '14px clamp(16px, 3vw, 48px)',
+        borderBottom: '1px solid rgba(140,200,230,0.10)',
+        background: 'rgba(3,8,16,0.72)', backdropFilter: 'blur(10px)',
+        opacity: open ? 1 : 0,
+        transform: open ? 'none' : 'translateY(-12px)',
+        transition: 'opacity 420ms ease 300ms, transform 520ms cubic-bezier(0.22,0.61,0.36,1) 300ms',
+        pointerEvents: open ? 'auto' : 'none'
+      },
+      // the letterbox bars pull back while a section is open so the tiles fit
+      barTopStyle: {
+        position: 'absolute', top: 0, left: 0, right: 0, height: open ? '6vh' : '13vh',
+        zIndex: 4, background: '#010307', borderBottom: '1px solid rgba(140,200,230,0.10)',
+        pointerEvents: 'none', transition: 'height 620ms cubic-bezier(0.22,0.61,0.36,1)'
+      },
+      barBottomStyle: {
+        position: 'absolute', bottom: 0, left: 0, right: 0, height: open ? '6vh' : '13vh',
+        zIndex: 4, background: '#010307', borderTop: '1px solid rgba(140,200,230,0.10)',
+        pointerEvents: 'none', transition: 'height 620ms cubic-bezier(0.22,0.61,0.36,1)'
+      },
+      tabs: LINKS.map((l, i) => {
+        const active = this.state.section === l.key;
+        return {
+          label: l.label,
+          current: active ? 'true' : 'false',
+          open: e => { e.preventDefault(); this.goToSection(l.key); },
+          style: {
+            padding: '10px 16px', borderRadius: '999px', cursor: 'pointer',
+            fontFamily: "'Jost', sans-serif", fontSize: '11.5px', fontWeight: 300, letterSpacing: '0.2em',
+            border: '1px solid ' + (active ? 'rgba(53,200,240,0.65)' : 'rgba(140,200,230,0.18)'),
+            background: active ? 'rgba(21,74,102,0.75)' : 'rgba(8,22,38,0.5)',
+            color: active ? '#eafaff' : '#93b2c2',
+            transition: 'border-color 220ms ease, color 220ms ease, background 220ms ease'
+          }
+        };
+      }),
+      linkHover: { color: '#e6f6fd' },
+      backHover: { borderColor: 'rgba(140,200,230,0.6)', color: '#e6f6fd' },
+      closeSection: e => { e.preventDefault(); this.setState({ section: null }); },
+      heroStyle: {
+        position: 'absolute', inset: 0, zIndex: 1,
+        opacity: open ? 0 : 1,
+        transform: open ? 'translateY(-24px)' : 'none',
+        transition: 'opacity 520ms ease, transform 620ms cubic-bezier(0.22,0.61,0.36,1)',
+        pointerEvents: 'none'
+      },
+      panelStyle: {
+        position: 'absolute', inset: 0, zIndex: 2,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '8.5vh clamp(20px, 4vw, 64px) 8.5vh',
+        opacity: open ? (this.state.switching ? 0 : 1) : 0,
+        // fades in only after the sphere has burned out at the camera
+        transform: open ? (this.state.switching ? 'translateY(10px) scale(0.995)' : 'none') : 'scale(0.97)',
+        transition: this.state.switching
+          ? 'opacity 130ms ease, transform 150ms ease'
+          : open && this._entering
+          ? 'opacity 430ms ease 820ms, transform 560ms cubic-bezier(0.22,0.61,0.36,1) 820ms'
+          : open
+          ? 'opacity 240ms ease, transform 320ms cubic-bezier(0.22,0.61,0.36,1)'
+          : 'opacity 200ms ease, transform 260ms ease',
+        pointerEvents: open ? 'auto' : 'none'
+      },
+      // the bottom nav + © stack hides while a section is open (the panel
+      // carries its own section nav), so nothing overlaps the content
+      bottomStackStyle: {
+        position: 'absolute', left: 0, right: 0, bottom: '17vh', zIndex: 3,
+        display: 'grid', justifyItems: 'center', gap: '26px',
+        padding: '0 clamp(16px, 3vw, 48px)',
+        opacity: open ? 0 : 1,
+        transform: open ? 'translateY(12px)' : 'none',
+        transition: 'opacity 420ms ease, transform 520ms cubic-bezier(0.22,0.61,0.36,1)',
+        pointerEvents: open ? 'none' : 'auto'
+      },
+      links: LINKS.map(l => ({
+        label: l.label,
+        href: '#' + l.key,
+        style: this.state.section === l.key ? activeLink : navLink,
+        open: e => { e.preventDefault(); this.goToSection(l.key); }
+      }))
+    };
+  }
+
+  componentDidMount() {
+    this.mouse = { x: 0, y: 0 };
+    this.reveal = 0;              // 0 = hero pose, 1 = aside pose
+    this.burstTime = -1;          // -1 = idle
+    this.burstAmount = 0;
+    this.reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this.lowPower = this.reduced || window.innerWidth < 700;
+    this.waitForThree();
+    this.onPointerMove = e => {
+      this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+      this.mouse.y = -((e.clientY / window.innerHeight) * 2 - 1);
+    };
+    this.onEsc = e => { if (e.key === 'Escape' && this.state.section) this.setState({ section: null }); };
+    this.onResize = () => { this.resize(); this.forceUpdate(); };
+    window.addEventListener('pointermove', this.onPointerMove, { passive: true });
+    window.addEventListener('keydown', this.onEsc);
+    window.addEventListener('resize', this.onResize);
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    // entering a section fires the burst; leaving does not
+    if (this.state.section && prevState.section !== this.state.section && !this.reduced) this.burstTime = 0;
+  }
+
+  componentWillUnmount() {
+    cancelAnimationFrame(this.raf);
+    window.removeEventListener('pointermove', this.onPointerMove);
+    window.removeEventListener('keydown', this.onEsc);
+    window.removeEventListener('resize', this.onResize);
+    if (this.renderer) this.renderer.dispose();
+  }
+
+  waitForThree() {
+    if (window.THREE && this.canvas) return this.init(window.THREE);
+    setTimeout(() => this.waitForThree(), 60);
+  }
+
+  /* ---------------- scene construction ---------------- */
+  init(THREE) {
+    const w = window.innerWidth, h = window.innerHeight;
+    this.THREE = THREE;
+    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: true });
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, this.lowPower ? 1.5 : 2));
+    this.renderer.setSize(w, h, false);
+    this.scene = new THREE.Scene();
+    this.camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
+    this.camera.position.set(0, 0, 5.0);
+
+    this.group = new THREE.Group();
+    this.scene.add(this.group);
+
+    const S = CONFIG.sphere, H = CONFIG.holo, C = CONFIG.color;
+    const col = hex => new THREE.Color(hex);
+
+    // uFade dims the whole sphere while a section is open
+    this.uniforms = { uTime: { value: 0 }, uFade: { value: 1 }, uBurst: { value: 0 } };
+
+    this.bodyUniforms = Object.assign({
+      uRadius: { value: S.radius },
+      uNoiseFreq: { value: S.noiseFreq },
+      uNoiseSpeed: { value: S.noiseSpeed },
+      uDispAmp: { value: S.dispAmp },
+      uColorDeep: { value: col(C.deep) },
+      uColorLit: { value: col(C.lit) },
+      uAccent: { value: col(C.accent) },
+    }, this.uniforms);
+
+    const displaceGLSL = PERLIN_GLSL + `
+      uniform float uTime, uRadius, uNoiseFreq, uNoiseSpeed, uDispAmp, uBurst;
+      float heightAt(vec3 dir){
+        float t = uTime * uNoiseSpeed;
+        float n = cnoise(dir * uNoiseFreq + vec3(0.0, 0.0, t));
+        n += 0.5 * cnoise(dir * uNoiseFreq * 2.1 + vec3(t * 0.7, 0.0, 0.0));
+        // the burst blows the shell into shards along its own normals
+        float shard = cnoise(dir * 5.5) * 0.5 + 0.5;
+        return n * uDispAmp * (1.0 + uBurst) + shard * uBurst * 0.42;
+      }
+      vec3 surfacePoint(vec3 dir){ return dir * uRadius * (1.0 + heightAt(dir)); }`;
+
+    const detail = this.lowPower ? S.detailMobile : S.detail;
+    this.body = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(1, detail),
+      new THREE.ShaderMaterial({
+        uniforms: this.bodyUniforms,
+        transparent: true,
+        vertexShader: displaceGLSL + `
+          varying vec3 vN; varying vec3 vViewPos; varying float vH;
+          void main(){
+            vec3 dir = normalize(position);
+            vec3 p = surfacePoint(dir);
+            vH = heightAt(dir);
+            // normals rebuilt from two displaced neighbours (Codrops technique)
+            vec3 t1 = normalize(cross(dir, abs(dir.y) < 0.9 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0)));
+            vec3 t2 = cross(dir, t1);
+            float eps = 0.012;
+            vec3 pa = surfacePoint(normalize(dir + t1 * eps));
+            vec3 pb = surfacePoint(normalize(dir + t2 * eps));
+            vec3 n = normalize(cross(pa - p, pb - p));
+            if (dot(n, dir) < 0.0) n = -n;
+            vec4 mv = modelViewMatrix * vec4(p, 1.0);
+            vN = normalize(normalMatrix * n);
+            vViewPos = mv.xyz;
+            gl_Position = projectionMatrix * mv;
+          }`,
+        fragmentShader: `
+          uniform vec3 uColorDeep, uColorLit, uAccent, uFire;
+          uniform float uDispAmp, uFade, uBurst, uFireGain;
+          varying vec3 vN; varying vec3 vViewPos; varying float vH;
+          void main(){
+            vec3 n = normalize(vN), v = normalize(-vViewPos);
+            vec3 lightDir = normalize(vec3(-0.45, 0.55, 0.75));
+            float diff = max(dot(n, lightDir), 0.0);
+            float spec = pow(max(dot(reflect(-lightDir, n), v), 0.0), 38.0) * 0.28;
+            float fres = pow(1.0 - max(dot(n, v), 0.0), 3.0);
+            vec3 c = mix(uColorDeep, uColorLit, pow(diff, 0.85));
+            c += uAccent * fres * 0.55;
+            c += uAccent * smoothstep(0.35, 1.0, vH / max(uDispAmp, 0.001)) * 0.22;
+            c += vec3(0.55, 0.80, 0.95) * spec;
+            // green fire licking out of the cracks as the shell blows apart
+            float crack = smoothstep(0.15, 1.0, vH / max(uDispAmp, 0.001));
+            c += uFire * uBurst * (0.35 + crack * 0.9) * uFireGain;
+            c += uAccent * uBurst * 0.25;
+            gl_FragColor = vec4(c * uFade, uFade);
+          }`
+      })
+    );
+    this.group.add(this.body);
+
+    this.holoUniforms = Object.assign({
+      uRadius: { value: S.radius * H.scale },
+      uStripeFreq: { value: H.stripeFreq },
+      uScanSpeed: { value: H.scanSpeed },
+      uHoloIntensity: { value: H.intensity },
+      uFresnelPower: { value: H.fresnelPower },
+      uGlitch: { value: H.glitch },
+      uAccent: { value: col(C.accent) },
+      uFire: { value: col(CONFIG.burst.fireColor) },
+      uFireGain: { value: CONFIG.burst.fire }
+    }, this.uniforms);
+
+    this.holo = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(1, this.lowPower ? 8 : 24),
+      new THREE.ShaderMaterial({
+        uniforms: this.holoUniforms,
+        transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+        vertexShader: `
+          uniform float uTime, uRadius, uGlitch;
+          varying vec3 vN; varying vec3 vViewPos; varying vec3 vLocal;
+          void main(){
+            vec3 dir = normalize(position);
+            float wobble = sin(dir.y * 9.0 + uTime * 1.3) * uGlitch
+                         + sin(dir.x * 14.0 - uTime * 0.8) * uGlitch * 0.6;
+            vec3 p = dir * (uRadius + wobble);
+            vLocal = p;
+            vec4 mv = modelViewMatrix * vec4(p, 1.0);
+            vN = normalize(normalMatrix * dir);
+            vViewPos = mv.xyz;
+            gl_Position = projectionMatrix * mv;
+          }`,
+        fragmentShader: `
+          uniform float uTime, uStripeFreq, uScanSpeed, uHoloIntensity, uFresnelPower, uFade;
+          uniform vec3 uAccent;
+          varying vec3 vN; varying vec3 vViewPos; varying vec3 vLocal;
+          void main(){
+            vec3 n = normalize(vN), v = normalize(-vViewPos);
+            float stripes = fract(vLocal.y * uStripeFreq - uTime * uScanSpeed * uStripeFreq * 0.15);
+            stripes = pow(stripes, 3.0);
+            float fres = pow(1.0 - abs(dot(n, v)), uFresnelPower);
+            float a = (stripes * 0.45 + fres * 0.9) * uHoloIntensity * uFade;
+            gl_FragColor = vec4(uAccent * (0.7 + 0.6 * fres), a);
+          }`
+      })
+    );
+    this.holo.visible = !this.lowPower;
+    this.group.add(this.holo);
+
+    // ---- starfield ----
+    const ST = 2200, sp = new Float32Array(ST * 3), sa = new Float32Array(ST);
+    for (let i = 0; i < ST; i++) {
+      const u = Math.random() * 2 - 1, ph = Math.random() * Math.PI * 2, rr = 14 + Math.random() * 22, s = Math.sqrt(1 - u * u);
+      sp[i * 3] = Math.cos(ph) * s * rr; sp[i * 3 + 1] = u * rr * 0.8; sp[i * 3 + 2] = Math.sin(ph) * s * rr - 6;
+      sa[i] = Math.random();
+    }
+    const sg = new THREE.BufferGeometry();
+    sg.setAttribute('position', new THREE.BufferAttribute(sp, 3));
+    sg.setAttribute('aSeed', new THREE.BufferAttribute(sa, 1));
+    this.stars = new THREE.Points(sg, new THREE.ShaderMaterial({
+      uniforms: { uTime: this.uniforms.uTime, uPulse: this.starPulseUniform = { value: 0 } },
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      vertexShader: `
+        attribute float aSeed; uniform float uTime, uPulse; varying float vTw;
+        void main(){
+          vTw = 0.35 + 0.65 * (0.5 + 0.5 * sin(uTime * (0.4 + aSeed) + aSeed * 30.0));
+          vTw *= 1.0 + uPulse * (0.45 + aSeed * 0.55);    // flare on section change
+          vec4 mv = modelViewMatrix * vec4(position, 1.0);
+          gl_PointSize = (0.5 + aSeed * 0.9) * (34.0 / -mv.z) * 3.0 * (1.0 + uPulse * 1.1);
+          gl_Position = projectionMatrix * mv;
+        }`,
+      fragmentShader: `
+        varying float vTw;
+        void main(){
+          float d = length(gl_PointCoord - 0.5);
+          if (d > 0.5) discard;
+          gl_FragColor = vec4(vec3(0.62, 0.74, 0.94), smoothstep(0.5, 0.0, d) * vTw * 0.30);
+        }`
+    }));
+    this.scene.add(this.stars);
+
+    this.target = { x: 0, y: 0, rx: 0, ry: 0 };
+    this.baseScale = 1;
+    this.introTime = 0; // intro timeline restarts on every page load
+    this.clock = new THREE.Clock();
+    this.resize();
+    this.animate();
+  }
+
+  resize() {
+    if (!this.renderer) return;
+    const w = window.innerWidth, h = window.innerHeight;
+    this.camera.aspect = w / h;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(w, h, false);
+    this.baseScale = Math.max(0.5, Math.min(1, (w / h) / 0.9));
+    this.narrow = w < 900;
+  }
+
+  /* ---------------- 1) MOUSE FOLLOW ----------------
+     Each frame the sphere's position and tilt move a fraction
+     (positionEase / rotationEase) of the way to the pointer-derived target,
+     producing inertia. While a section is open the mouse influence is damped
+     (reveal.followDamp) so the sphere stays parked. */
+  updateFollow(dt) {
+    const f = Object.assign({}, CONFIG.follow, { positionEase: this.props.followEase ?? CONFIG.follow.positionEase });
+    const r = CONFIG.reveal, g = this.group;
+    const damp = 1 - this.reveal * (1 - r.followDamp);
+    const mx = (this.reduced ? 0 : this.mouse.x) * damp, my = (this.reduced ? 0 : this.mouse.y) * damp;
+    // the sphere stays centred and charges straight at the camera instead
+    this.target.x = f.offsetX + mx * f.rangeX;
+    this.target.y = f.offsetY + my * f.rangeY;
+    g.position.z = this.reveal * r.rush;
+    this.target.ry = mx * f.tiltY;
+    this.target.rx = -my * f.tiltX;
+    const k = 1 - Math.pow(1 - f.positionEase, dt * 60);
+    const kr = 1 - Math.pow(1 - f.rotationEase, dt * 60);
+    g.position.x += (this.target.x - g.position.x) * k;
+    g.position.y += (this.target.y - g.position.y) * k;
+    g.rotation.x += (this.target.rx - g.rotation.x) * kr;
+    const spin = this.reduced ? 0 : f.idleSpin;
+    this.spinBase = (this.spinBase || 0) + spin * dt;
+    g.rotation.y += (this.target.ry + this.spinBase - g.rotation.y) * kr + spin * dt;
+    g.scale.setScalar(this.baseScale * this.introScale() * this.breathScale()
+      * (1 + this.reveal * r.swell));
+  }
+
+  /* ---------------- BURST ----------------
+     One eased 0..1 value; feeds uBurst (noise detonation + accent flash) and
+     the scale kick. Tune with CONFIG.burst. */
+  updateBurst() {
+    const r = this.reveal;
+    // bell curve over the reveal timeline: 0 at rest, 0 when fully open,
+    // maximum mid-flight — symmetric, so POWRÓT replays it backwards
+    this.burstAmount = Math.pow(4 * r * (1 - r), 0.8);
+    this.uniforms.uBurst.value = this.burstAmount * CONFIG.burst.amp;
+  }
+
+  /* ---------------- INTRO SCALE ----------------
+     Tune with CONFIG.intro: startScale (entry size), growMs (time to reach
+     full size), settleScale + settleMs (the slow drift down afterwards). */
+  introScale() {
+    const i = CONFIG.intro, t = this.introTime;
+    if (t < i.growMs) {
+      const p = easeOutCubic(t / i.growMs);
+      return i.startScale + (1 - i.startScale) * p;
+    }
+    const p = Math.min(1, (t - i.growMs) / i.settleMs);
+    return 1 + (i.settleScale - 1) * easeInOutCubic(p);
+  }
+
+  /* slow inhale/exhale; fades in over the first second so it never fights the
+     intro growth, and holds still under prefers-reduced-motion */
+  breathScale() {
+    if (this.reduced) return 1;
+    const b = CONFIG.breath, t = this.introTime / 1000;
+    const ramp = Math.min(1, t / 1.2);
+    return 1 + Math.sin((t / b.periodS) * Math.PI * 2) * b.amp * ramp;
+  }
+
+  /* ---------------- 2) SECTION REVEAL ----------------
+     A single eased value (this.reveal, 0..1) drives the whole transition:
+     position offset, scale and uFade brightness. No geometry is broken apart.
+     Tune: reveal.ease (speed), asideX/asideY (parking spot), asideScale, dim. */
+  updateReveal(dt) {
+    const r = CONFIG.reveal;
+    const want = this.state.section ? 1 : 0;
+    const ease = want > this.reveal ? r.ease : r.easeBack;
+    const k = 1 - Math.pow(1 - ease, dt * 60);
+    this.reveal += (want - this.reveal) * k;
+    if (Math.abs(want - this.reveal) < 0.002) this.reveal = want;
+    // burns out on the way at the camera, comes back on the reverse pass
+    this.uniforms.uFade.value = 1 - Math.min(1, this.reveal / r.fadeAt);
+  }
+
+  syncProps() {
+    if (!this.bodyUniforms) return;
+    this.bodyUniforms.uNoiseSpeed.value = this.props.noiseSpeed ?? CONFIG.sphere.noiseSpeed;
+    this.bodyUniforms.uDispAmp.value = this.props.dispAmp ?? CONFIG.sphere.dispAmp;
+    this.holoUniforms.uHoloIntensity.value = this.props.holoIntensity ?? CONFIG.holo.intensity;
+    const accent = this.props.accentColor;
+    if (accent && accent !== this._accent) {
+      this._accent = accent;
+      this.bodyUniforms.uAccent.value.set(accent);
+      this.holoUniforms.uAccent.value.set(accent);
+    }
+  }
+
+  animate() {
+    this.raf = requestAnimationFrame(() => this.animate());
+    const dt = Math.min(this.clock.getDelta(), 0.05);
+    this.uniforms.uTime.value += this.reduced ? 0 : dt;
+    this.introTime += dt * 1000;
+    this.syncProps();
+    this.updateBurst();
+    this.updateReveal(dt);
+    this.updateFollow(dt);
+    // starfield synced to the planet: same eased position/rotation, damped
+    const st = CONFIG.stars, g = this.group;
+    // star flare decays over ~0.5 s and nudges the field's spin
+    this.starPulse = Math.max(0, (this.starPulse || 0) - dt * 2.2);
+    this.starPulseUniform.value = easeOutCubic(this.starPulse);
+    this.starDrift = (this.starDrift || 0) + dt * (st.drift + this.starPulse * 0.22);
+    this.stars.position.set(g.position.x * st.posFactor, g.position.y * st.posFactor, 0);
+    this.stars.rotation.y = g.rotation.y * st.rotFactor + this.starDrift;
+    this.stars.rotation.x = g.rotation.x * st.rotFactor;
+    this.renderer.render(this.scene, this.camera);
+  }
+}
+</script>
+</body>
+</html>
