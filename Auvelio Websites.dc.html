@@ -1,0 +1,2345 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="description" content="AUVELIO WEBSITES — profesjonalne strony internetowe: od prostych wizytówek po zaawansowane doświadczenia 3D i WebGL." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400;500&family=Geist:wght@300;400;500&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+<style>
+  html, body { margin: 0; padding: 0; background: #03060c; color: #c2d6df;
+    -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility; }
+  * { box-sizing: border-box; }
+  a { color: #a8c4d2; text-decoration: none; }
+  a:hover { color: #e6f6fd; }
+  a:focus-visible, button:focus-visible { outline: 2px solid #7fd4f0; outline-offset: 6px; border-radius: 2px; }
+  ::selection { background: rgba(140,200,225,0.25); }
+  @keyframes scanIn {
+    0% { opacity: 0; clip-path: inset(0 0 100% 0); transform: translateY(6px); }
+    55% { opacity: 1; }
+    100% { opacity: 1; clip-path: inset(0 0 0% 0); transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+  }
+</style>
+</helmet>
+<div style="position: relative; width: 100%; height: 100vh; background: radial-gradient(100% 78% at 50% 46%, #0a2033 0%, #051221 46%, #03060c 100%); font-family: 'Jost', system-ui, sans-serif; overflow: hidden;">
+
+  <canvas ref="{{ canvasRef }}" aria-hidden="true" role="presentation" style="position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 0;"></canvas>
+
+  <!-- HERO — visible when no section is open -->
+  <div style="{{ heroStyle }}">
+    <div style="display: grid; grid-template-rows: 1.22fr auto auto 1fr; align-content: center; justify-items: center; height: 100vh; padding: 0 clamp(16px, 3vw, 48px) 4vh; text-align: center; pointer-events: none;">
+      <h1 style="grid-row: 2; margin: 0; font-weight: 200; font-size: clamp(14px, 5.2vw, 92px); line-height: 1; letter-spacing: min(0.3em, 1.4vw); text-indent: min(0.3em, 1.4vw); color: #c2d6df; text-shadow: 0 0 30px rgba(130,195,225,0.35); white-space: nowrap;">AUVELIO WEBSITES</h1>
+      <p style="grid-row: 3; margin: 22px 0 0; font-weight: 200; font-size: clamp(8px, 1.1vw, 17px); letter-spacing: min(0.5em, 1vw); text-indent: min(0.5em, 1vw); color: #cfe2ea; text-shadow: 0 0 10px rgba(4,12,22,0.85), 0 0 26px rgba(120,185,215,0.35); white-space: nowrap;">WEBGL&nbsp; · &nbsp;INTERAKCJE&nbsp; · &nbsp;STRONY 3D</p>
+    </div>
+  </div>
+
+  <!-- SECTION PANEL — the sphere drifts aside and dims, the content takes over -->
+  <div style="{{ panelStyle }}">
+    <div style="{{ innerStyle }}">
+
+      <!-- one control row: back on the left of the section switcher -->
+      <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; margin-top: -4vh;">
+        <sc-for list="{{ tabs }}" as="tab" hint-placeholder-count="5">
+          <button onClick="{{ tab.open }}" data-interactive="true" aria-current="{{ tab.current }}" style="{{ tab.style }}" style-hover="{{ tabHover }}">{{ tab.label }}</button>
+        </sc-for>
+      </div>
+
+      <!-- section header, centred -->
+      <header style="display: grid; justify-items: center; gap: 12px; text-align: center;">
+        <span style="font-size: 12px; font-weight: 400; letter-spacing: 0.3em; color: #5fb9d8;">{{ section.eyebrow }}</span>
+        <h2 style="margin: 0; font-weight: 200; font-size: clamp(29px, 3.2vw, 49px); line-height: 1.05; letter-spacing: 0.04em; color: #e3eff5;">{{ section.title }}</h2>
+        <sc-if value="{{ showLead }}" hint-placeholder-val="{{ true }}">
+          <p style="{{ leadStyle }}">{{ section.lead }}</p>
+        </sc-if>
+      </header>
+
+      <!-- CONTACT FORM — three required fields, one consent, clear errors -->
+      <sc-if value="{{ showForm }}" hint-placeholder-val="{{ false }}">
+        <div style="{{ scrollStyle }}">
+        <form onSubmit="{{ submitForm }}" style="position: relative; margin: 0 auto; align-self: start; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px 22px; width: 100%; max-width: 900px; padding: 24px 28px; box-sizing: border-box; border: 1px solid rgba(150,205,232,0.20); border-radius: 30px / 46px; background: linear-gradient(178deg, rgba(16,44,68,0.52) 0%, rgba(7,20,36,0.34) 52%, rgba(11,32,52,0.46) 100%); backdrop-filter: blur(16px) saturate(116%); -webkit-backdrop-filter: blur(16px) saturate(116%); box-shadow: inset 0 1px 0 rgba(190,235,255,0.16), inset 0 -22px 60px -30px rgba(60,150,200,0.35), 0 30px 80px -26px rgba(0,0,0,0.8); text-align: left;">
+          <!-- same decorative top line + sheen + edge vignette as every other box, for 1:1 parity -->
+          <span aria-hidden="true" style="position: absolute; left: 8%; right: 8%; top: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(200,245,255,0.55), transparent); pointer-events: none;"></span>
+          <span aria-hidden="true" style="position: absolute; inset: 0; border-radius: inherit; background: radial-gradient(120% 150% at 50% 0%, rgba(90,190,235,0.10) 0%, transparent 55%); pointer-events: none;"></span>
+          <span aria-hidden="true" style="position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(90deg, rgba(2,7,14,0.75) 0%, transparent 16%, transparent 84%, rgba(2,7,14,0.75) 100%); pointer-events: none;"></span>
+
+          <!-- companion orb: same hologram material as the hero, pinned to the
+               card corner, pulses on every keystroke and flares on send -->
+          <div ref="{{ kontaktOrbRef }}" aria-hidden="true" style="{{ kontaktOrbStageStyle }}">
+            <canvas ref="{{ kontaktOrbCanvasRef }}" style="position: absolute; inset: 0; width: 100%; height: 100%; display: block;"></canvas>
+          </div>
+
+          <div style="display: grid; gap: 12px; align-content: start;">
+            <label style="display: grid; gap: 6px;">
+              <span style="{{ labelStyle }}">Imię i nazwisko <span style="color: #6fc9e6;">*</span></span>
+              <input type="text" value="{{ form.name }}" onChange="{{ setName }}" placeholder="np. Anna Kowalska" style="{{ nameFieldStyle }}" style-focus="{{ inputFocus }}" />
+            </label>
+            <label style="display: grid; gap: 6px;">
+              <span style="{{ labelStyle }}">E-mail <span style="color: #6fc9e6;">*</span></span>
+              <input type="email" value="{{ form.email }}" onChange="{{ setEmail }}" placeholder="np. anna@firma.pl" style="{{ emailFieldStyle }}" style-focus="{{ inputFocus }}" />
+            </label>
+            <div style="display: grid; gap: 6px;">
+              <span style="{{ labelStyle }}">Rodzaj projektu</span>
+              <div style="display: flex; flex-wrap: wrap; gap: 7px;">
+                <sc-for list="{{ kinds }}" as="kind" hint-placeholder-count="5">
+                  <button type="button" onClick="{{ kind.pick }}" data-interactive="true" aria-pressed="{{ kind.pressed }}" style="{{ kind.style }}" style-hover="{{ chipHover }}">{{ kind.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: grid; gap: 12px; align-content: start;">
+            <label style="display: grid; gap: 6px;">
+              <span style="{{ labelStyle }}">Czego potrzebujesz? <span style="color: #6fc9e6;">*</span></span>
+              <textarea value="{{ form.message }}" onChange="{{ setMessage }}" rows="4" placeholder="Krótko: co ma robić strona, na kiedy, jaki budżet." style="{{ messageFieldStyle }}" style-focus="{{ inputFocus }}"></textarea>
+              <span style="font-size: 12px; font-weight: 300; letter-spacing: 0.02em; color: #6e8b9b;">{{ counter }}</span>
+            </label>
+
+            <!-- animated consent checkbox: the tick draws itself in -->
+            <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer;">
+              <input type="checkbox" checked="{{ form.consent }}" onChange="{{ setConsent }}" style="position: absolute; opacity: 0; width: 1px; height: 1px;" />
+              <span aria-hidden="true" style="{{ boxStyle }}">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" style="display: block;">
+                  <path d="M4 12.5 L9.5 18 L20 6.5" stroke="#06121f" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" style="{{ tickStyle }}"></path>
+                </svg>
+              </span>
+              <span style="font-size: 13px; font-weight: 300; line-height: 1.45; color: #a2bdca;">Zgadzam się na kontakt w sprawie tego zapytania. <span style="color: #6fc9e6;">*</span></span>
+            </label>
+
+            <div style="display: grid; gap: 8px;">
+              <button type="submit" data-interactive="true" style="{{ submitStyle }}" style-hover="{{ submitHover }}">{{ submitLabel }}</button>
+              <span style="{{ statusStyle }}">{{ status }}</span>
+            </div>
+          </div>
+        </form>
+        </div>
+      </sc-if>
+
+      <!-- USŁUGI — RING: six baked cards (same technique as PORTFOLIO's
+           shards) arranged evenly around a circle. Drag/scroll spins it;
+           whichever card faces the camera is naturally larger and brighter
+           — no separate click-to-focus state, the front position IS the
+           focus. Simpler than a shattered shell or a constellation: one
+           continuous rotation, nothing else moving independently. -->
+      <sc-if value="{{ showRing }}" hint-placeholder-val="{{ false }}">
+      <div style="{{ ringWrapStyle }}">
+        <div ref="{{ ringRef }}" style="{{ ringStageStyle }}">
+          <canvas ref="{{ ringCanvasRef }}" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab;"></canvas>
+        </div>
+        <span aria-hidden="true" style="{{ ringHintStyle }}">PRZECIĄGNIJ LUB PRZEWIŃ, ABY OBRACAĆ</span>
+        <div style="{{ ringDotsRowStyle }}">
+          <sc-for list="{{ ringDots }}" as="dot" hint-placeholder-count="6">
+            <button onClick="{{ dot.jump }}" data-interactive="true" aria-label="{{ dot.label }}" aria-current="{{ dot.active }}" style="{{ dot.style }}" style-hover="{{ ringDotHover }}"></button>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- PROCES — WINDING PATH: a curved road recedes into the scene: four
+           baked step-cards (same technique as PORTFOLIO/USŁUGI) sit at
+           bends along it. Scroll/drag drives the camera along the curve
+           like a journey — each card brightens as you approach and fades
+           as you leave, arriving at a small hologram glow at the end. -->
+      <sc-if value="{{ showPath }}" hint-placeholder-val="{{ false }}">
+      <div style="{{ pathWrapStyle }}">
+        <div ref="{{ pathRef }}" style="{{ pathStageStyle }}">
+          <canvas ref="{{ pathCanvasRef }}" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: pointer;"></canvas>
+        </div>
+        <span aria-hidden="true" style="{{ pathHintStyle }}">PRZECIĄGNIJ LUB PRZEWIŃ, ABY IŚĆ DALEJ</span>
+        <div style="{{ pathDotsRowStyle }}">
+          <sc-for list="{{ pathDots }}" as="dot" hint-placeholder-count="4">
+            <button onClick="{{ dot.jump }}" data-interactive="true" aria-label="{{ dot.label }}" aria-current="{{ dot.active }}" style="{{ dot.style }}" style-hover="{{ pathDotHover }}"></button>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- PORTFOLIO — SHATTERED HOLOGRAM: the sphere's shell broken into 10
+           glass shards drifting in real 3D. Click one: it swings to face the
+           camera and reveals the project, the rest recede and blur. -->
+      <sc-if value="{{ showShards }}" hint-placeholder-val="{{ false }}">
+      <div ref="{{ shardsRef }}" style="{{ shardsStageStyle }}">
+        <canvas ref="{{ shardsCanvasRef }}" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: pointer;"></canvas>
+        <button onClick="{{ shardsBack }}" data-interactive="true" style="{{ shardsBackStyle }}" style-hover="{{ backHover }}">← WRÓĆ</button>
+        <span aria-hidden="true" style="{{ shardsHintStyle }}">KLIKNIJ ODŁAMEK</span>
+        <!-- num/meta/name/desc all live on the card's own texture now — this
+             list exists only so screen readers still get the four projects
+             (the canvas itself is aria-hidden). -->
+        <ul style="{{ srOnlyStyle }}">
+          <sc-for list="{{ shardItems }}" as="shard" hint-placeholder-count="4">
+            <li>{{ shard.name }} — {{ shard.meta }}. {{ shard.desc }}</li>
+          </sc-for>
+        </ul>
+      </div>
+      </sc-if>
+
+      <!-- O MARCE — HOLOGRAM READOUT: a small companion orb runs the exact
+           scanline/fresnel material from the hero, docked beside a scanning
+           text log — reads like brand specs playing back on a hologram. -->
+      <sc-if value="{{ showReadout }}" hint-placeholder-val="{{ false }}">
+      <div style="{{ scrollStyle }}">
+      <div style="{{ readoutRowStyle }}">
+        <div ref="{{ orbRef }}" style="{{ orbStageStyle }}">
+          <canvas ref="{{ orbCanvasRef }}" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%; display: block;"></canvas>
+        </div>
+        <div style="{{ readoutListStyle }}" key="{{ section.title }}">
+          <sc-for list="{{ readoutItems }}" as="item" hint-placeholder-count="4">
+            <article style="{{ item.style }}">
+              <span aria-hidden="true" style="{{ readoutRuleStyle }}"></span>
+              <div style="display: flex; align-items: baseline; gap: 10px;">
+                <span style="font-family: 'Geist', 'Jost', sans-serif; font-size: 22px; font-weight: 300; line-height: 1; color: #6fc9e6;">{{ item.num }}</span>
+                <span style="font-size: 10px; font-weight: 400; letter-spacing: 0.16em; text-transform: uppercase; color: #7fa9bd; white-space: nowrap;">{{ item.meta }}</span>
+              </div>
+              <h3 style="margin: 0; font-family: 'Geist', 'Jost', sans-serif; font-size: 18px; font-weight: 500; line-height: 1.25; color: #f0f7fa;">{{ item.name }}</h3>
+              <p style="margin: 0; font-size: 14px; font-weight: 300; line-height: 1.55; color: #a8c2cf; text-wrap: pretty;">{{ item.desc }}</p>
+            </article>
+          </sc-for>
+        </div>
+      </div>
+      </div>
+      </sc-if>
+
+      <button onClick="{{ closeSection }}" data-interactive="true" style="margin-top: clamp(20px, 3.4vh, 42px); display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border: 1px solid rgba(150,205,232,0.20); border-radius: 999px; background: linear-gradient(178deg, rgba(16,44,68,0.42) 0%, rgba(7,20,36,0.30) 100%); backdrop-filter: blur(16px) saturate(116%); -webkit-backdrop-filter: blur(16px) saturate(116%); box-shadow: inset 0 1px 0 rgba(190,235,255,0.16), 0 8px 20px -12px rgba(0,0,0,0.6); color: #b7d0dc; font-family: 'Jost', sans-serif; font-size: 13px; font-weight: 300; letter-spacing: 0.2em; cursor: pointer; transition: border-color 220ms ease, color 220ms ease, background 220ms ease;" style-hover="{{ backHover }}">← START</button>
+    </div>
+  </div>
+
+  <!-- MAIN NAV — always available, sits at the bottom -->
+  <div style="{{ bottomStackStyle }}">
+    <nav aria-label="Nawigacja główna" style="display: flex; flex-wrap: wrap; justify-content: center; gap: clamp(20px, 4.5vw, 72px);">
+      <sc-for list="{{ links }}" as="link" hint-placeholder-count="5">
+        <a href="{{ link.href }}" onClick="{{ link.open }}" data-interactive="true" style="{{ link.style }}" style-hover="{{ linkHover }}">{{ link.label }}</a>
+      </sc-for>
+    </nav>
+    <span style="font-size: 11px; font-weight: 300; letter-spacing: 0.12em; color: #7f96a4;">© {{ year }} AUVELIO WEBSITES</span>
+  </div>
+
+  <!-- cinematic letterbox bars -->
+  <div aria-hidden="true" style="{{ barTopStyle }}"></div>
+  <div aria-hidden="true" style="{{ barBottomStyle }}"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;noiseSpeed&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:0.16,&quot;min&quot;:0,&quot;max&quot;:0.8,&quot;step&quot;:0.02,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Kula&quot;},&quot;dispAmp&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:0.11,&quot;min&quot;:0,&quot;max&quot;:0.3,&quot;step&quot;:0.01,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Kula&quot;},&quot;holoIntensity&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:0.32,&quot;min&quot;:0,&quot;max&quot;:1.5,&quot;step&quot;:0.05,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Hologram&quot;},&quot;accentColor&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#35c8f0&quot;,&quot;options&quot;:[&quot;#35c8f0&quot;,&quot;#2f8fe0&quot;,&quot;#3ce0c0&quot;,&quot;#8ab4ff&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Kula&quot;},&quot;followEase&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:0.035,&quot;min&quot;:0.005,&quot;max&quot;:0.2,&quot;step&quot;:0.005,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Motion&quot;}}">
+/* =========================================================================
+   AUVELIO WEBSITES — animated displaced sphere + hologram scanline overlay.
+
+   Displacement technique based on the Codrops tutorial by Anderson Mancini,
+   "Creating an Animated Displaced Sphere with a Custom Three.js Material"
+   — MIT License —
+   https://tympanus.net/codrops/2024/07/09/creating-an-animated-displaced-sphere-with-a-custom-three-js-material/
+   (icosahedron base geometry, animated 3D Perlin displacement, normals
+   recomputed from displaced neighbours.)
+
+   Classic 3D Perlin noise (cnoise) by Stefan Gustavson / Ashima Arts,
+   webgl-noise — MIT License — https://github.com/ashima/webgl-noise
+
+   Hologram overlay implements the standard scanline technique (stripes from
+   the model's Y position + Fresnel rim + subtle vertex wobble), additively
+   blended, written here from the technique description.
+
+   Two independently tunable systems:
+     1) MOUSE FOLLOW    -> CONFIG.follow + updateFollow()
+     2) SECTION REVEAL  -> CONFIG.reveal + updateReveal()
+        Clicking a nav item slides the sphere aside and dims it while the
+        section content fades in. No shatter, no fragments.
+   ========================================================================= */
+
+const CONFIG = {
+  follow: {
+    rangeX: 0.45, rangeY: 0.28,
+    positionEase: 0.035,          // per-frame lerp; lower = laggier
+    tiltX: 0.34, tiltY: 0.45,
+    rotationEase: 0.028,
+    idleSpin: 0.045,
+    offsetX: 0, offsetY: 0.05     // hero rest position (viewport centre)
+  },
+  /* REVEAL — one 0..1 value plays the whole transition, and running it back to
+     0 plays it in reverse (that is what POWRÓT does).
+     rush = how far the sphere charges toward the camera, swell = how much it
+     grows on the way, fadeAt = where along the timeline it burns out. */
+  reveal: {
+    ease: 0.038,                  // outbound: slow charge at the camera
+    easeBack: 0.17,               // return: snaps back into place
+    rush: 3.55, swell: 1.9,
+    fadeAt: 0.62,
+    followDamp: 0.15
+  },
+  sphere: {
+    radius: 1.25,
+    detail: 40, detailMobile: 14,
+    noiseFreq: 1.35,              // uNoiseFreq — displacement scale
+    noiseSpeed: 0.16,             // uNoiseSpeed — calm drift
+    dispAmp: 0.11                 // uDispAmp — displacement strength
+  },
+  holo: {
+    scale: 1.055,
+    stripeFreq: 8.0,              // uStripeFreq — scanline density
+    scanSpeed: 0.5,               // uScanSpeed — upward travel
+    intensity: 0.32,              // uHoloIntensity — brightness
+    fresnelPower: 2.6,            // uFresnelPower — rim tightness
+    glitch: 0.006                 // uGlitch — vertex wobble
+  },
+  // brand palette in place of the tutorial's magenta: deep navy body, cyan accent
+  color: { deep: 0x081426, lit: 0x14425e, accent: 0x35c8f0 },
+  /* INTRO SCALE — one timeline, independent of follow/reveal:
+     starts at 20% less volume (0.8^(1/3) of the radius), grows to full size
+     over growMs, then drifts gently down to settleScale over settleMs. */
+  intro: { startScale: 0.928, growMs: 3000, settleScale: 0.82, settleMs: 14000 },
+  /* BREATHING — slow scale pulse layered on top of the intro timeline.
+     amp = how much it swells (fraction), periodS = one full breath in seconds. */
+  breath: { amp: 0.045, periodS: 6.5 },
+  /* STARS — the field is locked to the sphere's motion: it shifts with the
+     pointer and turns with the planet, just softer (parallax).
+     posFactor: share of the sphere's drift, rotFactor: share of its spin. */
+  stars: { posFactor: 0.45, rotFactor: 0.35, drift: 0.008 },
+  /* BURST — the "wow" on entering a section: the sphere swells and its noise
+     field detonates, then settles into the aside pose.
+     riseMs/fallMs = timing, amp = displacement spike, pop = scale kick,
+     flash = accent light added at the peak. */
+  /* BURST — derived from the reveal timeline (peaks mid-flight, zero at both
+     ends), so it fires on the way out AND, reversed, on the way back.
+     amp = shard displacement, fire = green flame brightness. */
+  burst: { amp: 3.2, fire: 2.6, fireColor: 0x3bff7a }
+};
+
+/* Classic 3D Perlin noise — Stefan Gustavson / Ashima Arts (MIT). */
+const PERLIN_GLSL = `
+vec3 mod289(vec3 x){ return x - floor(x * (1.0 / 289.0)) * 289.0; }
+vec4 mod289(vec4 x){ return x - floor(x * (1.0 / 289.0)) * 289.0; }
+vec4 permute(vec4 x){ return mod289(((x * 34.0) + 1.0) * x); }
+vec4 taylorInvSqrt(vec4 r){ return 1.79284291400159 - 0.85373472095314 * r; }
+vec3 fade(vec3 t){ return t * t * t * (t * (t * 6.0 - 15.0) + 10.0); }
+float cnoise(vec3 P){
+  vec3 Pi0 = floor(P), Pi1 = Pi0 + vec3(1.0);
+  Pi0 = mod289(Pi0); Pi1 = mod289(Pi1);
+  vec3 Pf0 = fract(P), Pf1 = Pf0 - vec3(1.0);
+  vec4 ix = vec4(Pi0.x, Pi1.x, Pi0.x, Pi1.x);
+  vec4 iy = vec4(Pi0.yy, Pi1.yy);
+  vec4 iz0 = Pi0.zzzz, iz1 = Pi1.zzzz;
+  vec4 ixy = permute(permute(ix) + iy);
+  vec4 ixy0 = permute(ixy + iz0), ixy1 = permute(ixy + iz1);
+  vec4 gx0 = ixy0 * (1.0 / 7.0);
+  vec4 gy0 = fract(floor(gx0) * (1.0 / 7.0)) - 0.5;
+  gx0 = fract(gx0);
+  vec4 gz0 = vec4(0.5) - abs(gx0) - abs(gy0);
+  vec4 sz0 = step(gz0, vec4(0.0));
+  gx0 -= sz0 * (step(0.0, gx0) - 0.5);
+  gy0 -= sz0 * (step(0.0, gy0) - 0.5);
+  vec4 gx1 = ixy1 * (1.0 / 7.0);
+  vec4 gy1 = fract(floor(gx1) * (1.0 / 7.0)) - 0.5;
+  gx1 = fract(gx1);
+  vec4 gz1 = vec4(0.5) - abs(gx1) - abs(gy1);
+  vec4 sz1 = step(gz1, vec4(0.0));
+  gx1 -= sz1 * (step(0.0, gx1) - 0.5);
+  gy1 -= sz1 * (step(0.0, gy1) - 0.5);
+  vec3 g000 = vec3(gx0.x, gy0.x, gz0.x), g100 = vec3(gx0.y, gy0.y, gz0.y);
+  vec3 g010 = vec3(gx0.z, gy0.z, gz0.z), g110 = vec3(gx0.w, gy0.w, gz0.w);
+  vec3 g001 = vec3(gx1.x, gy1.x, gz1.x), g101 = vec3(gx1.y, gy1.y, gz1.y);
+  vec3 g011 = vec3(gx1.z, gy1.z, gz1.z), g111 = vec3(gx1.w, gy1.w, gz1.w);
+  vec4 norm0 = taylorInvSqrt(vec4(dot(g000,g000), dot(g010,g010), dot(g100,g100), dot(g110,g110)));
+  g000 *= norm0.x; g010 *= norm0.y; g100 *= norm0.z; g110 *= norm0.w;
+  vec4 norm1 = taylorInvSqrt(vec4(dot(g001,g001), dot(g011,g011), dot(g101,g101), dot(g111,g111)));
+  g001 *= norm1.x; g011 *= norm1.y; g101 *= norm1.z; g111 *= norm1.w;
+  float n000 = dot(g000, Pf0);
+  float n100 = dot(g100, vec3(Pf1.x, Pf0.yz));
+  float n010 = dot(g010, vec3(Pf0.x, Pf1.y, Pf0.z));
+  float n110 = dot(g110, vec3(Pf1.xy, Pf0.z));
+  float n001 = dot(g001, vec3(Pf0.xy, Pf1.z));
+  float n101 = dot(g101, vec3(Pf1.x, Pf0.y, Pf1.z));
+  float n011 = dot(g011, vec3(Pf0.x, Pf1.yz));
+  float n111 = dot(g111, Pf1);
+  vec3 f = fade(Pf0);
+  vec4 n_z = mix(vec4(n000, n100, n010, n110), vec4(n001, n101, n011, n111), f.z);
+  vec2 n_yz = mix(n_z.xy, n_z.zw, f.y);
+  return 2.2 * mix(n_yz.x, n_yz.y, f.x);
+}`;
+
+const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+const easeInOutCubic = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+/* splits a lead into its first sentence (headline) and the remainder */
+function splitLead(lead) {
+  const m = String(lead || '').match(/^([\s\S]*?[.!?])(\s+)([\s\S]+)$/);
+  return m ? { headline: m[1], rest: m[3] } : { headline: lead, rest: '' };
+}
+
+const clamp01 = v => Math.min(1, Math.max(0, v));
+
+function hexToRgba(hex, a) {
+  const h = String(hex || '#35c8f0').replace('#', '');
+  const r = parseInt(h.substring(0, 2), 16), g = parseInt(h.substring(2, 4), 16), b = parseInt(h.substring(4, 6), 16);
+  return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+}
+
+/* ==========================================================================
+   HOLO ORB — a smaller, cheaper sibling of the hero sphere (same displaced-
+   shell + hologram-scanline shader pair, trimmed detail). Used as a living
+   companion wherever the hero itself doesn't reach: the PROCES orrery core,
+   the O MARCE readout, the KONTAKT card. One shared build so every orb in
+   the site reads as the same material, not five different widgets.
+   ========================================================================= */
+function makeHoloOrb(THREE, opts) {
+  const o = Object.assign({
+    radius: 0.6, detail: 22, holoDetail: 16,
+    accent: 0x35c8f0, deep: 0x081426, lit: 0x14425e, fireColor: 0x3bff7a,
+    noiseFreq: 1.5, noiseSpeed: 0.18, dispAmp: 0.09,
+    stripeFreq: 7.0, scanSpeed: 0.5, holoIntensity: 0.4, fresnelPower: 2.6, glitch: 0.004
+  }, opts || {});
+
+  const uniforms = { uTime: { value: 0 }, uFade: { value: 1 }, uBurst: { value: 0 } };
+
+  const bodyUniforms = Object.assign({
+    uRadius: { value: o.radius }, uNoiseFreq: { value: o.noiseFreq }, uNoiseSpeed: { value: o.noiseSpeed },
+    uDispAmp: { value: o.dispAmp }, uColorDeep: { value: new THREE.Color(o.deep) },
+    uColorLit: { value: new THREE.Color(o.lit) }, uAccent: { value: new THREE.Color(o.accent) },
+    uFire: { value: new THREE.Color(o.fireColor) }, uFireGain: { value: 1.4 }
+  }, uniforms);
+
+  const displaceGLSL = PERLIN_GLSL + `
+    uniform float uTime, uRadius, uNoiseFreq, uNoiseSpeed, uDispAmp, uBurst;
+    float heightAt(vec3 dir){
+      float t = uTime * uNoiseSpeed;
+      float n = cnoise(dir * uNoiseFreq + vec3(0.0, 0.0, t));
+      n += 0.5 * cnoise(dir * uNoiseFreq * 2.1 + vec3(t * 0.7, 0.0, 0.0));
+      return n * uDispAmp * (1.0 + uBurst * 0.6);
+    }
+    vec3 surfacePoint(vec3 dir){ return dir * uRadius * (1.0 + heightAt(dir)); }`;
+
+  const body = new THREE.Mesh(
+    new THREE.IcosahedronGeometry(1, o.detail),
+    new THREE.ShaderMaterial({
+      uniforms: bodyUniforms, transparent: true,
+      vertexShader: displaceGLSL + `
+        varying vec3 vN; varying vec3 vViewPos; varying float vH;
+        void main(){
+          vec3 dir = normalize(position);
+          vec3 p = surfacePoint(dir);
+          vH = heightAt(dir);
+          vec3 t1 = normalize(cross(dir, abs(dir.y) < 0.9 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0)));
+          vec3 t2 = cross(dir, t1);
+          float eps = 0.02;
+          vec3 pa = surfacePoint(normalize(dir + t1 * eps));
+          vec3 pb = surfacePoint(normalize(dir + t2 * eps));
+          vec3 n = normalize(cross(pa - p, pb - p));
+          if (dot(n, dir) < 0.0) n = -n;
+          vec4 mv = modelViewMatrix * vec4(p, 1.0);
+          vN = normalize(normalMatrix * n);
+          vViewPos = mv.xyz;
+          gl_Position = projectionMatrix * mv;
+        }`,
+      fragmentShader: `
+        uniform vec3 uColorDeep, uColorLit, uAccent, uFire;
+        uniform float uDispAmp, uFade, uBurst, uFireGain;
+        varying vec3 vN; varying vec3 vViewPos; varying float vH;
+        void main(){
+          vec3 n = normalize(vN), v = normalize(-vViewPos);
+          vec3 lightDir = normalize(vec3(-0.45, 0.55, 0.75));
+          float diff = max(dot(n, lightDir), 0.0);
+          float spec = pow(max(dot(reflect(-lightDir, n), v), 0.0), 30.0) * 0.3;
+          float fres = pow(1.0 - max(dot(n, v), 0.0), 3.0);
+          vec3 c = mix(uColorDeep, uColorLit, pow(diff, 0.85));
+          c += uAccent * fres * 0.6;
+          c += vec3(0.55, 0.80, 0.95) * spec;
+          c += uFire * uBurst * fres * uFireGain;
+          c += uAccent * uBurst * 0.4;
+          gl_FragColor = vec4(c * uFade, uFade);
+        }`
+    })
+  );
+
+  const holoUniforms = Object.assign({
+    uRadius: { value: o.radius * 1.06 }, uStripeFreq: { value: o.stripeFreq },
+    uScanSpeed: { value: o.scanSpeed }, uHoloIntensity: { value: o.holoIntensity },
+    uFresnelPower: { value: o.fresnelPower }, uGlitch: { value: o.glitch },
+    uAccent: { value: new THREE.Color(o.accent) }
+  }, uniforms);
+
+  const holo = new THREE.Mesh(
+    new THREE.IcosahedronGeometry(1, o.holoDetail),
+    new THREE.ShaderMaterial({
+      uniforms: holoUniforms, transparent: true, depthWrite: false,
+      blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+      vertexShader: `
+        uniform float uTime, uRadius, uGlitch;
+        varying vec3 vN; varying vec3 vViewPos; varying vec3 vLocal;
+        void main(){
+          vec3 dir = normalize(position);
+          float wobble = sin(dir.y * 9.0 + uTime * 1.3) * uGlitch + sin(dir.x * 14.0 - uTime * 0.8) * uGlitch * 0.6;
+          vec3 p = dir * (uRadius + wobble);
+          vLocal = p;
+          vec4 mv = modelViewMatrix * vec4(p, 1.0);
+          vN = normalize(normalMatrix * dir);
+          vViewPos = mv.xyz;
+          gl_Position = projectionMatrix * mv;
+        }`,
+      fragmentShader: `
+        uniform float uTime, uStripeFreq, uScanSpeed, uHoloIntensity, uFresnelPower, uFade;
+        uniform vec3 uAccent;
+        varying vec3 vN; varying vec3 vViewPos; varying vec3 vLocal;
+        void main(){
+          vec3 n = normalize(vN), v = normalize(-vViewPos);
+          float stripes = fract(vLocal.y * uStripeFreq - uTime * uScanSpeed * uStripeFreq * 0.15);
+          stripes = pow(stripes, 3.0);
+          float fres = pow(1.0 - abs(dot(n, v)), uFresnelPower);
+          float a = (stripes * 0.45 + fres * 0.9) * uHoloIntensity * uFade;
+          gl_FragColor = vec4(uAccent * (0.7 + 0.6 * fres), a);
+        }`
+    })
+  );
+
+  const group = new THREE.Group();
+  group.add(body);
+  group.add(holo);
+  return { group, body, holo, uniforms, bodyUniforms, holoUniforms };
+}
+
+/* ==========================================================================
+   SHARD CARD TEXTURE — a PORTFOLIO shard shouldn't read as empty glass until
+   you click it, so the number/title/brand-accent are baked straight onto
+   the card as a small canvas texture (redrawn once web fonts are ready).
+   ========================================================================= */
+/* greedy word-wrap for canvas text — ctx.font must already be set */
+function wrapLines(ctx, text, maxWidth, maxLines) {
+  const words = String(text || '').split(/\s+/).filter(Boolean);
+  const lines = [];
+  let line = '';
+  let i = 0;
+  for (; i < words.length; i++) {
+    const test = line ? line + ' ' + words[i] : words[i];
+    if (line && ctx.measureText(test).width > maxWidth) {
+      lines.push(line);
+      line = words[i];
+      if (lines.length === maxLines) { line = ''; break; }
+    } else {
+      line = test;
+    }
+  }
+  if (line && lines.length < maxLines) lines.push(line);
+  if (i < words.length || lines.length > maxLines) {
+    let last = lines[maxLines - 1] || '';
+    while (last.length > 1 && ctx.measureText(last + '…').width > maxWidth) last = last.slice(0, -1);
+    lines[maxLines - 1] = last.replace(/\s+$/, '') + '…';
+    lines.length = maxLines;
+  }
+  return lines;
+}
+
+function drawShardCard(ctx, W, H, item) {
+  ctx.clearRect(0, 0, W, H);
+  const r = W * 0.075;
+  ctx.beginPath();
+  ctx.moveTo(r, 0);
+  ctx.arcTo(W, 0, W, H, r);
+  ctx.arcTo(W, H, 0, H, r);
+  ctx.arcTo(0, H, 0, 0, r);
+  ctx.arcTo(0, 0, W, 0, r);
+  ctx.closePath();
+  ctx.save();
+  ctx.clip();
+
+  const [c0, c1] = item.swatch || ['#0a2338', '#040d18'];
+  const bg = ctx.createLinearGradient(0, 0, W * 0.4, H);
+  bg.addColorStop(0, c1);
+  bg.addColorStop(1, c0);
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // a soft diagonal sheen, same language as the site's glass boxes
+  const sheen = ctx.createLinearGradient(0, 0, W, H * 0.6);
+  sheen.addColorStop(0, item.dark ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.10)');
+  sheen.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = sheen;
+  ctx.fillRect(0, 0, W, H * 0.7);
+
+  const ink = item.dark ? '#10151a' : '#f4fafd';
+  const sub = item.dark ? 'rgba(16,21,26,0.62)' : 'rgba(210,230,240,0.75)';
+  const accent = item.dark ? '#0d6fa8' : '#6fd8ff';
+  const marginX = W * 0.055;
+  const maxTextW = W - marginX * 2;
+
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = accent;
+  ctx.font = '300 ' + Math.round(H * 0.135) + 'px Geist, sans-serif';
+  ctx.fillText(item.num, marginX, H * 0.275);
+
+  ctx.font = '400 ' + Math.round(H * 0.040) + 'px Jost, sans-serif';
+  ctx.fillStyle = sub;
+  ctx.fillText(item.meta, marginX, H * 0.375);
+
+  ctx.font = '500 ' + Math.round(H * 0.105) + 'px Geist, sans-serif';
+  ctx.fillStyle = ink;
+  ctx.fillText(item.name, marginX, H * 0.55);
+
+  ctx.strokeStyle = item.dark ? 'rgba(16,21,26,0.35)' : 'rgba(255,255,255,0.4)';
+  ctx.lineWidth = Math.max(1, H * 0.006);
+  ctx.beginPath();
+  ctx.moveTo(marginX, H * 0.605);
+  ctx.lineTo(marginX + W * 0.24, H * 0.605);
+  ctx.stroke();
+
+  // the description now lives on the card itself, so it's visible from the
+  // moment the shard is picked out — never a separate floating layer to
+  // collide with anything below the stage.
+  ctx.font = '300 ' + Math.round(H * 0.052) + 'px Jost, sans-serif';
+  ctx.fillStyle = sub;
+  const descLines = wrapLines(ctx, item.desc, maxTextW, 3);
+  const lineH = H * 0.072;
+  descLines.forEach((line, i) => ctx.fillText(line, marginX, H * 0.69 + i * lineH));
+
+  ctx.restore();
+}
+
+function makeShardTexture(THREE, item) {
+  // high-res relative to the plane's on-screen size (especially once a
+  // shard flies to focus and scales up) — a smaller canvas here was the
+  // "rozmazuje się" blur: crisp text needs real pixels behind it
+  const W = 1440, H = 912;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  drawShardCard(ctx, W, H, item);
+  const texture = new THREE.CanvasTexture(canvas);
+  // mipmapped + anisotropic: when a card isn't at full focus size the GPU
+  // was sampling the high-res text raw and undersampling it into mush —
+  // mipmaps give it a proper pre-filtered chain instead of "blurry", and
+  // anisotropy only does anything once mipmaps exist to filter across
+  texture.generateMipmaps = true;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.anisotropy = 8;
+  if ('colorSpace' in texture) texture.colorSpace = THREE.SRGBColorSpace;
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => {
+      drawShardCard(ctx, W, H, item);
+      texture.needsUpdate = true;
+    });
+  }
+  return texture;
+}
+
+/* SERVICE CARD TEXTURE — one brand, one dark navy body, only the accent
+   colour changes per service (unlike the shard cards, which represent four
+   different external brands). Same wrap/bake technique as drawShardCard. */
+function drawServiceCard(ctx, W, H, item) {
+  ctx.clearRect(0, 0, W, H);
+  const r = W * 0.075;
+  ctx.beginPath();
+  ctx.moveTo(r, 0);
+  ctx.arcTo(W, 0, W, H, r);
+  ctx.arcTo(W, H, 0, H, r);
+  ctx.arcTo(0, H, 0, 0, r);
+  ctx.arcTo(0, 0, W, 0, r);
+  ctx.closePath();
+  ctx.save();
+  ctx.clip();
+
+  const accent = item.swatch || '#35c8f0';
+  const bg = ctx.createLinearGradient(0, 0, W * 0.4, H);
+  bg.addColorStop(0, hexToRgba(accent, 0.16));
+  bg.addColorStop(1, '#040d18');
+  ctx.fillStyle = '#081a2c';
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  const sheen = ctx.createLinearGradient(0, 0, W, H * 0.6);
+  sheen.addColorStop(0, 'rgba(255,255,255,0.08)');
+  sheen.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = sheen;
+  ctx.fillRect(0, 0, W, H * 0.7);
+
+  const ink = '#f4fafd';
+  const sub = 'rgba(210,230,240,0.75)';
+  const marginX = W * 0.055;
+  const maxTextW = W - marginX * 2;
+
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = accent;
+  ctx.font = '300 ' + Math.round(H * 0.135) + 'px Geist, sans-serif';
+  ctx.fillText(item.num, marginX, H * 0.275);
+
+  ctx.font = '400 ' + Math.round(H * 0.040) + 'px Jost, sans-serif';
+  ctx.fillStyle = sub;
+  ctx.fillText(item.meta, marginX, H * 0.375);
+
+  ctx.font = '500 ' + Math.round(H * 0.105) + 'px Geist, sans-serif';
+  ctx.fillStyle = ink;
+  const nameLines = wrapLines(ctx, item.name, maxTextW, 2);
+  nameLines.forEach((line, i) => ctx.fillText(line, marginX, H * 0.478 + i * H * 0.108));
+
+  const ruleY = H * 0.478 + nameLines.length * H * 0.108 + H * 0.03;
+  ctx.strokeStyle = hexToRgba(accent, 0.5);
+  ctx.lineWidth = Math.max(1, H * 0.006);
+  ctx.beginPath();
+  ctx.moveTo(marginX, ruleY);
+  ctx.lineTo(marginX + W * 0.24, ruleY);
+  ctx.stroke();
+
+  ctx.font = '300 ' + Math.round(H * 0.050) + 'px Jost, sans-serif';
+  ctx.fillStyle = sub;
+  const descLines = wrapLines(ctx, item.desc, maxTextW, 2);
+  const lineH = H * 0.064;
+  descLines.forEach((line, i) => ctx.fillText(line, marginX, ruleY + H * 0.075 + i * lineH));
+
+  ctx.restore();
+}
+
+function makeServiceTexture(THREE, item) {
+  // same high-res fix as the shard cards — this one gets scaled up even
+  // further at the front of the ring, so it needs the extra pixels most
+  const W = 1440, H = 912;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  drawServiceCard(ctx, W, H, item);
+  const texture = new THREE.CanvasTexture(canvas);
+  // mipmapped + anisotropic: when a card isn't at full focus size the GPU
+  // was sampling the high-res text raw and undersampling it into mush —
+  // mipmaps give it a proper pre-filtered chain instead of "blurry", and
+  // anisotropy only does anything once mipmaps exist to filter across
+  texture.generateMipmaps = true;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.anisotropy = 8;
+  if ('colorSpace' in texture) texture.colorSpace = THREE.SRGBColorSpace;
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => {
+      drawServiceCard(ctx, W, H, item);
+      texture.needsUpdate = true;
+    });
+  }
+  return texture;
+}
+
+const KINDS = [
+  { key: 'wizytowka', label: 'Wizytówka' },
+  { key: 'firmowa', label: 'Strona firmowa' },
+  { key: 'sklep', label: 'Sklep' },
+  { key: 'webgl', label: '3D / WebGL' },
+  { key: 'inne', label: 'Jeszcze nie wiem' }
+];
+
+/* one field style, red-tinted when that field is the blocking error */
+const field = bad => ({
+  width: '100%', padding: '10px 12px', fontFamily: "'Jost', sans-serif",
+  fontSize: '15px', fontWeight: 300, color: '#e3eff5',
+  background: bad ? 'rgba(40,16,20,0.7)' : 'rgba(6,20,36,0.78)',
+  border: '1px solid ' + (bad ? 'rgba(226,160,160,0.75)' : 'rgba(140,200,230,0.22)'),
+  borderRadius: '8px', outline: 'none',
+  transition: 'border-color 200ms ease, background 200ms ease'
+});
+
+const SECTIONS = {
+  uslugi: {
+    title: 'Usługi',
+    lead: 'Budujemy strony na każdym poziomie złożoności — od jednostronicowej wizytówki, która ma po prostu działać i szybko się ładować, po interaktywne doświadczenia 3D w WebGL. Zakres dobieramy do celu, nie do mody.',
+    items: [
+      { name: 'Strona wizytówka', meta: 'OD 1 STRONY', desc: 'Jedna dobrze zaprojektowana strona: kim jesteś, co robisz, jak się skontaktować. Responsywna, szybka, gotowa do indeksowania w Google.', swatch: '#35c8f0' },
+      { name: 'Strona firmowa', meta: '4–12 PODSTRON', desc: 'Pełna struktura: oferta, realizacje, zespół, kontakt, blog. Panel do samodzielnej edycji treści i podstawowa optymalizacja SEO.', swatch: '#4fd6c8' },
+      { name: 'Landing page sprzedażowy', meta: 'KAMPANIE', desc: 'Jedna strona pod konkretną kampanię: czytelna argumentacja, formularz, integracja z analityką i systemem mailingowym.', swatch: '#5ab8ff' },
+      { name: 'Sklep internetowy', meta: 'E-COMMERCE', desc: 'Katalog, koszyk, płatności online, wysyłka i faktury. Wdrożenie na sprawdzonym silniku, bez eksperymentów na Twoim budżecie.', swatch: '#7ee0a8' },
+      { name: 'Animacje i WebGL', meta: 'ZAAWANSOWANE', desc: 'Scroll-telling, konfiguratory produktu, shadery i scenografia 3D w przeglądarce — bez wtyczek, na Three.js.', swatch: '#b08cff' },
+      { name: 'Redesign, audyt i opieka', meta: 'ISTNIEJĄCE STRONY', desc: 'Przegląd wydajności i dostępności, poprawki uszeregowane według wpływu na wynik, a potem stały pakiet zmian i monitoring.', swatch: '#ffb35a' }
+    ]
+  },
+  portfolio: {
+    title: 'Portfolio',
+    lead: 'Cztery studia stylu zamiast realizacji — każdy odłamek pokazuje, jak dopasowujemy język wizualny do marki. Miejsca gotowe do podmiany na prawdziwe realizacje.',
+    items: [
+      { name: 'Apple', meta: 'STUDIUM STYLU · MINIMAL', desc: 'Czysta siatka, biel i światło, produkt w centrum — zero szumu wokół.', swatch: ['#f2f4f6', '#c7ccd3'], dark: true },
+      { name: 'Samsung', meta: 'STUDIUM STYLU · TECH', desc: 'Chłodny granat i elektryczny akcent, mocna siatka produktowa.', swatch: ['#0a2a52', '#1665c9'] },
+      { name: 'Marvel', meta: 'STUDIUM STYLU · KINO', desc: 'Czerń, czerwień i duży kontrast — plakatowa, kinowa skala.', swatch: ['#150404', '#9a0f14'] },
+      { name: 'CD Projekt', meta: 'STUDIUM STYLU · GAMEDEV', desc: 'Mrok, karmazyn i surowa typografia — klimat gry, nie strony firmowej.', swatch: ['#170406', '#7a0f1c'] }
+    ]
+  },
+  proces: {
+    title: 'Proces',
+    lead: 'Cztery etapy, jasne punkty decyzyjne, wycena znana przed startem prac.',
+    items: [
+      { name: '1. Rozmowa i zakres', meta: '2–4 DNI', desc: 'Cel strony, grupa odbiorców, konkurencja, lista funkcji i budżet. Na koniec: wycena i harmonogram.', swatch: '#35c8f0' },
+      { name: '2. Projekt', meta: '1–3 TYGODNIE', desc: 'Układ, typografia, kolory i kluczowe ekrany. Dwie rundy poprawek w cenie.', swatch: '#4fd6c8' },
+      { name: '3. Wdrożenie', meta: '2–6 TYGODNI', desc: 'Kodowanie, treści, testy na urządzeniach, wydajność i dostępność.', swatch: '#5ab8ff' },
+      { name: '4. Start i opieka', meta: 'PO WDROŻENIU', desc: 'Publikacja, analityka, szkolenie z panelu i dalsze zmiany w ramach opieki.', swatch: '#7ee0a8' }
+    ]
+  },
+  'o-marce': {
+    title: 'O marce',
+    lead: 'AUVELIO WEBSITES to studio projektowania i wdrażania stron internetowych. Pracujemy w małym zespole, prowadzimy niewiele projektów jednocześnie i odpowiadamy za wynik, nie za liczbę godzin.',
+    items: [
+      { name: 'Jak pracujemy', meta: 'ZASADY', desc: 'Jeden opiekun projektu, ustalony zakres, brak niespodzianek w fakturze. Kod i pliki projektowe przechodzą na Twoją własność.' },
+      { name: 'Technologie', meta: 'STACK', desc: 'HTML, CSS i JavaScript pisane ręcznie, Three.js do 3D, sprawdzone silniki CMS i e-commerce tam, gdzie mają sens.' },
+      { name: 'Wydajność i dostępność', meta: 'STANDARD', desc: 'Cel: szybkie ładowanie na telefonie w słabym zasięgu, kontrast zgodny z WCAG AA, obsługa klawiaturą.' }
+    ]
+  },
+  kontakt: {
+    title: 'Kontakt',
+    lead: 'Wypełnij trzy pola i wyślij. Odpowiadamy w ciągu jednego dnia roboczego — pytaniami albo wstępną wyceną.',
+    form: true,
+    items: []
+  }
+};
+
+const LINKS = [
+  { label: 'USŁUGI', key: 'uslugi' },
+  { label: 'PORTFOLIO', key: 'portfolio' },
+  { label: 'PROCES', key: 'proces' },
+  { label: 'O MARCE', key: 'o-marce' },
+  { label: 'KONTAKT', key: 'kontakt' }
+];
+
+class Component extends DCLogic {
+  state = {
+    section: null, switching: false,
+    form: { name: '', email: '', kind: 'firmowa', message: '', consent: false },
+    status: '', statusOk: false, errorField: null, sending: false,
+    // PROCES: which station is nearest along the path. PORTFOLIO: which
+    // shard is focused (null = the shell is intact and scattered). USŁUGI:
+    // which card currently sits at the front of the ring.
+    pathActive: 0, shardFocus: null, ringActive: 0
+  };
+
+  // continuous progress, eased in updatePath()/updateRing() — the path's is
+  // clamped 0..1 (a journey has ends), the ring's is unbounded index units
+  // (it wraps, a circle doesn't)
+  pathTarget = 0;
+  pathOffset = 0;
+  ringTarget = 0;
+  ringOffset = 0;
+
+  /* ---------------- STABLE REFS ----------------
+     Every one of these is a class-field arrow function, created exactly
+     once per component instance. renderVals() must hand the SAME function
+     reference to `ref=` on every render — an inline `el => {...}` written
+     fresh inside renderVals() gets a new identity each render, and React
+     reacts to a changed ref identity by calling the old one with null and
+     the new one with the element, back to back, on every single re-render.
+     For a plain `el => this.x = el` that's harmless noise. For anything
+     that inits/tears down a WebGL scene on mount/unmount (all of these),
+     it means every setState — a click, a keystroke, a step change —
+     silently destroyed and rebuilt the scene, snapping it back to rest.
+     That was the "cięcie" (cut): not a broken animation, a hard reset. */
+  canvasRef = el => { this.canvas = el; };
+
+  ringRef = el => { this.ringEl = el; };
+  ringCanvasRef = el => {
+    if (el && el !== this.ringCanvas) { this.ringCanvas = el; this.initRing(el); }
+    if (!el) { this.ringCanvas = null; this.teardownRing(); }
+  };
+
+  pathRef = el => { this.pathEl = el; };
+  pathCanvasRef = el => {
+    if (el && el !== this.pathCanvas) { this.pathCanvas = el; this.initPath(el); }
+    if (!el) { this.pathCanvas = null; this.teardownPath(); }
+  };
+
+  shardsRef = el => { this.shardsEl = el; };
+  shardsCanvasRef = el => {
+    if (el && el !== this.shardsCanvas) { this.shardsCanvas = el; this.initShards(el); }
+    if (!el) { this.shardsCanvas = null; this.teardownShards(); }
+  };
+
+  orbRef = () => {};
+  orbCanvasRef = el => {
+    if (el && el !== this.orbCanvas) {
+      this.orbCanvas = el;
+      this.initHoloOrb('marca', el, { radius: 0.72, detail: 26, holoDetail: 18, holoIntensity: 0.48, dispAmp: 0.08 });
+    }
+    if (!el) { this.orbCanvas = null; this.teardownHoloOrb('marca'); }
+  };
+
+  kontaktOrbRef = () => {};
+  kontaktOrbCanvasRef = el => {
+    if (el && el !== this.kontaktOrbCanvas) {
+      this.kontaktOrbCanvas = el;
+      this.initHoloOrb('kontakt', el, { radius: 0.6, detail: 20, holoDetail: 14, holoIntensity: 0.55, dispAmp: 0.1 });
+    }
+    if (!el) { this.kontaktOrbCanvas = null; this.teardownHoloOrb('kontakt'); }
+  };
+
+  setField(key, value) {
+    if (this.orbs && this.orbs.kontakt) this.orbs.kontakt.pulse = 1;
+    this.setState(s => ({
+      form: Object.assign({}, s.form, { [key]: value }),
+      status: '', statusOk: false,
+      errorField: s.errorField === key ? null : s.errorField
+    }));
+  }
+
+  /* front-end validation only — a real backend still has to validate.
+     One error at a time, the offending field is highlighted. */
+  handleSubmit(e) {
+    e.preventDefault();
+    if (this.state.sending) return;
+    const f = this.state.form;
+    const fail = (errorField, status) => {
+      if (this.orbs && this.orbs.kontakt) this.orbs.kontakt.pulse = 1;
+      this.setState({ errorField, status, statusOk: false });
+    };
+    if (!f.name.trim()) return fail('name', 'Podaj imię i nazwisko.');
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.email)) return fail('email', 'Podaj poprawny adres e-mail.');
+    if (f.message.trim().length < 10) return fail('message', 'Opisz projekt w kilku słowach — minimum 10 znaków.');
+    if (!f.consent) return fail('consent', 'Zaznacz zgodę na kontakt.');
+    this.setState({ sending: true, errorField: null, status: '' });
+    clearTimeout(this._send);
+    this._send = setTimeout(() => {
+      if (this.orbs && this.orbs.kontakt) this.orbs.kontakt.flare = 1;
+      this.setState({
+        sending: false, statusOk: true,
+        status: 'Dziękujemy, ' + f.name.trim().split(' ')[0] + ' — odpowiemy w ciągu jednego dnia roboczego.'
+      });
+    }, 700);
+  }
+
+  /* switching between sections while the panel is open: the content dips out,
+     swaps, and comes back — so the change is never abrupt */
+  goToSection(key) {
+    if (this.state.section === key) return;
+    if (!this.state.section) {
+      // opening from the hero: the content waits for the sphere to burn out
+      this._entering = true;
+      clearTimeout(this._enter);
+      this._enter = setTimeout(() => { this._entering = false; }, 1400);
+      return this.setState({ section: key, node: 0, switching: false });
+    }
+    this.setState({ switching: true });
+    clearTimeout(this._swap);
+    // stars flare and sweep in the direction the section moved (right = +1)
+    this.starPulse = 1;
+    const from = LINKS.findIndex(l => l.key === this.state.section);
+    const to = LINKS.findIndex(l => l.key === key);
+    this.starDir = to > from ? 1 : -1;
+    this._swap = setTimeout(() => this.setState({ section: key, node: 0, hud: null, switching: false }), 130);
+  }
+
+  renderVals() {
+    const open = !!this.state.section;
+    const sec = SECTIONS[this.state.section] || SECTIONS.uslugi;
+    const navLink = {
+      fontSize: 'clamp(11px, 0.95vw, 15px)', fontWeight: 300, letterSpacing: '0.3em',
+      color: '#a8c4d2', textShadow: '0 0 16px rgba(110,180,215,0.28)',
+      transition: 'color 220ms ease, text-shadow 220ms ease'
+    };
+    const activeLink = Object.assign({}, navLink, { color: '#e6f6fd', textShadow: '0 0 22px rgba(160,220,245,0.6)' });
+    // the panel must fit without scrolling: descriptions are dropped and the
+    // grid gets narrower columns when the free band between the bars is short
+    const vh = typeof window !== 'undefined' ? window.innerHeight : 900;
+    const vw = typeof window !== 'undefined' ? window.innerWidth : 1200;
+    return {
+      canvasRef: this.canvasRef,
+      year: new Date().getFullYear(),
+      // the lead's first sentence becomes the section's headline, verbatim;
+      // whatever follows stays as supporting copy underneath
+      section: Object.assign({}, sec, {
+        eyebrow: 'SEKCJA ' + (Math.max(0, LINKS.findIndex(l => l.key === this.state.section)) + 1) + ' Z ' + LINKS.length
+      }),
+      showForm: !!sec.form,
+      // one shared universe: USŁUGI flies through glass monoliths, PROCES is
+      // an orrery (steps orbit a hologram core), PORTFOLIO is a shattered
+      // hologram shell (click a shard to focus it), O MARCE runs a small
+      // companion orb beside a scanning readout. All real WebGL, no CSS
+      // perspective tricks.
+      showRing: this.state.section === 'uslugi' && !this.reduced,
+      showPath: this.state.section === 'proces' && !this.reduced,
+      showShards: this.state.section === 'portfolio' && !this.reduced,
+      // O MARCE always reads through the orb + readout. With reduced motion,
+      // the other three fall back to the exact same static readout instead
+      // of rendering nothing — every one of their orb/ring/shard flourishes
+      // is itself gated on !this.reduced, so nothing here is a dead end.
+      showReadout: this.state.section === 'o-marce'
+        || (this.reduced && (this.state.section === 'uslugi' || this.state.section === 'proces' || this.state.section === 'portfolio')),
+
+      pathWrapStyle: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', width: '100%' },
+      pathRef: this.pathRef,
+      pathCanvasRef: this.pathCanvasRef,
+      pathStageStyle: {
+        position: 'relative', width: '100%', minHeight: 0,
+        height: 'min(48vh, 360px, calc(100vh - 260px))',
+        background: 'transparent'
+      },
+      pathHintStyle: {
+        fontSize: '10.5px', fontWeight: 300, letterSpacing: '0.24em', color: '#4f7286', textAlign: 'center'
+      },
+      pathDotsRowStyle: { display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '9px' },
+      pathDotHover: { boxShadow: '0 0 12px 3px rgba(255,255,255,0.5)' },
+      pathDots: SECTIONS.proces.items.map((it, i) => {
+        const active = this.state.pathActive === i;
+        const accent = it.swatch || '#35c8f0';
+        return {
+          i, label: it.name + ' — ' + it.meta, active: active ? 'true' : 'false',
+          jump: () => this.jumpPath(i),
+          style: {
+            width: active ? '26px' : '9px', height: '9px', padding: 0, border: 'none', borderRadius: '999px', cursor: 'pointer',
+            background: active ? accent : hexToRgba(accent, 0.35),
+            boxShadow: active ? '0 0 10px 2px ' + hexToRgba(accent, 0.6) : 'none',
+            transition: 'width 260ms cubic-bezier(0.34,1.56,0.64,1), background 220ms ease, box-shadow 220ms ease'
+          }
+        };
+      }),
+
+      shardsRef: this.shardsRef,
+      shardsCanvasRef: this.shardsCanvasRef,
+      shardsStageStyle: {
+        position: 'relative', width: '100%', minHeight: 0,
+        height: 'min(48vh, 360px, calc(100vh - 260px))',
+        background: 'transparent'
+      },
+      shardItems: SECTIONS.portfolio.items.map((it, i) => ({
+        i, name: it.name, meta: it.meta, desc: it.desc
+      })),
+      srOnlyStyle: {
+        position: 'absolute', width: '1px', height: '1px', margin: '-1px',
+        padding: 0, border: 0, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap'
+      },
+      shardsBack: e => { e.preventDefault(); this.setState({ shardFocus: null }); },
+      shardsBackStyle: {
+        position: 'absolute', left: '50%', bottom: '-40px', transform: 'translateX(-50%)',
+        padding: '8px 16px', borderRadius: '999px', cursor: 'pointer',
+        border: '1px solid rgba(150,205,232,0.20)',
+        background: 'linear-gradient(178deg, rgba(16,44,68,0.42) 0%, rgba(7,20,36,0.30) 100%)',
+        backdropFilter: 'blur(16px) saturate(116%)', WebkitBackdropFilter: 'blur(16px) saturate(116%)',
+        boxShadow: 'inset 0 1px 0 rgba(190,235,255,0.16), 0 8px 20px -12px rgba(0,0,0,0.6)',
+        fontFamily: "'Jost', sans-serif", fontSize: '12px', fontWeight: 300, letterSpacing: '0.2em',
+        color: '#b7d0dc',
+        opacity: this.state.shardFocus != null ? 1 : 0,
+        pointerEvents: this.state.shardFocus != null ? 'auto' : 'none',
+        transition: 'opacity 320ms ease 180ms, border-color 220ms ease, color 220ms ease'
+      },
+      shardsHintStyle: {
+        position: 'absolute', left: '50%', bottom: '-30px', transform: 'translateX(-50%)',
+        fontSize: '10.5px', fontWeight: 300, letterSpacing: '0.24em', color: '#4f7286',
+        pointerEvents: 'none', whiteSpace: 'nowrap',
+        opacity: this.state.shardFocus == null ? 1 : 0, transition: 'opacity 300ms ease'
+      },
+
+      readoutRowStyle: {
+        display: 'grid', gridTemplateColumns: vw < 760 ? '1fr' : 'minmax(180px, 245px) 1fr',
+        // top-aligned, not centred: the orb is a fixed square and the text
+        // column's height varies with content, so centring them made the
+        // two edges start at different heights instead of lining up
+        // width:100% just caps it, it doesn't centre it — the row was
+        // sitting flush against the left edge of the (wider) scroll
+        // container instead of under the centred header above it
+        // extra breathing room under the lead paragraph, on top of the
+        // grid's own row gap — pushes the whole orb+list block down
+        gap: 'clamp(16px, 3vw, 40px)', alignItems: 'start', width: '100%', maxWidth: '870px',
+        margin: 'clamp(18px, 4.5vh, 44px) auto 0'
+      },
+      orbRef: this.orbRef,
+      orbCanvasRef: this.orbCanvasRef,
+      orbStageStyle: {
+        position: 'relative', width: '100%', aspectRatio: '1 / 1', maxWidth: '245px',
+        justifySelf: vw < 760 ? 'center' : 'start'
+      },
+      readoutListStyle: { display: 'grid', gap: 'clamp(14px, 2vh, 22px)', textAlign: 'left' },
+      readoutRuleStyle: {
+        position: 'absolute', left: 0, top: '4px', bottom: '4px', width: '1px',
+        background: 'linear-gradient(180deg, rgba(53,200,240,0.7), rgba(53,200,240,0.05))'
+      },
+      readoutItems: (sec.items || []).map((it, i) => ({
+        num: String(i + 1).padStart(2, '0'), name: it.name, meta: it.meta, desc: it.desc,
+        style: {
+          position: 'relative', paddingLeft: '18px', display: 'grid', gap: '6px',
+          animation: this.reduced ? 'none' : 'scanIn 640ms cubic-bezier(0.22,0.61,0.36,1) both',
+          animationDelay: (i * 90) + 'ms'
+        }
+      })),
+
+      kontaktOrbRef: this.kontaktOrbRef,
+      kontaktOrbCanvasRef: this.kontaktOrbCanvasRef,
+      kontaktOrbStageStyle: {
+        position: 'absolute', top: '-42px', right: '18px', width: '86px', height: '86px',
+        pointerEvents: 'none', opacity: 0.9, filter: 'drop-shadow(0 8px 20px rgba(0,0,0,0.5))'
+      },
+      showLead: true,
+      leadStyle: {
+        margin: 0, maxWidth: '68ch', fontWeight: 300,
+        fontSize: this.state.section === 'uslugi'
+          ? 'clamp(14px, 1.1vw, 17px)'
+          : 'clamp(17px, 1.5vw, 23px)',
+        lineHeight: 1.5, color: '#bcd3de', textWrap: 'pretty'
+      },
+      ringWrapStyle: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', width: '100%' },
+      ringRef: this.ringRef,
+      ringCanvasRef: this.ringCanvasRef,
+      ringStageStyle: {
+        position: 'relative', width: '100%', minHeight: 0,
+        height: 'min(46vh, 340px, calc(100vh - 280px))',
+        background: 'transparent'
+      },
+      ringHintStyle: {
+        fontSize: '10.5px', fontWeight: 300, letterSpacing: '0.24em', color: '#4f7286', textAlign: 'center'
+      },
+      ringDotsRowStyle: { display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '9px' },
+      ringDotHover: { boxShadow: '0 0 12px 3px rgba(255,255,255,0.5)' },
+      ringDots: SECTIONS.uslugi.items.map((it, i) => {
+        const active = this.state.ringActive === i;
+        const accent = it.swatch || '#35c8f0';
+        return {
+          i, label: it.name + ' — ' + it.meta, active: active ? 'true' : 'false',
+          jump: () => this.jumpRing(i),
+          style: {
+            width: active ? '26px' : '9px', height: '9px', padding: 0, border: 'none', borderRadius: '999px', cursor: 'pointer',
+            background: active ? accent : hexToRgba(accent, 0.35),
+            boxShadow: active ? '0 0 10px 2px ' + hexToRgba(accent, 0.6) : 'none',
+            transition: 'width 260ms cubic-bezier(0.34,1.56,0.64,1), background 220ms ease, box-shadow 220ms ease'
+          }
+        };
+      }),
+
+      form: this.state.form,
+      status: this.state.status,
+      setName: e => this.setField('name', e.target.value),
+      setEmail: e => this.setField('email', e.target.value),
+      setKind: e => this.setField('kind', e.target.value),
+      setMessage: e => this.setField('message', e.target.value),
+      setConsent: e => this.setField('consent', e.target.checked),
+      submitForm: e => this.handleSubmit(e),
+      // panel budget: fixed rows for tabs/header/START, the tile band takes
+      // what is left (min-height 0 so it actually shrinks and scrolls)
+      innerStyle: {
+        width: '100%', maxWidth: 'min(1240px, 94vw)', maxHeight: '100%', minHeight: 0,
+        display: 'grid', gridTemplateRows: 'auto auto minmax(0, auto) auto',
+        justifyItems: 'center', alignContent: 'center',
+        gap: vh < 780 ? '12px' : 'clamp(14px, 2.2vh, 26px)'
+      },
+      // a bottom fade signals that the band scrolls instead of looking sliced
+      scrollStyle: {
+        // explicit bound (viewport minus tabs/header/START/padding) so the
+        // grid rows stay tight and centred while the band still scrolls
+        width: '100%', minHeight: 0, maxHeight: '100%',
+        overflowY: 'auto', overscrollBehavior: 'contain',
+        paddingRight: '6px', paddingBottom: '10px',
+        maskImage: 'linear-gradient(180deg, #000 0, #000 calc(100% - 26px), transparent 100%)',
+        WebkitMaskImage: 'linear-gradient(180deg, #000 0, #000 calc(100% - 26px), transparent 100%)',
+        scrollbarWidth: 'thin', scrollbarColor: 'rgba(140,200,230,0.35) transparent'
+      },
+      labelStyle: {
+        fontSize: '12px', fontWeight: 400, letterSpacing: '0.16em',
+        textTransform: 'uppercase', color: '#7fa9bd'
+      },
+      nameFieldStyle: field(this.state.errorField === 'name'),
+      emailFieldStyle: field(this.state.errorField === 'email'),
+      messageFieldStyle: Object.assign(field(this.state.errorField === 'message'), {
+        lineHeight: 1.5, resize: 'none'
+      }),
+      inputFocus: { borderColor: 'rgba(53,200,240,0.75)', background: 'rgba(9,29,50,0.9)' },
+      counter: this.state.form.message.trim().length + ' / min. 10 znaków',
+      chipHover: { borderColor: 'rgba(140,200,230,0.5)', color: '#e6f6fd' },
+      kinds: KINDS.map(k => {
+        const on = this.state.form.kind === k.key;
+        return {
+          label: k.label,
+          pressed: on ? 'true' : 'false',
+          pick: () => this.setField('kind', k.key),
+          style: {
+            padding: '7px 13px', borderRadius: '999px', cursor: 'pointer',
+            fontFamily: "'Jost', sans-serif", fontSize: '12.5px', fontWeight: 300, letterSpacing: '0.08em',
+            // same glass language as the PROCES box: gradient fill + blur + inset sheen
+            border: '1px solid ' + (on ? 'rgba(53,200,240,0.65)' : 'rgba(150,205,232,0.20)'),
+            background: on
+              ? 'linear-gradient(178deg, rgba(26,84,112,0.85) 0%, rgba(10,34,56,0.55) 100%)'
+              : 'linear-gradient(178deg, rgba(16,44,68,0.42) 0%, rgba(7,20,36,0.30) 100%)',
+            backdropFilter: 'blur(16px) saturate(116%)', WebkitBackdropFilter: 'blur(16px) saturate(116%)',
+            boxShadow: 'inset 0 1px 0 rgba(190,235,255,0.16), 0 8px 20px -12px rgba(0,0,0,0.6)',
+            color: on ? '#eafaff' : '#93b2c2',
+            transition: 'border-color 200ms ease, background 200ms ease, color 200ms ease'
+          }
+        };
+      }),
+      // checkbox: box springs and fills, tick strokes itself in
+      boxStyle: {
+        flex: 'none', display: 'grid', placeItems: 'center',
+        width: '20px', height: '20px', marginTop: '1px', borderRadius: '6px',
+        border: '1px solid ' + (this.state.form.consent ? 'rgba(53,200,240,0.9)'
+          : this.state.errorField === 'consent' ? 'rgba(226,160,160,0.8)' : 'rgba(140,200,230,0.3)'),
+        background: this.state.form.consent ? '#35c8f0' : 'rgba(6,20,36,0.8)',
+        transform: this.state.form.consent ? 'scale(1.06)' : 'scale(1)',
+        transition: 'background 200ms ease, border-color 200ms ease, transform 260ms cubic-bezier(0.34,1.56,0.64,1)'
+      },
+      tickStyle: {
+        strokeDasharray: 26,
+        strokeDashoffset: this.state.form.consent ? 0 : 26,
+        transition: 'stroke-dashoffset 300ms cubic-bezier(0.65,0,0.35,1) 60ms'
+      },
+      submitLabel: this.state.sending ? 'WYSYŁANIE…' : this.state.statusOk ? '✓ WYSŁANE' : 'WYŚLIJ ZAPYTANIE',
+      submitStyle: {
+        justifySelf: 'start', padding: '12px 24px', borderRadius: '999px',
+        cursor: this.state.sending ? 'progress' : 'pointer',
+        fontFamily: "'Jost', sans-serif", fontSize: '13px', fontWeight: 400, letterSpacing: '0.2em',
+        // same glass language as the PROCES box: gradient fill + blur + inset sheen
+        border: '1px solid ' + (this.state.statusOk ? 'rgba(124,224,176,0.8)' : 'rgba(53,200,240,0.65)'),
+        background: this.state.statusOk
+          ? 'linear-gradient(178deg, rgba(30,96,72,0.85) 0%, rgba(10,40,30,0.55) 100%)'
+          : 'linear-gradient(178deg, rgba(26,84,112,0.85) 0%, rgba(10,34,56,0.55) 100%)',
+        backdropFilter: 'blur(16px) saturate(116%)', WebkitBackdropFilter: 'blur(16px) saturate(116%)',
+        boxShadow: 'inset 0 1px 0 rgba(190,235,255,0.16), 0 10px 26px -14px rgba(0,0,0,0.6)',
+        color: '#eafaff',
+        opacity: this.state.sending ? 0.75 : 1,
+        transition: 'border-color 220ms ease, background 260ms ease, opacity 200ms ease'
+      },
+      submitHover: { borderColor: 'rgba(120,225,255,0.9)', background: 'rgba(28,96,131,0.85)' },
+      statusStyle: {
+        minHeight: '16px', fontSize: '13.5px', fontWeight: 300, lineHeight: 1.4,
+        color: this.state.statusOk ? '#7ce0b0' : '#e2a0a0',
+        opacity: this.state.status ? 1 : 0,
+        transform: this.state.status ? 'none' : 'translateY(-4px)',
+        transition: 'opacity 240ms ease, transform 240ms ease'
+      },
+      tabHover: { borderColor: 'rgba(140,200,230,0.5)', color: '#e6f6fd' },
+      navbarStyle: {
+        position: 'absolute', left: 0, right: 0, top: '6vh', zIndex: 5,
+        display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center',
+        gap: '10px', padding: '14px clamp(16px, 3vw, 48px)',
+        borderBottom: '1px solid rgba(140,200,230,0.10)',
+        background: 'rgba(3,8,16,0.72)', backdropFilter: 'blur(10px)',
+        opacity: open ? 1 : 0,
+        transform: open ? 'none' : 'translateY(-12px)',
+        transition: 'opacity 420ms ease 300ms, transform 520ms cubic-bezier(0.22,0.61,0.36,1) 300ms',
+        pointerEvents: open ? 'auto' : 'none'
+      },
+      // the letterbox bars pull back while a section is open so the tiles fit
+      barTopStyle: {
+        position: 'absolute', top: 0, left: 0, right: 0, height: open ? '6vh' : '13vh',
+        zIndex: 4, background: '#010307', borderBottom: '1px solid rgba(140,200,230,0.10)',
+        pointerEvents: 'none', transition: 'height 620ms cubic-bezier(0.22,0.61,0.36,1)'
+      },
+      barBottomStyle: {
+        position: 'absolute', bottom: 0, left: 0, right: 0, height: open ? '6vh' : '13vh',
+        zIndex: 4, background: '#010307', borderTop: '1px solid rgba(140,200,230,0.10)',
+        pointerEvents: 'none', transition: 'height 620ms cubic-bezier(0.22,0.61,0.36,1)'
+      },
+      tabs: LINKS.map((l, i) => {
+        const active = this.state.section === l.key;
+        return {
+          label: l.label,
+          current: active ? 'true' : 'false',
+          open: e => { e.preventDefault(); this.goToSection(l.key); },
+          style: {
+            padding: '11px 18px', borderRadius: '999px', cursor: 'pointer',
+            fontFamily: "'Jost', sans-serif", fontSize: '13px', fontWeight: 300, letterSpacing: '0.2em',
+            // same glass language as the PROCES box: gradient fill + blur + inset sheen
+            border: '1px solid ' + (active ? 'rgba(53,200,240,0.65)' : 'rgba(150,205,232,0.20)'),
+            background: active
+              ? 'linear-gradient(178deg, rgba(26,84,112,0.85) 0%, rgba(10,34,56,0.55) 100%)'
+              : 'linear-gradient(178deg, rgba(16,44,68,0.42) 0%, rgba(7,20,36,0.30) 100%)',
+            backdropFilter: 'blur(16px) saturate(116%)', WebkitBackdropFilter: 'blur(16px) saturate(116%)',
+            boxShadow: 'inset 0 1px 0 rgba(190,235,255,0.16), 0 10px 26px -14px rgba(0,0,0,0.6)',
+            color: active ? '#eafaff' : '#93b2c2',
+            transition: 'border-color 220ms ease, color 220ms ease, background 220ms ease'
+          }
+        };
+      }),
+      linkHover: { color: '#e6f6fd' },
+      backHover: { borderColor: 'rgba(140,200,230,0.6)', color: '#e6f6fd' },
+      closeSection: e => { e.preventDefault(); this.setState({ section: null }); },
+      heroStyle: {
+        position: 'absolute', inset: 0, zIndex: 1,
+        opacity: open ? 0 : 1,
+        transform: open ? 'translateY(-24px)' : 'none',
+        transition: 'opacity 520ms ease, transform 620ms cubic-bezier(0.22,0.61,0.36,1)',
+        pointerEvents: 'none'
+      },
+      panelStyle: {
+        position: 'absolute', inset: 0, zIndex: 2,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        // clears the cinematic bars (13vh) with a small margin, nothing more
+        padding: 'max(7.5vh, 44px) clamp(20px, 4vw, 64px) max(7.5vh, 48px)',
+        opacity: open ? (this.state.switching ? 0 : 1) : 0,
+        // fades in only after the sphere has burned out at the camera
+        transform: open ? (this.state.switching ? 'translateY(10px) scale(0.995)' : 'none') : 'scale(0.97)',
+        transition: this.state.switching
+          ? 'opacity 130ms ease, transform 150ms ease'
+          : open && this._entering
+          ? 'opacity 430ms ease 820ms, transform 560ms cubic-bezier(0.22,0.61,0.36,1) 820ms'
+          : open
+          ? 'opacity 240ms ease, transform 320ms cubic-bezier(0.22,0.61,0.36,1)'
+          : 'opacity 200ms ease, transform 260ms ease',
+        pointerEvents: open ? 'auto' : 'none'
+      },
+      // the bottom nav + © stack hides while a section is open (the panel
+      // carries its own section nav), so nothing overlaps the content
+      bottomStackStyle: {
+        position: 'absolute', left: 0, right: 0, bottom: '17vh', zIndex: 3,
+        display: 'grid', justifyItems: 'center', gap: '26px',
+        padding: '0 clamp(16px, 3vw, 48px)',
+        opacity: open ? 0 : 1,
+        transform: open ? 'translateY(12px)' : 'none',
+        transition: 'opacity 420ms ease, transform 520ms cubic-bezier(0.22,0.61,0.36,1)',
+        pointerEvents: open ? 'none' : 'auto'
+      },
+      links: LINKS.map(l => ({
+        label: l.label,
+        href: '#' + l.key,
+        style: this.state.section === l.key ? activeLink : navLink,
+        open: e => { e.preventDefault(); this.goToSection(l.key); }
+      }))
+    };
+  }
+
+  componentDidMount() {
+    this.mouse = { x: 0, y: 0 };
+    this.reveal = 0;              // 0 = hero pose, 1 = aside pose
+    this.burstTime = -1;          // -1 = idle
+    this.burstAmount = 0;
+    this.reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this.lowPower = this.reduced || window.innerWidth < 700;
+    this.waitForThree();
+    this.onPointerMove = e => {
+      this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+      this.mouse.y = -((e.clientY / window.innerHeight) * 2 - 1);
+    };
+    this.onEsc = e => { if (e.key === 'Escape' && this.state.section) this.setState({ section: null }); };
+    this.onResize = () => { this.resize(); this.forceUpdate(); };
+    window.addEventListener('pointermove', this.onPointerMove, { passive: true });
+    window.addEventListener('keydown', this.onEsc);
+    window.addEventListener('resize', this.onResize);
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    // entering a section fires the burst; leaving does not
+    if (this.state.section && prevState.section !== this.state.section && !this.reduced) this.burstTime = 0;
+  }
+
+  componentWillUnmount() {
+    cancelAnimationFrame(this.raf);
+    window.removeEventListener('pointermove', this.onPointerMove);
+    window.removeEventListener('keydown', this.onEsc);
+    window.removeEventListener('resize', this.onResize);
+    if (this.renderer) this.renderer.dispose();
+    this.teardownPath();
+    this.teardownShards();
+    this.teardownRing();
+    if (this.orbs) for (const key in this.orbs) this.teardownHoloOrb(key);
+  }
+
+  waitForThree() {
+    if (window.THREE && this.canvas) return this.init(window.THREE);
+    setTimeout(() => this.waitForThree(), 60);
+  }
+
+  /* ---------------- scene construction ---------------- */
+  init(THREE) {
+    const w = window.innerWidth, h = window.innerHeight;
+    this.THREE = THREE;
+    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: true });
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, this.lowPower ? 1.5 : 2));
+    this.renderer.setSize(w, h, false);
+    this.scene = new THREE.Scene();
+    this.camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
+    this.camera.position.set(0, 0, 5.0);
+
+    this.group = new THREE.Group();
+    this.scene.add(this.group);
+
+    const S = CONFIG.sphere, H = CONFIG.holo, C = CONFIG.color;
+    const col = hex => new THREE.Color(hex);
+
+    // uFade dims the whole sphere while a section is open
+    this.uniforms = { uTime: { value: 0 }, uFade: { value: 1 }, uBurst: { value: 0 } };
+
+    this.bodyUniforms = Object.assign({
+      uRadius: { value: S.radius },
+      uNoiseFreq: { value: S.noiseFreq },
+      uNoiseSpeed: { value: S.noiseSpeed },
+      uDispAmp: { value: S.dispAmp },
+      uColorDeep: { value: col(C.deep) },
+      uColorLit: { value: col(C.lit) },
+      uAccent: { value: col(C.accent) },
+    }, this.uniforms);
+
+    const displaceGLSL = PERLIN_GLSL + `
+      uniform float uTime, uRadius, uNoiseFreq, uNoiseSpeed, uDispAmp, uBurst;
+      float heightAt(vec3 dir){
+        float t = uTime * uNoiseSpeed;
+        float n = cnoise(dir * uNoiseFreq + vec3(0.0, 0.0, t));
+        n += 0.5 * cnoise(dir * uNoiseFreq * 2.1 + vec3(t * 0.7, 0.0, 0.0));
+        // the burst blows the shell into shards along its own normals
+        float shard = cnoise(dir * 5.5) * 0.5 + 0.5;
+        return n * uDispAmp * (1.0 + uBurst) + shard * uBurst * 0.42;
+      }
+      vec3 surfacePoint(vec3 dir){ return dir * uRadius * (1.0 + heightAt(dir)); }`;
+
+    const detail = this.lowPower ? S.detailMobile : S.detail;
+    this.body = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(1, detail),
+      new THREE.ShaderMaterial({
+        uniforms: this.bodyUniforms,
+        transparent: true,
+        vertexShader: displaceGLSL + `
+          varying vec3 vN; varying vec3 vViewPos; varying float vH;
+          void main(){
+            vec3 dir = normalize(position);
+            vec3 p = surfacePoint(dir);
+            vH = heightAt(dir);
+            // normals rebuilt from two displaced neighbours (Codrops technique)
+            vec3 t1 = normalize(cross(dir, abs(dir.y) < 0.9 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0)));
+            vec3 t2 = cross(dir, t1);
+            float eps = 0.012;
+            vec3 pa = surfacePoint(normalize(dir + t1 * eps));
+            vec3 pb = surfacePoint(normalize(dir + t2 * eps));
+            vec3 n = normalize(cross(pa - p, pb - p));
+            if (dot(n, dir) < 0.0) n = -n;
+            vec4 mv = modelViewMatrix * vec4(p, 1.0);
+            vN = normalize(normalMatrix * n);
+            vViewPos = mv.xyz;
+            gl_Position = projectionMatrix * mv;
+          }`,
+        fragmentShader: `
+          uniform vec3 uColorDeep, uColorLit, uAccent, uFire;
+          uniform float uDispAmp, uFade, uBurst, uFireGain;
+          varying vec3 vN; varying vec3 vViewPos; varying float vH;
+          void main(){
+            vec3 n = normalize(vN), v = normalize(-vViewPos);
+            vec3 lightDir = normalize(vec3(-0.45, 0.55, 0.75));
+            float diff = max(dot(n, lightDir), 0.0);
+            float spec = pow(max(dot(reflect(-lightDir, n), v), 0.0), 38.0) * 0.28;
+            float fres = pow(1.0 - max(dot(n, v), 0.0), 3.0);
+            vec3 c = mix(uColorDeep, uColorLit, pow(diff, 0.85));
+            c += uAccent * fres * 0.55;
+            c += uAccent * smoothstep(0.35, 1.0, vH / max(uDispAmp, 0.001)) * 0.22;
+            c += vec3(0.55, 0.80, 0.95) * spec;
+            // green fire licking out of the cracks as the shell blows apart
+            float crack = smoothstep(0.15, 1.0, vH / max(uDispAmp, 0.001));
+            c += uFire * uBurst * (0.35 + crack * 0.9) * uFireGain;
+            c += uAccent * uBurst * 0.25;
+            gl_FragColor = vec4(c * uFade, uFade);
+          }`
+      })
+    );
+    this.group.add(this.body);
+
+    this.holoUniforms = Object.assign({
+      uRadius: { value: S.radius * H.scale },
+      uStripeFreq: { value: H.stripeFreq },
+      uScanSpeed: { value: H.scanSpeed },
+      uHoloIntensity: { value: H.intensity },
+      uFresnelPower: { value: H.fresnelPower },
+      uGlitch: { value: H.glitch },
+      uAccent: { value: col(C.accent) },
+      uFire: { value: col(CONFIG.burst.fireColor) },
+      uFireGain: { value: CONFIG.burst.fire }
+    }, this.uniforms);
+
+    this.holo = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(1, this.lowPower ? 8 : 24),
+      new THREE.ShaderMaterial({
+        uniforms: this.holoUniforms,
+        transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+        vertexShader: `
+          uniform float uTime, uRadius, uGlitch;
+          varying vec3 vN; varying vec3 vViewPos; varying vec3 vLocal;
+          void main(){
+            vec3 dir = normalize(position);
+            float wobble = sin(dir.y * 9.0 + uTime * 1.3) * uGlitch
+                         + sin(dir.x * 14.0 - uTime * 0.8) * uGlitch * 0.6;
+            vec3 p = dir * (uRadius + wobble);
+            vLocal = p;
+            vec4 mv = modelViewMatrix * vec4(p, 1.0);
+            vN = normalize(normalMatrix * dir);
+            vViewPos = mv.xyz;
+            gl_Position = projectionMatrix * mv;
+          }`,
+        fragmentShader: `
+          uniform float uTime, uStripeFreq, uScanSpeed, uHoloIntensity, uFresnelPower, uFade;
+          uniform vec3 uAccent;
+          varying vec3 vN; varying vec3 vViewPos; varying vec3 vLocal;
+          void main(){
+            vec3 n = normalize(vN), v = normalize(-vViewPos);
+            float stripes = fract(vLocal.y * uStripeFreq - uTime * uScanSpeed * uStripeFreq * 0.15);
+            stripes = pow(stripes, 3.0);
+            float fres = pow(1.0 - abs(dot(n, v)), uFresnelPower);
+            float a = (stripes * 0.45 + fres * 0.9) * uHoloIntensity * uFade;
+            gl_FragColor = vec4(uAccent * (0.7 + 0.6 * fres), a);
+          }`
+      })
+    );
+    this.holo.visible = !this.lowPower;
+    this.group.add(this.holo);
+
+    // ---- starfield ----
+    const ST = 2200, sp = new Float32Array(ST * 3), sa = new Float32Array(ST);
+    for (let i = 0; i < ST; i++) {
+      const u = Math.random() * 2 - 1, ph = Math.random() * Math.PI * 2, rr = 14 + Math.random() * 22, s = Math.sqrt(1 - u * u);
+      sp[i * 3] = Math.cos(ph) * s * rr; sp[i * 3 + 1] = u * rr * 0.8; sp[i * 3 + 2] = Math.sin(ph) * s * rr - 6;
+      sa[i] = Math.random();
+    }
+    const sg = new THREE.BufferGeometry();
+    sg.setAttribute('position', new THREE.BufferAttribute(sp, 3));
+    sg.setAttribute('aSeed', new THREE.BufferAttribute(sa, 1));
+    this.stars = new THREE.Points(sg, new THREE.ShaderMaterial({
+      uniforms: { uTime: this.uniforms.uTime, uPulse: this.starPulseUniform = { value: 0 } },
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      vertexShader: `
+        attribute float aSeed; uniform float uTime, uPulse; varying float vTw;
+        void main(){
+          vTw = 0.35 + 0.65 * (0.5 + 0.5 * sin(uTime * (0.4 + aSeed) + aSeed * 30.0));
+          vTw *= 1.0 + uPulse * (0.18 + aSeed * 0.22);    // flare on section change
+          vec4 mv = modelViewMatrix * vec4(position, 1.0);
+          gl_PointSize = (0.5 + aSeed * 0.9) * (34.0 / -mv.z) * 3.0 * (1.0 + uPulse * 0.45);
+          gl_Position = projectionMatrix * mv;
+        }`,
+      fragmentShader: `
+        varying float vTw;
+        void main(){
+          float d = length(gl_PointCoord - 0.5);
+          if (d > 0.5) discard;
+          gl_FragColor = vec4(vec3(0.62, 0.74, 0.94), smoothstep(0.5, 0.0, d) * vTw * 0.30);
+        }`
+    }));
+    this.scene.add(this.stars);
+
+    this.target = { x: 0, y: 0, rx: 0, ry: 0 };
+    this.baseScale = 1;
+    this.introTime = 0; // intro timeline restarts on every page load
+    this.clock = new THREE.Clock();
+    this.resize();
+    this.animate();
+  }
+
+  resize() {
+    if (!this.renderer) return;
+    const w = window.innerWidth, h = window.innerHeight;
+    this.camera.aspect = w / h;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(w, h, false);
+    this.baseScale = Math.max(0.5, Math.min(1, (w / h) / 0.9));
+    this.narrow = w < 900;
+  }
+
+  /* ---------------- 1) MOUSE FOLLOW ----------------
+     Each frame the sphere's position and tilt move a fraction
+     (positionEase / rotationEase) of the way to the pointer-derived target,
+     producing inertia. While a section is open the mouse influence is damped
+     (reveal.followDamp) so the sphere stays parked. */
+  updateFollow(dt) {
+    const f = Object.assign({}, CONFIG.follow, { positionEase: this.props.followEase ?? CONFIG.follow.positionEase });
+    const r = CONFIG.reveal, g = this.group;
+    const damp = 1 - this.reveal * (1 - r.followDamp);
+    const mx = (this.reduced ? 0 : this.mouse.x) * damp, my = (this.reduced ? 0 : this.mouse.y) * damp;
+    // the sphere stays centred and charges straight at the camera instead
+    this.target.x = f.offsetX + mx * f.rangeX;
+    this.target.y = f.offsetY + my * f.rangeY;
+    g.position.z = this.reveal * r.rush;
+    this.target.ry = mx * f.tiltY;
+    this.target.rx = -my * f.tiltX;
+    const k = 1 - Math.pow(1 - f.positionEase, dt * 60);
+    const kr = 1 - Math.pow(1 - f.rotationEase, dt * 60);
+    g.position.x += (this.target.x - g.position.x) * k;
+    g.position.y += (this.target.y - g.position.y) * k;
+    g.rotation.x += (this.target.rx - g.rotation.x) * kr;
+    const spin = this.reduced ? 0 : f.idleSpin;
+    this.spinBase = (this.spinBase || 0) + spin * dt;
+    g.rotation.y += (this.target.ry + this.spinBase - g.rotation.y) * kr + spin * dt;
+    g.scale.setScalar(this.baseScale * this.introScale() * this.breathScale()
+      * (1 + this.reveal * r.swell));
+  }
+
+  /* ==================== HOLO ORB (O MARCE / KONTAKT) ====================
+     Small companion orbs, one per mounted canvas, keyed by name so a fresh
+     mount never collides with the last. Each reacts to its own `pulse`
+     (bumped on interaction, decays fast) and `flare` (bumped on a real
+     event like a sent form, decays slow) via the shared uBurst uniform. */
+  initHoloOrb(key, canvas, opts) {
+    const THREE = window.THREE;
+    if (!THREE) return setTimeout(() => this.initHoloOrb(key, canvas, opts), 60);
+    this.orbs = this.orbs || {};
+    this.teardownHoloOrb(key);
+    const w = canvas.clientWidth || 200, h = canvas.clientHeight || 200;
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(w, h, false);
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(38, w / Math.max(h, 1), 0.1, 20);
+    camera.position.set(0, 0, 2.5);
+    const orb = makeHoloOrb(THREE, opts);
+    scene.add(orb.group);
+    this.orbs[key] = { canvas, renderer, scene, camera, orb, w: 0, h: 0, pulse: 0, flare: 0 };
+  }
+
+  teardownHoloOrb(key) {
+    const o = this.orbs && this.orbs[key];
+    if (!o) return;
+    if (o.renderer) o.renderer.dispose();
+    delete this.orbs[key];
+  }
+
+  updateHoloOrb(key, dt) {
+    const o = this.orbs && this.orbs[key];
+    if (!o) return;
+    const w = o.canvas.clientWidth, h = o.canvas.clientHeight;
+    if (!w || !h) return;
+    if (o.w !== w || o.h !== h) {
+      o.w = w; o.h = h;
+      o.camera.aspect = w / h; o.camera.updateProjectionMatrix();
+      o.renderer.setSize(w, h, false);
+    }
+    o.pulse = Math.max(0, o.pulse - dt * 2.6);
+    o.flare = Math.max(0, o.flare - dt * 0.9);
+    const u = o.orb.uniforms;
+    u.uTime.value += this.reduced ? 0 : dt;
+    u.uBurst.value = o.pulse * 0.5 + o.flare * 1.6;
+    if (!this.reduced) {
+      o.orb.group.rotation.y += dt * 0.16;
+      o.orb.group.rotation.x = Math.sin(u.uTime.value * 0.3) * 0.08;
+    }
+    o.orb.group.scale.setScalar(1 + o.pulse * 0.10 + o.flare * 0.16);
+    o.renderer.render(o.scene, o.camera);
+  }
+
+  /* ==================== PROCES — WINDING PATH ====================
+     A Catmull-Rom curve winds from just behind the viewer out into the
+     depth of the scene; four baked step-cards (same material as
+     PORTFOLIO/USŁUGI) sit at bends along it, and a small hologram glow
+     waits at the far end like a destination. Scroll/drag/click move the
+     camera along the curve (arc-length parametrised, so speed feels even);
+     each card brightens the closer the camera gets to it and fades once
+     you've passed — no orbiting, no ring, a straight one-way journey. */
+  initPath(canvas) {
+    const THREE = window.THREE;
+    if (!THREE) return setTimeout(() => this.initPath(canvas), 60);
+    this.teardownPath();
+    const items = SECTIONS.proces.items;
+    const count = items.length;
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 40);
+
+    // waypoints: [0] and [5] are lead-in/lead-out (shape the curve's
+    // tangents at the ends), [1..4] are where the four cards sit
+    const waypoints = [
+      new THREE.Vector3(0.3, 0.12, 2.6),
+      new THREE.Vector3(1.3, 0.0, 0.3),
+      new THREE.Vector3(-1.2, -0.06, -2.5),
+      new THREE.Vector3(1.1, 0.05, -5.3),
+      new THREE.Vector3(-1.0, 0.0, -8.1),
+      new THREE.Vector3(0.0, 0.1, -10.5)
+    ];
+    const curve = new THREE.CatmullRomCurve3(waypoints, false, 'catmullrom', 0.5);
+
+    // a glowing road under the cards, traced straight from the same curve
+    const roadPts = curve.getPoints(140).map(p => new THREE.Vector3(p.x, p.y - 0.5, p.z));
+    const roadGeo = new THREE.BufferGeometry().setFromPoints(roadPts);
+    const road = new THREE.Line(roadGeo, new THREE.LineBasicMaterial({ color: 0x5fb9d8, transparent: true, opacity: 0.24 }));
+    scene.add(road);
+
+    // a small hologram glow waiting at the far end, like a finished site
+    const dest = makeHoloOrb(THREE, { radius: 0.34, detail: 18, holoDetail: 14, holoIntensity: 0.5, dispAmp: 0.05, noiseSpeed: 0.16 });
+    dest.group.position.copy(waypoints[5]);
+    scene.add(dest.group);
+
+    const geo = new THREE.PlaneGeometry(1.5, 0.95, 1, 1);
+    const cardFrag = `
+      uniform float uTime, uFocus, uDim, uSeed;
+      uniform sampler2D uMap;
+      varying vec2 vUv; varying float vDepth;
+      float rrect(vec2 p, vec2 b, float r){
+        vec2 q = abs(p) - b + r;
+        return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
+      }
+      void main(){
+        vec2 p = vUv - 0.5;
+        vec2 b = vec2(0.49, 0.49);
+        float d = rrect(p, b, 0.10);
+        float line = smoothstep(0.012, 0.0, abs(d));
+        float ang = atan(p.y, p.x) / 6.28318 + 0.5;
+        float sweep = pow(0.5 + 0.5 * sin((ang - uTime * 0.07 + uSeed) * 6.28318), 6.0);
+
+        vec4 tex = texture2D(uMap, vUv);
+        float depthFactor = mix(0.55, 1.0, 1.0 - smoothstep(2.6, 5.6, vDepth));
+
+        vec3 lineCol = vec3(0.42, 0.86, 1.0);
+        vec3 c = tex.rgb * (0.85 + uFocus * 0.3) * depthFactor * (1.0 - uDim * 0.55);
+        c += lineCol * line * (0.5 + sweep * 0.9 + uFocus * 0.7);
+
+        float a = tex.a * depthFactor * (1.0 - uDim * 0.6) * (0.9 + uFocus * 0.1);
+        a += line * 0.6 * (1.0 - uDim * 0.5);
+        gl_FragColor = vec4(c, clamp(a, 0.0, 1.0));
+      }`;
+    const cardVert = `
+      varying vec2 vUv; varying float vDepth;
+      void main(){
+        vUv = uv;
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        vDepth = -mv.z;
+        gl_Position = projectionMatrix * mv;
+      }`;
+
+    const cards = [];
+    for (let i = 0; i < count; i++) {
+      const item = Object.assign({ num: String(i + 1).padStart(2, '0') }, items[i]);
+      const mat = new THREE.ShaderMaterial({
+        uniforms: {
+          uTime: { value: 0 }, uFocus: { value: 0 }, uDim: { value: 0 }, uSeed: { value: i * 0.53 },
+          uMap: { value: makeServiceTexture(THREE, item) }
+        },
+        transparent: true, depthWrite: false, side: THREE.DoubleSide,
+        vertexShader: cardVert, fragmentShader: cardFrag
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      const pos = waypoints[i + 1];
+      mesh.position.copy(pos);
+      // face back toward where the camera approaches from — like a sign
+      // planted beside the road, not spinning to track the viewer
+      mesh.lookAt(waypoints[i]);
+      scene.add(mesh);
+      cards.push({ i, mesh, pos });
+    }
+
+    // sample the curve once to find, for each card, the u (0..1) where the
+    // camera passes closest to it — used for click-to-jump and the dots
+    const SAMPLES = 240;
+    const stepU = cards.map(c => {
+      let bestU = 0, bestD = Infinity;
+      for (let s = 0; s <= SAMPLES; s++) {
+        const u = s / SAMPLES;
+        const dd = curve.getPointAt(u).distanceTo(c.pos);
+        if (dd < bestD) { bestD = dd; bestU = u; }
+      }
+      return bestU;
+    });
+
+    this.PATH = { canvas, count, renderer, scene, camera, curve, cards, stepU, road, dest, raycaster: new THREE.Raycaster(), w: 0, h: 0, time: 0 };
+    const O = this.PATH;
+    O.onWheel = e => { e.preventDefault(); this.pathTarget = clamp01(this.pathTarget + e.deltaY * 0.00035); };
+    O.onDown = e => { O.dragY = e.clientY; O.dragFrom = this.pathTarget; };
+    O.onMove = e => { if (O.dragY == null) return; this.pathTarget = clamp01(O.dragFrom + (e.clientY - O.dragY) * 0.0016); };
+    O.onUp = () => { O.dragY = null; };
+    O.onKey = e => {
+      if (this.state.section !== 'proces') return;
+      const step = (e.key === 'ArrowDown' || e.key === 'ArrowRight') ? 1 : (e.key === 'ArrowUp' || e.key === 'ArrowLeft') ? -1 : 0;
+      if (!step) return;
+      e.preventDefault();
+      this.jumpPath(Math.max(0, Math.min(count - 1, this.state.pathActive + step)));
+    };
+    O.onClick = e => this.pathClick(e);
+    canvas.addEventListener('wheel', O.onWheel, { passive: false });
+    canvas.addEventListener('pointerdown', O.onDown);
+    canvas.addEventListener('click', O.onClick);
+    window.addEventListener('pointermove', O.onMove, { passive: true });
+    window.addEventListener('pointerup', O.onUp, { passive: true });
+    window.addEventListener('keydown', O.onKey);
+  }
+
+  teardownPath() {
+    const O = this.PATH;
+    if (!O) return;
+    if (O.canvas) {
+      if (O.onWheel) O.canvas.removeEventListener('wheel', O.onWheel);
+      if (O.onDown) O.canvas.removeEventListener('pointerdown', O.onDown);
+      if (O.onClick) O.canvas.removeEventListener('click', O.onClick);
+    }
+    window.removeEventListener('pointermove', O.onMove);
+    window.removeEventListener('pointerup', O.onUp);
+    window.removeEventListener('keydown', O.onKey);
+    if (O.cards) for (const c of O.cards) {
+      if (c.mesh.material.uniforms.uMap.value) c.mesh.material.uniforms.uMap.value.dispose();
+      c.mesh.material.dispose();
+      if (c.mesh.geometry) c.mesh.geometry.dispose();
+    }
+    if (O.road) { O.road.geometry.dispose(); O.road.material.dispose(); }
+    if (O.dest) {
+      O.dest.body.material.dispose(); O.dest.body.geometry.dispose();
+      O.dest.holo.material.dispose(); O.dest.holo.geometry.dispose();
+    }
+    if (O.renderer) O.renderer.dispose();
+    this.PATH = null;
+  }
+
+  jumpPath(i) {
+    const O = this.PATH;
+    if (!O) return;
+    this.pathTarget = clamp01(O.stepU[i] != null ? O.stepU[i] : (O.count > 1 ? i / (O.count - 1) : 0));
+  }
+
+  pathClick(e) {
+    const O = this.PATH;
+    if (!O) return;
+    const rect = O.canvas.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    const y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
+    O.raycaster.setFromCamera({ x, y }, O.camera);
+    const hits = O.raycaster.intersectObjects(O.cards.map(c => c.mesh));
+    if (hits.length) {
+      const idx = O.cards.findIndex(c => c.mesh === hits[0].object);
+      this.jumpPath(idx);
+    }
+  }
+
+  updatePath(dt) {
+    const THREE = window.THREE;
+    const O = this.PATH;
+    if (!O || !THREE || !this.pathEl) return;
+    const w = this.pathEl.clientWidth, h = this.pathEl.clientHeight;
+    if (!w || !h) return;
+    if (O.w !== w || O.h !== h) {
+      O.w = w; O.h = h;
+      O.camera.aspect = w / h; O.camera.updateProjectionMatrix();
+      O.renderer.setSize(w, h, false);
+    }
+
+    O.time += dt;
+    const k = 1 - Math.pow(1 - 0.06, dt * 60);
+    this.pathOffset += (this.pathTarget - this.pathOffset) * k;
+
+    const camPos = O.curve.getPointAt(this.pathOffset);
+    const lookPos = O.curve.getPointAt(clamp01(this.pathOffset + 0.07));
+    O.camera.position.copy(camPos);
+    O.camera.lookAt(lookPos);
+
+    O.dest.uniforms.uTime.value += this.reduced ? 0 : dt;
+    if (!this.reduced) O.dest.group.rotation.y += dt * 0.15;
+
+    let bestI = 0, bestNear = -1;
+    const kCard = 1 - Math.pow(1 - 0.08, dt * 60);
+    O.cards.forEach((c, i) => {
+      const d = camPos.distanceTo(c.pos);
+      const nearness = clamp01(1 - d / 2.4);
+      if (nearness > bestNear) { bestNear = nearness; bestI = i; }
+      const targetScale = 0.7 + nearness * 0.65;
+      c.mesh.scale.setScalar(c.mesh.scale.x + (targetScale - c.mesh.scale.x) * kCard);
+      const u = c.mesh.material.uniforms;
+      u.uTime.value = O.time;
+      u.uFocus.value += (nearness - u.uFocus.value) * kCard;
+      u.uDim.value += ((1 - nearness) * 0.72 - u.uDim.value) * kCard;
+    });
+    if (bestI !== this.state.pathActive) this.setState({ pathActive: bestI });
+
+    O.renderer.render(O.scene, O.camera);
+  }
+
+
+  /* ==================== PORTFOLIO — SHATTERED HOLOGRAM ====================
+     Ten glass shards sit in a seeded scattered cluster (deterministic, so
+     the layout doesn't jump between mounts), drifting gently and tilting
+     with the pointer. Click one: it's raycast-picked, then eased to a
+     camera-facing "front" pose while the rest recede and dim. */
+  initShards(canvas) {
+    const THREE = window.THREE;
+    if (!THREE) return setTimeout(() => this.initShards(canvas), 60);
+    this.teardownShards();
+    const items = SECTIONS.portfolio.items;
+    const count = items.length;
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(44, 1, 0.1, 30);
+    camera.position.set(0, 0, 4.0);
+    camera.lookAt(0, 0, 0);
+    const group = new THREE.Group();
+    scene.add(group);
+
+    const seedRand = n => { const x = Math.sin(n * 12.9898) * 43758.5453; return x - Math.floor(x); };
+    // fewer shards (4) read better bigger — same 16:10 ratio, ~1.7x the old
+    // size, plus another +25% on the whole idle composition
+    const geo = new THREE.PlaneGeometry(1.94, 1.22, 1, 1);
+    const shardFrag = `
+      uniform float uTime, uFocus, uDim, uSeed;
+      uniform sampler2D uMap;
+      varying vec2 vUv; varying float vDepth;
+      float rrect(vec2 p, vec2 b, float r){
+        vec2 q = abs(p) - b + r;
+        return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
+      }
+      void main(){
+        vec2 p = vUv - 0.5;
+        vec2 b = vec2(0.49, 0.49);
+        float d = rrect(p, b, 0.10);
+        float line = smoothstep(0.012, 0.0, abs(d));
+        float ang = atan(p.y, p.x) / 6.28318 + 0.5;
+        float sweep = pow(0.5 + 0.5 * sin((ang - uTime * 0.07 + uSeed) * 6.28318), 6.0);
+
+        vec4 tex = texture2D(uMap, vUv);
+        // nearer shards read bright, far ones recede — real depth, not a CSS blur guess
+        float depthFactor = mix(0.5, 1.0, 1.0 - smoothstep(3.6, 5.6, vDepth));
+
+        vec3 lineCol = vec3(0.42, 0.86, 1.0);
+        vec3 c = tex.rgb * (0.85 + uFocus * 0.3) * depthFactor * (1.0 - uDim * 0.55);
+        c += lineCol * line * (0.5 + sweep * 0.9 + uFocus * 0.7);
+
+        float a = tex.a * depthFactor * (1.0 - uDim * 0.65) * (0.92 + uFocus * 0.08);
+        a += line * 0.65 * (1.0 - uDim * 0.55);
+        gl_FragColor = vec4(c, clamp(a, 0.0, 1.0));
+      }`;
+    const shardVert = `
+      varying vec2 vUv; varying float vDepth;
+      void main(){
+        vUv = uv;
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        vDepth = -mv.z;
+        gl_Position = projectionMatrix * mv;
+      }`;
+
+    // a shallow readable FAN, not a random scatter: cards sit close to
+    // camera-facing with only small jitter, so all four read at a glance —
+    // clicking still flies the picked one to full front-and-centre.
+    const spacing = count > 1 ? Math.min(0.5, 1.7 / count) : 0;
+    const arcR = 2.125; // 1.7 * 1.25
+    const shards = [];
+    for (let i = 0; i < count; i++) {
+      const jx = seedRand(i * 3.1 + 1), jy = seedRand(i * 7.7 + 2), jz = seedRand(i * 5.3 + 3);
+      const jrx = seedRand(i * 2.1 + 4), jry = seedRand(i * 9.4 + 5), jrz = seedRand(i * 4.6 + 6);
+      const baseAngle = (i - (count - 1) / 2) * spacing;
+      const item = Object.assign({ num: String(i + 1).padStart(2, '0') }, items[i]);
+      const mat = new THREE.ShaderMaterial({
+        uniforms: {
+          uTime: { value: 0 }, uFocus: { value: 0 }, uDim: { value: 0 }, uSeed: { value: i * 0.53 },
+          uMap: { value: makeShardTexture(THREE, item) }
+        },
+        transparent: true, depthWrite: false, side: THREE.DoubleSide,
+        vertexShader: shardVert, fragmentShader: shardFrag
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      const restPos = new THREE.Vector3(
+        Math.sin(baseAngle) * arcR + (jx - 0.5) * 0.15,
+        (jy - 0.5) * 0.275,
+        -(1 - Math.cos(baseAngle)) * 1.31 + (jz - 0.5) * 0.125
+      );
+      const restQuat = new THREE.Quaternion().setFromEuler(new THREE.Euler(
+        (jrx - 0.5) * 0.10,
+        -baseAngle * 0.6 + (jry - 0.5) * 0.12,
+        (jrz - 0.5) * 0.08
+      ));
+      mesh.position.copy(restPos);
+      mesh.quaternion.copy(restQuat);
+      group.add(mesh);
+      shards.push({ i, mesh, restPos, restQuat, seedA: 0.4 + jx * 0.5 });
+    }
+
+    this.SHARDS = {
+      canvas, count, renderer, scene, camera, group, shards, raycaster: new THREE.Raycaster(),
+      w: 0, h: 0, time: 0, px: 0, py: 0,
+      frontQuat: new THREE.Quaternion(), tiltQuat: new THREE.Quaternion(), tiltEuler: new THREE.Euler()
+    };
+    const O = this.SHARDS;
+    // page-wide pointer (the same this.mouse the hero sphere already tracks)
+    // — the canvas itself is short and wide, so a canvas-local listener would
+    // exit vertically long before the pointer ever reached a side, killing
+    // any diagonal tilt.
+    O.onClick = e => this.shardsClick(e);
+    canvas.addEventListener('click', O.onClick);
+  }
+
+  teardownShards() {
+    const O = this.SHARDS;
+    if (!O) return;
+    if (O.canvas && O.onClick) O.canvas.removeEventListener('click', O.onClick);
+    if (O.shards) for (const s of O.shards) {
+      if (s.mesh.material.uniforms.uMap.value) s.mesh.material.uniforms.uMap.value.dispose();
+      s.mesh.material.dispose();
+      if (s.mesh.geometry) s.mesh.geometry.dispose();
+    }
+    if (O.renderer) O.renderer.dispose();
+    this.SHARDS = null;
+  }
+
+  shardsClick(e) {
+    const O = this.SHARDS;
+    if (!O) return;
+    const rect = O.canvas.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    const y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
+    O.raycaster.setFromCamera({ x, y }, O.camera);
+    const hits = O.raycaster.intersectObjects(O.shards.map(s => s.mesh));
+    if (hits.length) {
+      const idx = O.shards.findIndex(s => s.mesh === hits[0].object);
+      this.setState({ shardFocus: this.state.shardFocus === idx ? null : idx });
+    } else {
+      this.setState({ shardFocus: null });
+    }
+  }
+
+  updateShards(dt) {
+    const THREE = window.THREE;
+    const O = this.SHARDS;
+    if (!O || !THREE || !this.shardsEl) return;
+    const w = this.shardsEl.clientWidth, h = this.shardsEl.clientHeight;
+    if (!w || !h) return;
+    if (O.w !== w || O.h !== h) {
+      O.w = w; O.h = h;
+      O.camera.aspect = w / h; O.camera.updateProjectionMatrix();
+      O.renderer.setSize(w, h, false);
+    }
+    O.time += dt;
+    const focus = this.state.shardFocus;
+    const kPos = 1 - Math.pow(1 - 0.08, dt * 60);
+    const kRot = 1 - Math.pow(1 - 0.10, dt * 60);
+    if (!O.tmpPos) O.tmpPos = new THREE.Vector3();
+
+    // page-wide pointer, same convention as O.py used to have (+ = near the
+    // bottom of the screen) — this.mouse.y is already flipped the other way.
+    O.px = this.mouse ? this.mouse.x : 0;
+    O.py = this.mouse ? -this.mouse.y : 0;
+
+    // the focused card's own mouse-tilt, computed once and applied in place
+    // — never as a group swing, which would arc its position (it sits far
+    // from the group's origin) right out of the camera's frame.
+    if (!O.tmpEuler) O.tmpEuler = new THREE.Euler();
+    O.tmpEuler.set(this.reduced ? 0 : -O.py * 0.16, this.reduced ? 0 : O.px * 0.20, 0);
+    O.tiltQuat.setFromEuler(O.tmpEuler);
+
+    // focus "fills the screen" more — widen the lens to match so the bigger
+    // card still fits without clipping, then ease back once you let go.
+    const targetFov = focus != null ? 64 : 44;
+    O.camera.fov += (targetFov - O.camera.fov) * (1 - Math.pow(1 - 0.12, dt * 60));
+    O.camera.updateProjectionMatrix();
+
+    O.shards.forEach((s, i) => {
+      const isFocus = focus === i;
+      let targetScale, targetDim, targetQuat;
+      if (isFocus) {
+        O.tmpPos.set(0, 0.02, 2.1);
+        targetScale = 1.7; targetDim = 0; targetQuat = O.tiltQuat;
+      } else if (focus != null) {
+        O.tmpPos.set(s.restPos.x * 0.7, s.restPos.y * 0.7, s.restPos.z - 1.3);
+        targetScale = 0.7; targetDim = 1; targetQuat = s.restQuat;
+      } else {
+        const bob = this.reduced ? 0 : Math.sin(O.time * s.seedA + s.i) * 0.03;
+        O.tmpPos.set(s.restPos.x, s.restPos.y + bob, s.restPos.z);
+        targetScale = 1; targetDim = 0; targetQuat = s.restQuat;
+      }
+      s.mesh.position.lerp(O.tmpPos, kPos);
+      s.mesh.quaternion.slerp(targetQuat, kRot);
+      s.mesh.scale.setScalar(s.mesh.scale.x + (targetScale - s.mesh.scale.x) * kPos);
+      const u = s.mesh.material.uniforms;
+      u.uTime.value = O.time;
+      u.uFocus.value += ((isFocus ? 1 : 0) - u.uFocus.value) * kPos;
+      u.uDim.value += (targetDim - u.uDim.value) * kPos;
+    });
+
+    // the GROUP swing is only for the idle scattered scene — once something
+    // is focused it eases back to zero so the receded cards behind don't
+    // arc around either; the focused card keeps moving via its own local
+    // tilt above, so the "alive" feel doesn't disappear when you click.
+    if (!this.reduced) {
+      const targetY = focus == null ? O.px * 0.18 : 0;
+      const targetX = focus == null ? -O.py * 0.12 : 0;
+      const k = focus == null ? 0.06 : 0.08;
+      O.group.rotation.y += (targetY - O.group.rotation.y) * k;
+      O.group.rotation.x += (targetX - O.group.rotation.x) * k;
+      if (focus == null) O.group.rotation.y += dt * 0.02;
+    } else {
+      O.group.rotation.set(0, 0, 0);
+    }
+    O.renderer.render(O.scene, O.camera);
+  }
+
+  /* ==================== USŁUGI — RING ====================
+     Six cards (the same baked-texture mesh PORTFOLIO's shards use) evenly
+     spaced around a circle, facing outward. One continuous rotation
+     (this.ringTarget, eased into this.ringOffset — unbounded, a circle has
+     no ends) drives everything; whichever card is nearest the front is
+     simply bigger and brighter, computed fresh every frame from its
+     angle. No separate focus state, no click-to-zoom, nothing else moves
+     independently — deliberately the simplest of the three things tried
+     here. */
+  initRing(canvas) {
+    const THREE = window.THREE;
+    if (!THREE) return setTimeout(() => this.initRing(canvas), 60);
+    this.teardownRing();
+    const items = SECTIONS.uslugi.items;
+    const count = items.length;
+    const radius = 2.2;
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(44, 1, 0.1, 30);
+    camera.position.set(0, 0.12, radius + 2.3);
+    camera.lookAt(0, 0, 0);
+
+    const geo = new THREE.PlaneGeometry(1.5, 0.95, 1, 1);
+    const ringFrag = `
+      uniform float uTime, uFocus, uDim, uSeed;
+      uniform sampler2D uMap;
+      varying vec2 vUv; varying float vDepth;
+      float rrect(vec2 p, vec2 b, float r){
+        vec2 q = abs(p) - b + r;
+        return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
+      }
+      void main(){
+        vec2 p = vUv - 0.5;
+        vec2 b = vec2(0.49, 0.49);
+        float d = rrect(p, b, 0.10);
+        float line = smoothstep(0.012, 0.0, abs(d));
+        float ang = atan(p.y, p.x) / 6.28318 + 0.5;
+        float sweep = pow(0.5 + 0.5 * sin((ang - uTime * 0.07 + uSeed) * 6.28318), 6.0);
+
+        vec4 tex = texture2D(uMap, vUv);
+        float depthFactor = mix(0.55, 1.0, 1.0 - smoothstep(2.6, 5.6, vDepth));
+
+        vec3 lineCol = vec3(0.42, 0.86, 1.0);
+        vec3 c = tex.rgb * (0.85 + uFocus * 0.3) * depthFactor * (1.0 - uDim * 0.55);
+        c += lineCol * line * (0.5 + sweep * 0.9 + uFocus * 0.7);
+
+        float a = tex.a * depthFactor * (1.0 - uDim * 0.6) * (0.9 + uFocus * 0.1);
+        a += line * 0.6 * (1.0 - uDim * 0.5);
+        gl_FragColor = vec4(c, clamp(a, 0.0, 1.0));
+      }`;
+    const ringVert = `
+      varying vec2 vUv; varying float vDepth;
+      void main(){
+        vUv = uv;
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        vDepth = -mv.z;
+        gl_Position = projectionMatrix * mv;
+      }`;
+
+    const cards = [];
+    for (let i = 0; i < count; i++) {
+      const item = Object.assign({ num: String(i + 1).padStart(2, '0') }, items[i]);
+      const mat = new THREE.ShaderMaterial({
+        uniforms: {
+          uTime: { value: 0 }, uFocus: { value: 0 }, uDim: { value: 0 }, uSeed: { value: i * 0.53 },
+          uMap: { value: makeServiceTexture(THREE, item) }
+        },
+        transparent: true, depthWrite: false, side: THREE.DoubleSide,
+        vertexShader: ringVert, fragmentShader: ringFrag
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      scene.add(mesh);
+      cards.push({ i, mesh });
+    }
+
+    // a thin glowing rail under the cards — reads as one connected belt they
+    // ride on, not loose cards floating independently
+    const track = new THREE.Mesh(
+      new THREE.TorusGeometry(radius, 0.012, 8, 96),
+      new THREE.MeshBasicMaterial({ color: 0x5fb9d8, transparent: true, opacity: 0.22 })
+    );
+    track.rotation.x = Math.PI / 2;
+    track.position.y = -0.62;
+    scene.add(track);
+
+    this.RING = { canvas, count, radius, renderer, scene, camera, cards, track, raycaster: new THREE.Raycaster(), w: 0, h: 0, time: 0 };
+    const O = this.RING;
+    O.onWheel = e => { e.preventDefault(); this.ringTarget += e.deltaY * 0.0032; };
+    O.onDown = e => { O.dragY = e.clientY; O.dragFrom = this.ringTarget; };
+    O.onMove = e => { if (O.dragY == null) return; this.ringTarget = O.dragFrom + (O.dragY - e.clientY) / 180; };
+    O.onUp = () => { O.dragY = null; };
+    O.onKey = e => {
+      if (this.state.section !== 'uslugi') return;
+      const step = (e.key === 'ArrowRight' || e.key === 'ArrowDown') ? 1 : (e.key === 'ArrowLeft' || e.key === 'ArrowUp') ? -1 : 0;
+      if (!step) return;
+      e.preventDefault();
+      this.ringTarget += step;
+    };
+    O.onClick = e => this.ringClick(e);
+    canvas.addEventListener('wheel', O.onWheel, { passive: false });
+    canvas.addEventListener('pointerdown', O.onDown);
+    canvas.addEventListener('click', O.onClick);
+    window.addEventListener('pointermove', O.onMove, { passive: true });
+    window.addEventListener('pointerup', O.onUp, { passive: true });
+    window.addEventListener('keydown', O.onKey);
+  }
+
+  teardownRing() {
+    const O = this.RING;
+    if (!O) return;
+    if (O.canvas) {
+      if (O.onWheel) O.canvas.removeEventListener('wheel', O.onWheel);
+      if (O.onDown) O.canvas.removeEventListener('pointerdown', O.onDown);
+      if (O.onClick) O.canvas.removeEventListener('click', O.onClick);
+    }
+    window.removeEventListener('pointermove', O.onMove);
+    window.removeEventListener('pointerup', O.onUp);
+    window.removeEventListener('keydown', O.onKey);
+    if (O.cards) for (const c of O.cards) {
+      if (c.mesh.material.uniforms.uMap.value) c.mesh.material.uniforms.uMap.value.dispose();
+      c.mesh.material.dispose();
+      if (c.mesh.geometry) c.mesh.geometry.dispose();
+    }
+    if (O.track) { O.track.geometry.dispose(); O.track.material.dispose(); }
+    if (O.renderer) O.renderer.dispose();
+    this.RING = null;
+  }
+
+  /* shortest-path jump: spins the ring the short way round to bring card i
+     to the front, never the long way just because the raw index is lower */
+  jumpRing(i) {
+    const O = this.RING;
+    const count = O ? O.count : SECTIONS.uslugi.items.length;
+    const base = Math.round(this.ringOffset);
+    let diff = ((i - base) % count + count) % count;
+    if (diff > count / 2) diff -= count;
+    this.ringTarget = base + diff;
+  }
+
+  ringClick(e) {
+    const O = this.RING;
+    if (!O) return;
+    const rect = O.canvas.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    const y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
+    O.raycaster.setFromCamera({ x, y }, O.camera);
+    const hits = O.raycaster.intersectObjects(O.cards.map(c => c.mesh));
+    if (hits.length) {
+      const idx = O.cards.findIndex(c => c.mesh === hits[0].object);
+      this.jumpRing(idx);
+    }
+  }
+
+  updateRing(dt) {
+    const THREE = window.THREE;
+    const O = this.RING;
+    if (!O || !THREE || !this.ringEl) return;
+    const w = this.ringEl.clientWidth, h = this.ringEl.clientHeight;
+    if (!w || !h) return;
+    if (O.w !== w || O.h !== h) {
+      O.w = w; O.h = h;
+      O.camera.aspect = w / h; O.camera.updateProjectionMatrix();
+      O.renderer.setSize(w, h, false);
+    }
+
+    O.time += dt;
+    const k = 1 - Math.pow(1 - 0.08, dt * 60);
+    this.ringOffset += (this.ringTarget - this.ringOffset) * k;
+
+    const activeIdx = ((Math.round(this.ringOffset) % O.count) + O.count) % O.count;
+    if (activeIdx !== this.state.ringActive) this.setState({ ringActive: activeIdx });
+
+    O.idleSpin = (O.idleSpin || 0) + (this.reduced ? 0 : dt * 0.022);
+    const angleStep = (Math.PI * 2) / O.count;
+    const rot = -this.ringOffset * angleStep + O.idleSpin;
+
+    O.cards.forEach((c, i) => {
+      const ang = i * angleStep + rot;
+      let a = ang % (Math.PI * 2);
+      if (a > Math.PI) a -= Math.PI * 2;
+      if (a < -Math.PI) a += Math.PI * 2;
+      const dist = Math.abs(a);
+      const nearness = clamp01(1 - dist / (Math.PI * 0.62));
+
+      c.mesh.position.set(Math.sin(ang) * O.radius, 0, Math.cos(ang) * O.radius);
+      // face toward the camera, capped — never swing round to a full 90°
+      // radial-outward edge-on sliver the way a plain "spinning carousel"
+      // would; reads as a curved bank of monitors instead
+      const face = Math.max(-0.85, Math.min(0.85, a * 0.55));
+      c.mesh.rotation.y = face;
+      const targetScale = 0.75 + nearness * 0.6;
+      c.mesh.scale.setScalar(c.mesh.scale.x + (targetScale - c.mesh.scale.x) * k);
+
+      const u = c.mesh.material.uniforms;
+      u.uTime.value = O.time;
+      u.uFocus.value += (nearness - u.uFocus.value) * k;
+      u.uDim.value += ((1 - nearness) * 0.7 - u.uDim.value) * k;
+    });
+
+    if (O.track) O.track.rotation.z = rot * 0.3;
+    O.renderer.render(O.scene, O.camera);
+  }
+
+  /* ---------------- BURST ----------------
+     One eased 0..1 value; feeds uBurst (noise detonation + accent flash) and
+     the scale kick. Tune with CONFIG.burst. */
+  updateBurst() {
+    const r = this.reveal;
+    // bell curve over the reveal timeline: 0 at rest, 0 when fully open,
+    // maximum mid-flight — symmetric, so POWRÓT replays it backwards
+    this.burstAmount = Math.pow(4 * r * (1 - r), 0.8);
+    this.uniforms.uBurst.value = this.burstAmount * CONFIG.burst.amp;
+  }
+
+  /* ---------------- INTRO SCALE ----------------
+     Tune with CONFIG.intro: startScale (entry size), growMs (time to reach
+     full size), settleScale + settleMs (the slow drift down afterwards). */
+  introScale() {
+    const i = CONFIG.intro, t = this.introTime;
+    if (t < i.growMs) {
+      const p = easeOutCubic(t / i.growMs);
+      return i.startScale + (1 - i.startScale) * p;
+    }
+    const p = Math.min(1, (t - i.growMs) / i.settleMs);
+    return 1 + (i.settleScale - 1) * easeInOutCubic(p);
+  }
+
+  /* slow inhale/exhale; fades in over the first second so it never fights the
+     intro growth, and holds still under prefers-reduced-motion */
+  breathScale() {
+    if (this.reduced) return 1;
+    const b = CONFIG.breath, t = this.introTime / 1000;
+    const ramp = Math.min(1, t / 1.2);
+    return 1 + Math.sin((t / b.periodS) * Math.PI * 2) * b.amp * ramp;
+  }
+
+  /* ---------------- 2) SECTION REVEAL ----------------
+     A single eased value (this.reveal, 0..1) drives the whole transition:
+     position offset, scale and uFade brightness. No geometry is broken apart.
+     Tune: reveal.ease (speed), asideX/asideY (parking spot), asideScale, dim. */
+  updateReveal(dt) {
+    const r = CONFIG.reveal;
+    const want = this.state.section ? 1 : 0;
+    const ease = want > this.reveal ? r.ease : r.easeBack;
+    const k = 1 - Math.pow(1 - ease, dt * 60);
+    this.reveal += (want - this.reveal) * k;
+    if (Math.abs(want - this.reveal) < 0.002) this.reveal = want;
+    // burns out on the way at the camera, comes back on the reverse pass
+    this.uniforms.uFade.value = 1 - Math.min(1, this.reveal / r.fadeAt);
+  }
+
+  syncProps() {
+    if (!this.bodyUniforms) return;
+    this.bodyUniforms.uNoiseSpeed.value = this.props.noiseSpeed ?? CONFIG.sphere.noiseSpeed;
+    this.bodyUniforms.uDispAmp.value = this.props.dispAmp ?? CONFIG.sphere.dispAmp;
+    this.holoUniforms.uHoloIntensity.value = this.props.holoIntensity ?? CONFIG.holo.intensity;
+    const accent = this.props.accentColor;
+    if (accent && accent !== this._accent) {
+      this._accent = accent;
+      this.bodyUniforms.uAccent.value.set(accent);
+      this.holoUniforms.uAccent.value.set(accent);
+    }
+  }
+
+  /* a bug in one section's WebGL subsystem must never freeze the hero
+     sphere for everyone else — run it defensively and log once instead of
+     letting the exception cancel the rest of this animate() call (which
+     would skip the final render() below and stall the whole page). */
+  safeUpdate(name, fn) {
+    try { fn(); } catch (err) {
+      this._broken = this._broken || {};
+      if (!this._broken[name]) {
+        this._broken[name] = true;
+        console.error('[Auvelio] ' + name + ' threw — continuing without it:', err);
+      }
+    }
+  }
+
+  animate() {
+    this.raf = requestAnimationFrame(() => this.animate());
+    const dt = Math.min(this.clock.getDelta(), 0.05);
+    this.uniforms.uTime.value += this.reduced ? 0 : dt;
+    this.introTime += dt * 1000;
+    this.syncProps();
+    this.safeUpdate('ring', () => this.updateRing(dt));
+    this.safeUpdate('path', () => this.updatePath(dt));
+    this.safeUpdate('shards', () => this.updateShards(dt));
+    if (this.orbs) for (const key in this.orbs) this.safeUpdate('orb:' + key, () => this.updateHoloOrb(key, dt));
+    this.safeUpdate('burst', () => this.updateBurst());
+    this.safeUpdate('reveal', () => this.updateReveal(dt));
+    this.safeUpdate('follow', () => this.updateFollow(dt));
+    // starfield synced to the planet: same eased position/rotation, damped
+    const st = CONFIG.stars, g = this.group;
+    // star flare decays over ~0.5 s and nudges the field's spin
+    this.starPulse = Math.max(0, (this.starPulse || 0) - dt * 2.2);
+    this.starPulseUniform.value = easeOutCubic(this.starPulse);
+    this.starDrift = (this.starDrift || 0) + dt * (st.drift + this.starPulse * 0.55 * (this.starDir || 1));
+    this.stars.position.set(g.position.x * st.posFactor, g.position.y * st.posFactor, 0);
+    this.stars.rotation.y = g.rotation.y * st.rotFactor + this.starDrift;
+    this.stars.rotation.x = g.rotation.x * st.rotFactor;
+    this.renderer.render(this.scene, this.camera);
+  }
+}
+</script>
+</body>
+</html>
