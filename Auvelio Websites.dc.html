@@ -574,8 +574,16 @@ function drawShardCard(ctx, W, H, item) {
   ctx.font = '300 ' + Math.round(H * 0.135) + 'px Geist, sans-serif';
   ctx.fillText(item.num, marginX, H * 0.275);
 
-  ctx.font = '460 ' + Math.round(H * 0.052) + 'px Geist, sans-serif';
+  // canvas font-weight matching against a variable font's wght axis isn't
+  // reliably supported everywhere — a plain 400 plus a thin matching-colour
+  // stroke fattens the glyph the same way regardless of what the browser's
+  // canvas text renderer actually does with the weight number
+  ctx.font = '400 ' + Math.round(H * 0.052) + 'px Geist, sans-serif';
   ctx.fillStyle = sub;
+  ctx.strokeStyle = sub;
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = H * 0.0032;
+  ctx.strokeText(item.meta, marginX, H * 0.385);
   ctx.fillText(item.meta, marginX, H * 0.385);
 
   ctx.font = '500 ' + Math.round(H * 0.105) + 'px Geist, sans-serif';
@@ -595,11 +603,18 @@ function drawShardCard(ctx, W, H, item) {
   // czcionka" complaint even after fixing mipmaps/resolution: at the size
   // these cards actually render on screen, a thin small glyph just doesn't
   // have enough pixels to survive minification — bigger AND heavier does.
-  ctx.font = '440 ' + Math.round(H * 0.064) + 'px Geist, sans-serif';
+  ctx.font = '400 ' + Math.round(H * 0.064) + 'px Geist, sans-serif';
   ctx.fillStyle = sub;
+  ctx.strokeStyle = sub;
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = H * 0.0018;
   const descLines = wrapLines(ctx, item.desc, maxTextW, 2);
   const lineH = H * 0.086;
-  descLines.forEach((line, i) => ctx.fillText(line, marginX, H * 0.70 + i * lineH));
+  descLines.forEach((line, i) => {
+    const y = H * 0.70 + i * lineH;
+    ctx.strokeText(line, marginX, y);
+    ctx.fillText(line, marginX, y);
+  });
 
   ctx.restore();
 }
@@ -673,8 +688,16 @@ function drawServiceCard(ctx, W, H, item) {
   ctx.font = '300 ' + Math.round(H * 0.135) + 'px Geist, sans-serif';
   ctx.fillText(item.num, marginX, H * 0.275);
 
-  ctx.font = '460 ' + Math.round(H * 0.052) + 'px Geist, sans-serif';
+  // canvas font-weight matching against a variable font's wght axis isn't
+  // reliably supported everywhere — a plain 400 plus a thin matching-colour
+  // stroke fattens the glyph the same way regardless of what the browser's
+  // canvas text renderer actually does with the weight number
+  ctx.font = '400 ' + Math.round(H * 0.052) + 'px Geist, sans-serif';
   ctx.fillStyle = sub;
+  ctx.strokeStyle = sub;
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = H * 0.0032;
+  ctx.strokeText(item.meta, marginX, H * 0.375);
   ctx.fillText(item.meta, marginX, H * 0.375);
 
   ctx.font = '500 ' + Math.round(H * 0.105) + 'px Geist, sans-serif';
@@ -694,11 +717,18 @@ function drawServiceCard(ctx, W, H, item) {
   // mipmaps/resolution: at the size these cards actually render on screen,
   // a thin small glyph doesn't have enough pixels to survive minification
   // — bigger AND heavier does.
-  ctx.font = '440 ' + Math.round(H * 0.064) + 'px Geist, sans-serif';
+  ctx.font = '400 ' + Math.round(H * 0.064) + 'px Geist, sans-serif';
   ctx.fillStyle = sub;
+  ctx.strokeStyle = sub;
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = H * 0.0018;
   const descLines = wrapLines(ctx, item.desc, maxTextW, 2);
   const lineH = H * 0.078;
-  descLines.forEach((line, i) => ctx.fillText(line, marginX, ruleY + H * 0.06 + i * lineH));
+  descLines.forEach((line, i) => {
+    const y = ruleY + H * 0.06 + i * lineH;
+    ctx.strokeText(line, marginX, y);
+    ctx.fillText(line, marginX, y);
+  });
 
   ctx.restore();
 }
