@@ -571,7 +571,7 @@ function drawShardCard(ctx, W, H, item) {
   ctx.font = '300 ' + Math.round(H * 0.135) + 'px Geist, sans-serif';
   ctx.fillText(item.num, marginX, H * 0.275);
 
-  ctx.font = '500 ' + Math.round(H * 0.052) + 'px Jost, sans-serif';
+  ctx.font = '400 ' + Math.round(H * 0.052) + 'px Jost, sans-serif';
   ctx.fillStyle = sub;
   ctx.fillText(item.meta, marginX, H * 0.385);
 
@@ -592,7 +592,7 @@ function drawShardCard(ctx, W, H, item) {
   // czcionka" complaint even after fixing mipmaps/resolution: at the size
   // these cards actually render on screen, a thin small glyph just doesn't
   // have enough pixels to survive minification — bigger AND heavier does.
-  ctx.font = '500 ' + Math.round(H * 0.064) + 'px Jost, sans-serif';
+  ctx.font = '300 ' + Math.round(H * 0.064) + 'px Jost, sans-serif';
   ctx.fillStyle = sub;
   const descLines = wrapLines(ctx, item.desc, maxTextW, 2);
   const lineH = H * 0.086;
@@ -670,7 +670,7 @@ function drawServiceCard(ctx, W, H, item) {
   ctx.font = '300 ' + Math.round(H * 0.135) + 'px Geist, sans-serif';
   ctx.fillText(item.num, marginX, H * 0.275);
 
-  ctx.font = '500 ' + Math.round(H * 0.052) + 'px Jost, sans-serif';
+  ctx.font = '400 ' + Math.round(H * 0.052) + 'px Jost, sans-serif';
   ctx.fillStyle = sub;
   ctx.fillText(item.meta, marginX, H * 0.375);
 
@@ -691,7 +691,7 @@ function drawServiceCard(ctx, W, H, item) {
   // mipmaps/resolution: at the size these cards actually render on screen,
   // a thin small glyph doesn't have enough pixels to survive minification
   // — bigger AND heavier does.
-  ctx.font = '500 ' + Math.round(H * 0.064) + 'px Jost, sans-serif';
+  ctx.font = '300 ' + Math.round(H * 0.064) + 'px Jost, sans-serif';
   ctx.fillStyle = sub;
   const descLines = wrapLines(ctx, item.desc, maxTextW, 2);
   const lineH = H * 0.078;
@@ -1658,7 +1658,13 @@ class Component extends DCLogic {
         vec2 p = vUv - 0.5;
         vec2 b = vec2(0.49, 0.49);
         float d = rrect(p, b, 0.10);
-        float line = smoothstep(0.012, 0.0, abs(d));
+        // a fixed UV-space smoothstep width aliases into a jagged/torn edge
+        // once the card is angled enough that the border foreshortens to
+        // sub-pixel in one screen direction — fwidth(d) ties the
+        // anti-alias band to actual screen-pixel size instead, so the line
+        // stays one clean pixel wide at any viewing angle
+        float aa = max(fwidth(d), 0.0015);
+        float line = 1.0 - smoothstep(0.008 - aa, 0.008 + aa, abs(d));
         float ang = atan(p.y, p.x) / 6.28318 + 0.5;
         float sweep = pow(0.5 + 0.5 * sin((ang - uTime * 0.07 + uSeed) * 6.28318), 6.0);
 
@@ -1691,6 +1697,7 @@ class Component extends DCLogic {
           uMap: { value: makeServiceTexture(THREE, item) }
         },
         transparent: true, depthWrite: false, side: THREE.DoubleSide,
+        extensions: { derivatives: true },
         vertexShader: cardVert, fragmentShader: cardFrag
       });
       const mesh = new THREE.Mesh(geo, mat);
@@ -1863,7 +1870,13 @@ class Component extends DCLogic {
         vec2 p = vUv - 0.5;
         vec2 b = vec2(0.49, 0.49);
         float d = rrect(p, b, 0.10);
-        float line = smoothstep(0.012, 0.0, abs(d));
+        // a fixed UV-space smoothstep width aliases into a jagged/torn edge
+        // once the card is angled enough that the border foreshortens to
+        // sub-pixel in one screen direction — fwidth(d) ties the
+        // anti-alias band to actual screen-pixel size instead, so the line
+        // stays one clean pixel wide at any viewing angle
+        float aa = max(fwidth(d), 0.0015);
+        float line = 1.0 - smoothstep(0.008 - aa, 0.008 + aa, abs(d));
         float ang = atan(p.y, p.x) / 6.28318 + 0.5;
         float sweep = pow(0.5 + 0.5 * sin((ang - uTime * 0.07 + uSeed) * 6.28318), 6.0);
 
@@ -1905,6 +1918,7 @@ class Component extends DCLogic {
           uMap: { value: makeShardTexture(THREE, item) }
         },
         transparent: true, depthWrite: false, side: THREE.DoubleSide,
+        extensions: { derivatives: true },
         vertexShader: shardVert, fragmentShader: shardFrag
       });
       const mesh = new THREE.Mesh(geo, mat);
@@ -2079,7 +2093,13 @@ class Component extends DCLogic {
         vec2 p = vUv - 0.5;
         vec2 b = vec2(0.49, 0.49);
         float d = rrect(p, b, 0.10);
-        float line = smoothstep(0.012, 0.0, abs(d));
+        // a fixed UV-space smoothstep width aliases into a jagged/torn edge
+        // once the card is angled enough that the border foreshortens to
+        // sub-pixel in one screen direction — fwidth(d) ties the
+        // anti-alias band to actual screen-pixel size instead, so the line
+        // stays one clean pixel wide at any viewing angle
+        float aa = max(fwidth(d), 0.0015);
+        float line = 1.0 - smoothstep(0.008 - aa, 0.008 + aa, abs(d));
         float ang = atan(p.y, p.x) / 6.28318 + 0.5;
         float sweep = pow(0.5 + 0.5 * sin((ang - uTime * 0.07 + uSeed) * 6.28318), 6.0);
 
@@ -2112,6 +2132,7 @@ class Component extends DCLogic {
           uMap: { value: makeServiceTexture(THREE, item) }
         },
         transparent: true, depthWrite: false, side: THREE.DoubleSide,
+        extensions: { derivatives: true },
         vertexShader: ringVert, fragmentShader: ringFrag
       });
       const mesh = new THREE.Mesh(geo, mat);
