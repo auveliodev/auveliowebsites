@@ -571,9 +571,9 @@ function drawShardCard(ctx, W, H, item) {
   ctx.font = '300 ' + Math.round(H * 0.135) + 'px Geist, sans-serif';
   ctx.fillText(item.num, marginX, H * 0.275);
 
-  ctx.font = '400 ' + Math.round(H * 0.040) + 'px Jost, sans-serif';
+  ctx.font = '600 ' + Math.round(H * 0.052) + 'px Jost, sans-serif';
   ctx.fillStyle = sub;
-  ctx.fillText(item.meta, marginX, H * 0.375);
+  ctx.fillText(item.meta, marginX, H * 0.385);
 
   ctx.font = '500 ' + Math.round(H * 0.105) + 'px Geist, sans-serif';
   ctx.fillStyle = ink;
@@ -582,18 +582,21 @@ function drawShardCard(ctx, W, H, item) {
   ctx.strokeStyle = item.dark ? 'rgba(16,21,26,0.35)' : 'rgba(255,255,255,0.4)';
   ctx.lineWidth = Math.max(1, H * 0.006);
   ctx.beginPath();
-  ctx.moveTo(marginX, H * 0.605);
-  ctx.lineTo(marginX + W * 0.24, H * 0.605);
+  ctx.moveTo(marginX, H * 0.61);
+  ctx.lineTo(marginX + W * 0.24, H * 0.61);
   ctx.stroke();
 
   // the description now lives on the card itself, so it's visible from the
   // moment the shard is picked out — never a separate floating layer to
-  // collide with anything below the stage.
-  ctx.font = '300 ' + Math.round(H * 0.052) + 'px Jost, sans-serif';
+  // collide with anything below the stage. Small + thin was the "rozmyta
+  // czcionka" complaint even after fixing mipmaps/resolution: at the size
+  // these cards actually render on screen, a thin small glyph just doesn't
+  // have enough pixels to survive minification — bigger AND heavier does.
+  ctx.font = '500 ' + Math.round(H * 0.064) + 'px Jost, sans-serif';
   ctx.fillStyle = sub;
-  const descLines = wrapLines(ctx, item.desc, maxTextW, 3);
-  const lineH = H * 0.072;
-  descLines.forEach((line, i) => ctx.fillText(line, marginX, H * 0.69 + i * lineH));
+  const descLines = wrapLines(ctx, item.desc, maxTextW, 2);
+  const lineH = H * 0.086;
+  descLines.forEach((line, i) => ctx.fillText(line, marginX, H * 0.70 + i * lineH));
 
   ctx.restore();
 }
@@ -602,7 +605,7 @@ function makeShardTexture(THREE, item) {
   // high-res relative to the plane's on-screen size (especially once a
   // shard flies to focus and scales up) — a smaller canvas here was the
   // "rozmazuje się" blur: crisp text needs real pixels behind it
-  const W = 1440, H = 912;
+  const W = 1760, H = 1115;
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
@@ -667,7 +670,7 @@ function drawServiceCard(ctx, W, H, item) {
   ctx.font = '300 ' + Math.round(H * 0.135) + 'px Geist, sans-serif';
   ctx.fillText(item.num, marginX, H * 0.275);
 
-  ctx.font = '400 ' + Math.round(H * 0.040) + 'px Jost, sans-serif';
+  ctx.font = '600 ' + Math.round(H * 0.052) + 'px Jost, sans-serif';
   ctx.fillStyle = sub;
   ctx.fillText(item.meta, marginX, H * 0.375);
 
@@ -684,11 +687,15 @@ function drawServiceCard(ctx, W, H, item) {
   ctx.lineTo(marginX + W * 0.24, ruleY);
   ctx.stroke();
 
-  ctx.font = '300 ' + Math.round(H * 0.050) + 'px Jost, sans-serif';
+  // small + thin was the "rozmyta czcionka" complaint even after fixing
+  // mipmaps/resolution: at the size these cards actually render on screen,
+  // a thin small glyph doesn't have enough pixels to survive minification
+  // — bigger AND heavier does.
+  ctx.font = '500 ' + Math.round(H * 0.064) + 'px Jost, sans-serif';
   ctx.fillStyle = sub;
   const descLines = wrapLines(ctx, item.desc, maxTextW, 2);
-  const lineH = H * 0.064;
-  descLines.forEach((line, i) => ctx.fillText(line, marginX, ruleY + H * 0.075 + i * lineH));
+  const lineH = H * 0.078;
+  descLines.forEach((line, i) => ctx.fillText(line, marginX, ruleY + H * 0.06 + i * lineH));
 
   ctx.restore();
 }
@@ -696,7 +703,7 @@ function drawServiceCard(ctx, W, H, item) {
 function makeServiceTexture(THREE, item) {
   // same high-res fix as the shard cards — this one gets scaled up even
   // further at the front of the ring, so it needs the extra pixels most
-  const W = 1440, H = 912;
+  const W = 1760, H = 1115;
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
