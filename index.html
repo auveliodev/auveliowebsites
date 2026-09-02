@@ -618,7 +618,7 @@ function makeShardTexture(THREE, item) {
   texture.generateMipmaps = true;
   texture.minFilter = THREE.LinearMipmapLinearFilter;
   texture.magFilter = THREE.LinearFilter;
-  texture.anisotropy = 8;
+  texture.anisotropy = 16;
   if ('colorSpace' in texture) texture.colorSpace = THREE.SRGBColorSpace;
   if (document.fonts && document.fonts.ready) {
     document.fonts.ready.then(() => {
@@ -716,7 +716,7 @@ function makeServiceTexture(THREE, item) {
   texture.generateMipmaps = true;
   texture.minFilter = THREE.LinearMipmapLinearFilter;
   texture.magFilter = THREE.LinearFilter;
-  texture.anisotropy = 8;
+  texture.anisotropy = 16;
   if ('colorSpace' in texture) texture.colorSpace = THREE.SRGBColorSpace;
   if (document.fonts && document.fonts.ready) {
     document.fonts.ready.then(() => {
@@ -1663,7 +1663,11 @@ class Component extends DCLogic {
         // sub-pixel in one screen direction — fwidth(d) ties the
         // anti-alias band to actual screen-pixel size instead, so the line
         // stays one clean pixel wide at any viewing angle
-        float aa = max(fwidth(d), 0.0015);
+        // an unclamped fwidth can spike at grazing angles or small screen
+        // sizes, blowing the smoothstep band wide open and making the line
+        // itself pulse/shimmer frame to frame — clamped, it stays a stable
+        // ~1px band always
+        float aa = clamp(fwidth(d), 0.0015, 0.02);
         float line = 1.0 - smoothstep(0.008 - aa, 0.008 + aa, abs(d));
         float ang = atan(p.y, p.x) / 6.28318 + 0.5;
         float sweep = pow(0.5 + 0.5 * sin((ang - uTime * 0.07 + uSeed) * 6.28318), 6.0);
@@ -1821,7 +1825,12 @@ class Component extends DCLogic {
       const nearness = clamp01(1 - d / 2.4);
       if (nearness > bestNear) { bestNear = nearness; bestI = i; }
       const targetScale = 0.7 + nearness * 0.65;
-      c.mesh.scale.setScalar(c.mesh.scale.x + (targetScale - c.mesh.scale.x) * kCard);
+      // an eased lerp technically never quite reaches its target — the
+      // leftover sub-pixel drift was enough to keep nudging the texture's
+      // mip level every frame, reading as the text "trembling". Snap once
+      // close enough so a settled card is bit-for-bit static.
+      if (Math.abs(targetScale - c.mesh.scale.x) < 8e-4) c.mesh.scale.setScalar(targetScale);
+      else c.mesh.scale.setScalar(c.mesh.scale.x + (targetScale - c.mesh.scale.x) * kCard);
       const u = c.mesh.material.uniforms;
       u.uTime.value = O.time;
       u.uFocus.value += (nearness - u.uFocus.value) * kCard;
@@ -1875,7 +1884,11 @@ class Component extends DCLogic {
         // sub-pixel in one screen direction — fwidth(d) ties the
         // anti-alias band to actual screen-pixel size instead, so the line
         // stays one clean pixel wide at any viewing angle
-        float aa = max(fwidth(d), 0.0015);
+        // an unclamped fwidth can spike at grazing angles or small screen
+        // sizes, blowing the smoothstep band wide open and making the line
+        // itself pulse/shimmer frame to frame — clamped, it stays a stable
+        // ~1px band always
+        float aa = clamp(fwidth(d), 0.0015, 0.02);
         float line = 1.0 - smoothstep(0.008 - aa, 0.008 + aa, abs(d));
         float ang = atan(p.y, p.x) / 6.28318 + 0.5;
         float sweep = pow(0.5 + 0.5 * sin((ang - uTime * 0.07 + uSeed) * 6.28318), 6.0);
@@ -2032,7 +2045,10 @@ class Component extends DCLogic {
       }
       s.mesh.position.lerp(O.tmpPos, kPos);
       s.mesh.quaternion.slerp(targetQuat, kRot);
-      s.mesh.scale.setScalar(s.mesh.scale.x + (targetScale - s.mesh.scale.x) * kPos);
+      // snap once settled — see the ring/path cards for why (mip-level
+      // shimmer from an eased scale that never quite stops moving)
+      if (Math.abs(targetScale - s.mesh.scale.x) < 8e-4) s.mesh.scale.setScalar(targetScale);
+      else s.mesh.scale.setScalar(s.mesh.scale.x + (targetScale - s.mesh.scale.x) * kPos);
       const u = s.mesh.material.uniforms;
       u.uTime.value = O.time;
       u.uFocus.value += ((isFocus ? 1 : 0) - u.uFocus.value) * kPos;
@@ -2098,7 +2114,11 @@ class Component extends DCLogic {
         // sub-pixel in one screen direction — fwidth(d) ties the
         // anti-alias band to actual screen-pixel size instead, so the line
         // stays one clean pixel wide at any viewing angle
-        float aa = max(fwidth(d), 0.0015);
+        // an unclamped fwidth can spike at grazing angles or small screen
+        // sizes, blowing the smoothstep band wide open and making the line
+        // itself pulse/shimmer frame to frame — clamped, it stays a stable
+        // ~1px band always
+        float aa = clamp(fwidth(d), 0.0015, 0.02);
         float line = 1.0 - smoothstep(0.008 - aa, 0.008 + aa, abs(d));
         float ang = atan(p.y, p.x) / 6.28318 + 0.5;
         float sweep = pow(0.5 + 0.5 * sin((ang - uTime * 0.07 + uSeed) * 6.28318), 6.0);
@@ -2256,7 +2276,10 @@ class Component extends DCLogic {
       const face = Math.max(-0.85, Math.min(0.85, a * 0.55));
       c.mesh.rotation.y = face;
       const targetScale = 0.75 + nearness * 0.6;
-      c.mesh.scale.setScalar(c.mesh.scale.x + (targetScale - c.mesh.scale.x) * k);
+      // the ring keeps idle-spinning forever, so nearness never truly
+      // settles here — but snap anyway on the rare frame it lands exact
+      if (Math.abs(targetScale - c.mesh.scale.x) < 8e-4) c.mesh.scale.setScalar(targetScale);
+      else c.mesh.scale.setScalar(c.mesh.scale.x + (targetScale - c.mesh.scale.x) * k);
 
       const u = c.mesh.material.uniforms;
       u.uTime.value = O.time;
