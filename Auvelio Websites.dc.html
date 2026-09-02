@@ -571,7 +571,7 @@ function drawShardCard(ctx, W, H, item) {
   ctx.font = '300 ' + Math.round(H * 0.135) + 'px Geist, sans-serif';
   ctx.fillText(item.num, marginX, H * 0.275);
 
-  ctx.font = '400 ' + Math.round(H * 0.052) + 'px Jost, sans-serif';
+  ctx.font = '400 ' + Math.round(H * 0.052) + 'px Geist, sans-serif';
   ctx.fillStyle = sub;
   ctx.fillText(item.meta, marginX, H * 0.385);
 
@@ -592,7 +592,7 @@ function drawShardCard(ctx, W, H, item) {
   // czcionka" complaint even after fixing mipmaps/resolution: at the size
   // these cards actually render on screen, a thin small glyph just doesn't
   // have enough pixels to survive minification — bigger AND heavier does.
-  ctx.font = '300 ' + Math.round(H * 0.064) + 'px Jost, sans-serif';
+  ctx.font = '300 ' + Math.round(H * 0.064) + 'px Geist, sans-serif';
   ctx.fillStyle = sub;
   const descLines = wrapLines(ctx, item.desc, maxTextW, 2);
   const lineH = H * 0.086;
@@ -618,7 +618,7 @@ function makeShardTexture(THREE, item) {
   texture.generateMipmaps = true;
   texture.minFilter = THREE.LinearMipmapLinearFilter;
   texture.magFilter = THREE.LinearFilter;
-  texture.anisotropy = 16;
+  texture.anisotropy = 4;
   if ('colorSpace' in texture) texture.colorSpace = THREE.SRGBColorSpace;
   if (document.fonts && document.fonts.ready) {
     document.fonts.ready.then(() => {
@@ -670,7 +670,7 @@ function drawServiceCard(ctx, W, H, item) {
   ctx.font = '300 ' + Math.round(H * 0.135) + 'px Geist, sans-serif';
   ctx.fillText(item.num, marginX, H * 0.275);
 
-  ctx.font = '400 ' + Math.round(H * 0.052) + 'px Jost, sans-serif';
+  ctx.font = '400 ' + Math.round(H * 0.052) + 'px Geist, sans-serif';
   ctx.fillStyle = sub;
   ctx.fillText(item.meta, marginX, H * 0.375);
 
@@ -691,7 +691,7 @@ function drawServiceCard(ctx, W, H, item) {
   // mipmaps/resolution: at the size these cards actually render on screen,
   // a thin small glyph doesn't have enough pixels to survive minification
   // — bigger AND heavier does.
-  ctx.font = '300 ' + Math.round(H * 0.064) + 'px Jost, sans-serif';
+  ctx.font = '300 ' + Math.round(H * 0.064) + 'px Geist, sans-serif';
   ctx.fillStyle = sub;
   const descLines = wrapLines(ctx, item.desc, maxTextW, 2);
   const lineH = H * 0.078;
@@ -716,7 +716,7 @@ function makeServiceTexture(THREE, item) {
   texture.generateMipmaps = true;
   texture.minFilter = THREE.LinearMipmapLinearFilter;
   texture.magFilter = THREE.LinearFilter;
-  texture.anisotropy = 16;
+  texture.anisotropy = 4;
   if ('colorSpace' in texture) texture.colorSpace = THREE.SRGBColorSpace;
   if (document.fonts && document.fonts.ready) {
     document.fonts.ready.then(() => {
@@ -2257,7 +2257,7 @@ class Component extends DCLogic {
     const activeIdx = ((Math.round(this.ringOffset) % O.count) + O.count) % O.count;
     if (activeIdx !== this.state.ringActive) this.setState({ ringActive: activeIdx });
 
-    O.idleSpin = (O.idleSpin || 0) + (this.reduced ? 0 : dt * 0.022);
+    O.idleSpin = (O.idleSpin || 0) + (this.reduced ? 0 : dt * 0.03);
     const angleStep = (Math.PI * 2) / O.count;
     const rot = -this.ringOffset * angleStep + O.idleSpin;
 
@@ -2272,8 +2272,10 @@ class Component extends DCLogic {
       c.mesh.position.set(Math.sin(ang) * O.radius, 0, Math.cos(ang) * O.radius);
       // face toward the camera, capped — never swing round to a full 90°
       // radial-outward edge-on sliver the way a plain "spinning carousel"
-      // would; reads as a curved bank of monitors instead
-      const face = Math.max(-0.85, Math.min(0.85, a * 0.55));
+      // would; reads as a curved bank of monitors instead. Tightened from
+      // 0.85 — a shallower max angle keeps text away from the grazing
+      // angles where texture-sampling shimmer is worst.
+      const face = Math.max(-0.5, Math.min(0.5, a * 0.42));
       c.mesh.rotation.y = face;
       const targetScale = 0.75 + nearness * 0.6;
       // the ring keeps idle-spinning forever, so nearness never truly
