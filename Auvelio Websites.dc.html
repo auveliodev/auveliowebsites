@@ -60,8 +60,8 @@
 
       <!-- section header, centred -->
       <header style="display: grid; justify-items: center; gap: 12px; text-align: center;">
-        <span style="font-size: 12px; font-weight: 400; letter-spacing: 0.3em; color: #5fb9d8;">{{ section.eyebrow }}</span>
-        <h2 style="margin: 0; font-weight: 200; font-size: clamp(29px, 3.2vw, 49px); line-height: 1.05; letter-spacing: 0.04em; color: #e3eff5;">{{ section.title }}</h2>
+        <span style="font-size: 16px; font-weight: 400; letter-spacing: 0.3em; color: #5fb9d8;">{{ section.eyebrow }}</span>
+        <h2 style="margin: 0; font-weight: 200; font-size: clamp(39px, 4.3vw, 66px); line-height: 1.05; letter-spacing: 0.04em; color: #e3eff5;">{{ section.title }}</h2>
         <sc-if value="{{ showLead }}" hint-placeholder-val="{{ true }}">
           <p style="{{ leadStyle }}">{{ section.lead }}</p>
         </sc-if>
@@ -105,7 +105,7 @@
             <label style="display: grid; gap: 6px;">
               <span style="{{ labelStyle }}">Czego potrzebujesz? <span style="color: #6fc9e6;">*</span></span>
               <textarea value="{{ form.message }}" onChange="{{ setMessage }}" rows="4" placeholder="Krótko: co ma robić strona, na kiedy, jaki budżet." style="{{ messageFieldStyle }}" style-focus="{{ inputFocus }}"></textarea>
-              <span style="font-size: 12px; font-weight: 300; letter-spacing: 0.02em; color: #6e8b9b;">{{ counter }}</span>
+              <span style="font-size: 16px; font-weight: 300; letter-spacing: 0.02em; color: #6e8b9b;">{{ counter }}</span>
             </label>
 
             <!-- animated consent checkbox: the tick draws itself in -->
@@ -116,7 +116,7 @@
                   <path d="M4 12.5 L9.5 18 L20 6.5" stroke="#06121f" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" style="{{ tickStyle }}"></path>
                 </svg>
               </span>
-              <span style="font-size: 13px; font-weight: 300; line-height: 1.45; color: #a2bdca;">Zgadzam się na kontakt w sprawie tego zapytania. <span style="color: #6fc9e6;">*</span></span>
+              <span style="font-size: 18px; font-weight: 300; line-height: 1.45; color: #a2bdca;">Zgadzam się na kontakt w sprawie tego zapytania. <span style="color: #6fc9e6;">*</span></span>
             </label>
 
             <div style="display: grid; gap: 8px;">
@@ -200,11 +200,11 @@
             <article style="{{ item.style }}">
               <span aria-hidden="true" style="{{ readoutRuleStyle }}"></span>
               <div style="display: flex; align-items: baseline; gap: 10px;">
-                <span style="font-family: 'Geist', 'Jost', sans-serif; font-size: 22px; font-weight: 300; line-height: 1; color: #6fc9e6;">{{ item.num }}</span>
-                <span style="font-size: 10px; font-weight: 400; letter-spacing: 0.16em; text-transform: uppercase; color: #7fa9bd; white-space: nowrap;">{{ item.meta }}</span>
+                <span style="font-family: 'Geist', 'Jost', sans-serif; font-size: 30px; font-weight: 300; line-height: 1; color: #6fc9e6;">{{ item.num }}</span>
+                <span style="font-size: 14px; font-weight: 400; letter-spacing: 0.16em; text-transform: uppercase; color: #7fa9bd; white-space: nowrap;">{{ item.meta }}</span>
               </div>
-              <h3 style="margin: 0; font-family: 'Geist', 'Jost', sans-serif; font-size: 18px; font-weight: 500; line-height: 1.25; color: #f0f7fa;">{{ item.name }}</h3>
-              <p style="margin: 0; font-size: 14px; font-weight: 300; line-height: 1.55; color: #a8c2cf; text-wrap: pretty;">{{ item.desc }}</p>
+              <h3 style="margin: 0; font-family: 'Geist', 'Jost', sans-serif; font-size: 24px; font-weight: 500; line-height: 1.25; color: #f0f7fa;">{{ item.name }}</h3>
+              <p style="margin: 0; font-size: 19px; font-weight: 300; line-height: 1.55; color: #a8c2cf; text-wrap: pretty;">{{ item.desc }}</p>
             </article>
           </sc-for>
         </div>
@@ -212,7 +212,7 @@
       </div>
       </sc-if>
 
-      <button onClick="{{ closeSection }}" data-interactive="true" style="margin-top: clamp(20px, 3.4vh, 42px); display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border: 1px solid rgba(150,205,232,0.20); border-radius: 999px; background: linear-gradient(178deg, rgba(16,44,68,0.42) 0%, rgba(7,20,36,0.30) 100%); backdrop-filter: blur(16px) saturate(116%); -webkit-backdrop-filter: blur(16px) saturate(116%); box-shadow: inset 0 1px 0 rgba(190,235,255,0.16), 0 8px 20px -12px rgba(0,0,0,0.6); color: #b7d0dc; font-family: 'Jost', sans-serif; font-size: 13px; font-weight: 300; letter-spacing: 0.2em; cursor: pointer; transition: border-color 220ms ease, color 220ms ease, background 220ms ease;" style-hover="{{ backHover }}">← START</button>
+      <button onClick="{{ closeSection }}" data-interactive="true" style="margin-top: clamp(20px, 3.4vh, 42px); display: inline-flex; align-items: center; gap: 8px; padding: 13px 24px; border: 1px solid rgba(150,205,232,0.20); border-radius: 999px; background: linear-gradient(178deg, rgba(16,44,68,0.42) 0%, rgba(7,20,36,0.30) 100%); backdrop-filter: blur(16px) saturate(116%); -webkit-backdrop-filter: blur(16px) saturate(116%); box-shadow: inset 0 1px 0 rgba(190,235,255,0.16), 0 8px 20px -12px rgba(0,0,0,0.6); color: #b7d0dc; font-family: 'Jost', sans-serif; font-size: 18px; font-weight: 300; letter-spacing: 0.2em; cursor: pointer; transition: border-color 220ms ease, color 220ms ease, background 220ms ease;" style-hover="{{ backHover }}">← START</button>
     </div>
   </div>
 
@@ -741,7 +741,7 @@ const KINDS = [
 /* one field style, red-tinted when that field is the blocking error */
 const field = bad => ({
   width: '100%', padding: '10px 12px', fontFamily: "'Jost', sans-serif",
-  fontSize: '15px', fontWeight: 300, color: '#e3eff5',
+  fontSize: '20px', fontWeight: 300, color: '#e3eff5',
   background: bad ? 'rgba(40,16,20,0.7)' : 'rgba(6,20,36,0.78)',
   border: '1px solid ' + (bad ? 'rgba(226,160,160,0.75)' : 'rgba(140,200,230,0.22)'),
   borderRadius: '8px', outline: 'none',
@@ -976,7 +976,7 @@ class Component extends DCLogic {
         background: 'transparent'
       },
       pathHintStyle: {
-        fontSize: '10.5px', fontWeight: 300, letterSpacing: '0.24em', color: '#4f7286', textAlign: 'center'
+        fontSize: '14px', fontWeight: 300, letterSpacing: '0.24em', color: '#4f7286', textAlign: 'center'
       },
       pathDotsRowStyle: { display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '9px' },
       pathDotHover: { boxShadow: '0 0 12px 3px rgba(255,255,255,0.5)' },
@@ -1012,12 +1012,12 @@ class Component extends DCLogic {
       shardsBack: e => { e.preventDefault(); this.setState({ shardFocus: null }); },
       shardsBackStyle: {
         position: 'absolute', left: '50%', bottom: '-40px', transform: 'translateX(-50%)',
-        padding: '8px 16px', borderRadius: '999px', cursor: 'pointer',
+        padding: '11px 22px', borderRadius: '999px', cursor: 'pointer',
         border: '1px solid rgba(150,205,232,0.20)',
         background: 'linear-gradient(178deg, rgba(16,44,68,0.42) 0%, rgba(7,20,36,0.30) 100%)',
         backdropFilter: 'blur(16px) saturate(116%)', WebkitBackdropFilter: 'blur(16px) saturate(116%)',
         boxShadow: 'inset 0 1px 0 rgba(190,235,255,0.16), 0 8px 20px -12px rgba(0,0,0,0.6)',
-        fontFamily: "'Jost', sans-serif", fontSize: '12px', fontWeight: 300, letterSpacing: '0.2em',
+        fontFamily: "'Jost', sans-serif", fontSize: '16px', fontWeight: 300, letterSpacing: '0.2em',
         color: '#b7d0dc',
         opacity: this.state.shardFocus != null ? 1 : 0,
         pointerEvents: this.state.shardFocus != null ? 'auto' : 'none',
@@ -1025,13 +1025,13 @@ class Component extends DCLogic {
       },
       shardsHintStyle: {
         position: 'absolute', left: '50%', bottom: '-30px', transform: 'translateX(-50%)',
-        fontSize: '10.5px', fontWeight: 300, letterSpacing: '0.24em', color: '#4f7286',
+        fontSize: '14px', fontWeight: 300, letterSpacing: '0.24em', color: '#4f7286',
         pointerEvents: 'none', whiteSpace: 'nowrap',
         opacity: this.state.shardFocus == null ? 1 : 0, transition: 'opacity 300ms ease'
       },
 
       readoutRowStyle: {
-        display: 'grid', gridTemplateColumns: vw < 760 ? '1fr' : 'minmax(180px, 245px) 1fr',
+        display: 'grid', gridTemplateColumns: vw < 760 ? '1fr' : 'minmax(220px, 305px) 1fr',
         // top-aligned, not centred: the orb is a fixed square and the text
         // column's height varies with content, so centring them made the
         // two edges start at different heights instead of lining up
@@ -1040,13 +1040,13 @@ class Component extends DCLogic {
         // container instead of under the centred header above it
         // extra breathing room under the lead paragraph, on top of the
         // grid's own row gap — pushes the whole orb+list block down
-        gap: 'clamp(16px, 3vw, 40px)', alignItems: 'start', width: '100%', maxWidth: '870px',
+        gap: 'clamp(16px, 3vw, 40px)', alignItems: 'start', width: '100%', maxWidth: '1080px',
         margin: 'clamp(18px, 4.5vh, 44px) auto 0'
       },
       orbRef: this.orbRef,
       orbCanvasRef: this.orbCanvasRef,
       orbStageStyle: {
-        position: 'relative', width: '100%', aspectRatio: '1 / 1', maxWidth: '245px',
+        position: 'relative', width: '100%', aspectRatio: '1 / 1', maxWidth: '305px',
         justifySelf: vw < 760 ? 'center' : 'start'
       },
       readoutListStyle: { display: 'grid', gap: 'clamp(14px, 2vh, 22px)', textAlign: 'left' },
@@ -1073,8 +1073,8 @@ class Component extends DCLogic {
       leadStyle: {
         margin: 0, maxWidth: '68ch', fontWeight: 300,
         fontSize: this.state.section === 'uslugi'
-          ? 'clamp(14px, 1.1vw, 17px)'
-          : 'clamp(17px, 1.5vw, 23px)',
+          ? 'clamp(19px, 1.5vw, 23px)'
+          : 'clamp(23px, 2vw, 31px)',
         lineHeight: 1.5, color: '#bcd3de', textWrap: 'pretty'
       },
       ringWrapStyle: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', width: '100%' },
@@ -1086,7 +1086,7 @@ class Component extends DCLogic {
         background: 'transparent'
       },
       ringHintStyle: {
-        fontSize: '10.5px', fontWeight: 300, letterSpacing: '0.24em', color: '#4f7286', textAlign: 'center'
+        fontSize: '14px', fontWeight: 300, letterSpacing: '0.24em', color: '#4f7286', textAlign: 'center'
       },
       ringDotsRowStyle: { display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '9px' },
       ringDotHover: { boxShadow: '0 0 12px 3px rgba(255,255,255,0.5)' },
@@ -1116,7 +1116,7 @@ class Component extends DCLogic {
       // panel budget: fixed rows for tabs/header/START, the tile band takes
       // what is left (min-height 0 so it actually shrinks and scrolls)
       innerStyle: {
-        width: '100%', maxWidth: 'min(1240px, 94vw)', maxHeight: '100%', minHeight: 0,
+        width: '100%', maxWidth: 'min(1500px, 96vw)', maxHeight: '100%', minHeight: 0,
         display: 'grid', gridTemplateRows: 'auto auto minmax(0, auto) auto',
         justifyItems: 'center', alignContent: 'center',
         gap: vh < 780 ? '12px' : 'clamp(14px, 2.2vh, 26px)'
@@ -1133,7 +1133,7 @@ class Component extends DCLogic {
         scrollbarWidth: 'thin', scrollbarColor: 'rgba(140,200,230,0.35) transparent'
       },
       labelStyle: {
-        fontSize: '12px', fontWeight: 400, letterSpacing: '0.16em',
+        fontSize: '16px', fontWeight: 400, letterSpacing: '0.16em',
         textTransform: 'uppercase', color: '#7fa9bd'
       },
       nameFieldStyle: field(this.state.errorField === 'name'),
@@ -1151,8 +1151,8 @@ class Component extends DCLogic {
           pressed: on ? 'true' : 'false',
           pick: () => this.setField('kind', k.key),
           style: {
-            padding: '7px 13px', borderRadius: '999px', cursor: 'pointer',
-            fontFamily: "'Jost', sans-serif", fontSize: '12.5px', fontWeight: 300, letterSpacing: '0.08em',
+            padding: '9px 18px', borderRadius: '999px', cursor: 'pointer',
+            fontFamily: "'Jost', sans-serif", fontSize: '17px', fontWeight: 300, letterSpacing: '0.08em',
             // same glass language as the PROCES box: gradient fill + blur + inset sheen
             border: '1px solid ' + (on ? 'rgba(53,200,240,0.65)' : 'rgba(150,205,232,0.20)'),
             background: on
@@ -1182,9 +1182,9 @@ class Component extends DCLogic {
       },
       submitLabel: this.state.sending ? 'WYSYŁANIE…' : this.state.statusOk ? '✓ WYSŁANE' : 'WYŚLIJ ZAPYTANIE',
       submitStyle: {
-        justifySelf: 'start', padding: '12px 24px', borderRadius: '999px',
+        justifySelf: 'start', padding: '16px 32px', borderRadius: '999px',
         cursor: this.state.sending ? 'progress' : 'pointer',
-        fontFamily: "'Jost', sans-serif", fontSize: '13px', fontWeight: 400, letterSpacing: '0.2em',
+        fontFamily: "'Jost', sans-serif", fontSize: '18px', fontWeight: 400, letterSpacing: '0.2em',
         // same glass language as the PROCES box: gradient fill + blur + inset sheen
         border: '1px solid ' + (this.state.statusOk ? 'rgba(124,224,176,0.8)' : 'rgba(53,200,240,0.65)'),
         background: this.state.statusOk
@@ -1198,7 +1198,7 @@ class Component extends DCLogic {
       },
       submitHover: { borderColor: 'rgba(120,225,255,0.9)', background: 'rgba(28,96,131,0.85)' },
       statusStyle: {
-        minHeight: '16px', fontSize: '13.5px', fontWeight: 300, lineHeight: 1.4,
+        minHeight: '16px', fontSize: '18px', fontWeight: 300, lineHeight: 1.4,
         color: this.state.statusOk ? '#7ce0b0' : '#e2a0a0',
         opacity: this.state.status ? 1 : 0,
         transform: this.state.status ? 'none' : 'translateY(-4px)',
@@ -1234,8 +1234,8 @@ class Component extends DCLogic {
           current: active ? 'true' : 'false',
           open: e => { e.preventDefault(); this.goToSection(l.key); },
           style: {
-            padding: '11px 18px', borderRadius: '999px', cursor: 'pointer',
-            fontFamily: "'Jost', sans-serif", fontSize: '13px', fontWeight: 300, letterSpacing: '0.2em',
+            padding: '15px 24px', borderRadius: '999px', cursor: 'pointer',
+            fontFamily: "'Jost', sans-serif", fontSize: '18px', fontWeight: 300, letterSpacing: '0.2em',
             // same glass language as the PROCES box: gradient fill + blur + inset sheen
             border: '1px solid ' + (active ? 'rgba(53,200,240,0.65)' : 'rgba(150,205,232,0.20)'),
             background: active
