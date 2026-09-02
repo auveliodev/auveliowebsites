@@ -139,6 +139,18 @@
         <div ref="{{ ringRef }}" style="{{ ringStageStyle }}">
           <canvas ref="{{ ringCanvasRef }}" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab;"></canvas>
         </div>
+        <!-- the ring keeps spinning, so its baked-texture meta/desc text
+             never sits still long enough to sample perfectly clean — real
+             DOM text for the front card instead, which can't shimmer no
+             matter how the WebGL scene behind it moves -->
+        <div style="{{ ringCaptionStyle }}" key="{{ ringCaptionKey }}">
+          <div style="display: flex; align-items: baseline; gap: 10px; justify-content: center;">
+            <span style="font-family: 'Geist', 'Jost', sans-serif; font-size: 22px; font-weight: 300; line-height: 1; color: #6fc9e6;">{{ ringCaption.num }}</span>
+            <span style="font-size: 10px; font-weight: 400; letter-spacing: 0.16em; text-transform: uppercase; color: #7fa9bd;">{{ ringCaption.meta }}</span>
+          </div>
+          <h3 style="margin: 6px 0 0; font-family: 'Geist', 'Jost', sans-serif; font-size: 18px; font-weight: 500; color: #f0f7fa;">{{ ringCaption.name }}</h3>
+          <p style="margin: 6px 0 0; font-size: 13px; font-weight: 300; line-height: 1.5; color: #a8c2cf;">{{ ringCaption.desc }}</p>
+        </div>
         <span aria-hidden="true" style="{{ ringHintStyle }}">PRZECIĄGNIJ LUB PRZEWIŃ, ABY OBRACAĆ</span>
         <div style="{{ ringDotsRowStyle }}">
           <sc-for list="{{ ringDots }}" as="dot" hint-placeholder-count="6">
@@ -1088,6 +1100,15 @@ class Component extends DCLogic {
       ringHintStyle: {
         fontSize: '10.5px', fontWeight: 300, letterSpacing: '0.24em', color: '#4f7286', textAlign: 'center'
       },
+      ringCaptionStyle: {
+        textAlign: 'center', maxWidth: '46ch', width: '100%',
+        animation: this.reduced ? 'none' : 'scanIn 460ms cubic-bezier(0.22,0.61,0.36,1) both'
+      },
+      ringCaptionKey: String(this.state.ringActive),
+      ringCaption: (() => {
+        const it = SECTIONS.uslugi.items[this.state.ringActive] || SECTIONS.uslugi.items[0];
+        return { num: String(this.state.ringActive + 1).padStart(2, '0'), meta: it.meta, name: it.name, desc: it.desc };
+      })(),
       ringDotsRowStyle: { display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '9px' },
       ringDotHover: { boxShadow: '0 0 12px 3px rgba(255,255,255,0.5)' },
       ringDots: SECTIONS.uslugi.items.map((it, i) => {
