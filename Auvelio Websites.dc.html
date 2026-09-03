@@ -2194,13 +2194,17 @@ class Component extends DCLogic {
     }
 
     // a thin glowing rail under the cards — reads as one connected belt they
-    // ride on, not loose cards floating independently
+    // ride on, not loose cards floating independently. Sat at -0.62, which
+    // is ABOVE the bottom edge of the front card at its max scale (card
+    // half-height 0.95*1.4/2 ≈ 0.665) — close enough that the rail visibly
+    // crossed through/merged with the focused card's bottom corner. Pushed
+    // it below that with margin so it always reads as clearly separate.
     const track = new THREE.Mesh(
       new THREE.TorusGeometry(radius, 0.012, 8, 96),
-      new THREE.MeshBasicMaterial({ color: 0x5fb9d8, transparent: true, opacity: 0.22 })
+      new THREE.MeshBasicMaterial({ color: 0x5fb9d8, transparent: true, opacity: 0.22, depthWrite: false })
     );
     track.rotation.x = Math.PI / 2;
-    track.position.y = -0.62;
+    track.position.y = -0.95;
     scene.add(track);
 
     this.RING = { canvas, count, radius, renderer, scene, camera, cards, track, raycaster: new THREE.Raycaster(), w: 0, h: 0, time: 0 };
