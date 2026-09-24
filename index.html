@@ -109,6 +109,10 @@
     --au-pill-bg-hover: rgba(28,96,131,0.8);
     --au-pill-bg-ok: linear-gradient(178deg, rgba(30,96,72,0.85) 0%, rgba(10,40,30,0.55) 100%);
     --au-pill-shadow: inset 0 1px 0 rgba(190,235,255,0.16), 0 8px 20px -12px rgba(0,0,0,0.6);
+    --au-scrim: rgba(1,4,9,0.64);            /* behind the quote dialog */
+    --au-scrim-soft: rgba(1,4,9,0.34);       /* behind the language sheet */
+    --au-modal-fill: rgba(4,12,22,0.8);      /* keeps overlay copy legible over any page */
+    --au-fire-glow: rgba(59,255,122,0.26);   /* the burst fire, for a sent enquiry */
     --au-button-shadow: inset 0 1px 0 rgba(190,235,255,0.2), 0 10px 26px -14px rgba(0,0,0,0.6), 0 0 34px -6px rgba(53,200,240,0.45);
     /* form fields (lifted from the old field() helper, lighter) */
     --au-field-bg: rgba(6,20,36,0.46);
@@ -200,6 +204,19 @@
   @keyframes auSweepDown { from { transform: translateY(0); } to { transform: translateY(365%); } }
   @keyframes auSweepUp { from { transform: translateY(0); } to { transform: translateY(-365%); } }
   @keyframes auMarquee { to { transform: translateX(-50%); } }
+  /* OVERLAY ENTRANCES — the house reveal (scanIn's top-down clip wipe) under
+     a spring pop, the Dialog's snap-in feel expressed in Auvelio's own moves:
+     the wipe runs on --au-ease, the scale/lift on --au-ease-spring (slight
+     overshoot). Ends at a negative inset so the panel's shadow is not cut. */
+  @keyframes auWipe { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(-40% -40% -40% -40%); } }
+  @keyframes auPop { from { opacity: 0; transform: translateY(16px) scale(0.94); } 45% { opacity: 1; } to { opacity: 1; transform: none; } }
+  @keyframes auPopOut { to { opacity: 0; transform: translateY(8px) scale(0.97); } }
+  @keyframes auFadeOut { to { opacity: 0; } }
+  /* the Sheet: drops from the trigger's corner, a touch looser than the dialog */
+  @keyframes auSheetIn { from { opacity: 0; transform: translateY(-10px) scale(0.9); } 50% { opacity: 1; } to { opacity: 1; transform: none; } }
+  @keyframes auSheetOut { to { opacity: 0; transform: translateY(-6px) scale(0.96); } }
+  /* a sent enquiry: the burst's green fire rises through the glass once */
+  @keyframes auFlare { 0% { opacity: 0; } 25% { opacity: 1; } 100% { opacity: 0.35; } }
 
   /* ---- PAGE LAYER: fixed exactly between the letterbox bars (open pose).
      The hero canvas keeps rendering underneath as the living background,
@@ -702,12 +719,82 @@
     background: linear-gradient(0deg, transparent 0%, rgba(53,200,240,0.05) 55%, rgba(53,200,240,0.2) 95%, rgba(210,248,255,0.95) 99.3%, transparent 100%);
     animation: auSweepUp 780ms cubic-bezier(0.6,0,0.2,1) both; }
 
+  /* ---- LANGUAGE TRIGGER — flag + code, a thin pill beside START */
+  .au-lang-btn { margin-left: auto; display: inline-flex; align-items: center; gap: 9px; padding: 8px 13px 8px 10px;
+    border: var(--au-pill-border); border-radius: var(--au-radius-pill); background: transparent; cursor: pointer;
+    color: var(--au-link); font: 300 13px/1 var(--au-font); letter-spacing: 0.22em; text-indent: 0.22em;
+    transition: border-color var(--au-dur-fast) ease, color var(--au-dur-fast) ease, box-shadow var(--au-dur-fast) ease; }
+  .au-lang-btn:hover, .au-lang-btn[aria-expanded="true"] { border-color: var(--au-accent-line); color: var(--au-link-hover);
+    box-shadow: 0 0 18px -6px var(--au-accent-glow); }
+  .au-lang-btn:focus-visible, .au-lang-row:focus-visible, .au-modal-close:focus-visible, .au-quote-full:focus-visible {
+    outline: 2px solid var(--au-focus); outline-offset: 4px; }
+  .au-flag { flex: none; width: 22px; height: 15px; border-radius: 3px; overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.18), 0 2px 8px -2px rgba(0,0,0,0.6); }
+
+  /* ---- LANGUAGE SHEET — compact, anchored under the header trigger */
+  .au-sheet-scrim { position: absolute; inset: 0; z-index: 7; background: var(--au-scrim-soft); animation: auFade var(--au-dur-fast) ease both; }
+  .au-sheet-scrim[data-closing="true"] { animation: auFadeOut 180ms ease both; }
+  .au-glass.au-lang-sheet { position: absolute; top: calc(var(--au-head-top) + var(--au-head-h) + 6px); right: var(--au-gutter);
+    width: min(290px, calc(100% - 2 * var(--au-gutter))); display: grid; gap: var(--au-s-2); padding: var(--au-s-4) var(--au-s-2) var(--au-s-2);
+    border-radius: 24px / 32px; background: var(--au-glass-bg), var(--au-modal-fill);
+    transform-origin: calc(100% - 40px) 0; animation: auSheetIn 520ms var(--au-ease-spring) both; }
+  .au-lang-sheet[data-closing="true"] { animation: auSheetOut 170ms ease-in both; }
+  .au-lang-title { margin: 0 var(--au-s-3) var(--au-s-1); font-size: 12px; font-weight: 400; letter-spacing: 0.4em; text-transform: uppercase; color: var(--au-eyebrow); }
+  .au-lang-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  .au-lang-row { position: relative; width: 100%; display: flex; align-items: center; gap: 14px; padding: 12px 14px;
+    border: 1px solid transparent; border-radius: 18px / 24px; background: none; cursor: pointer; text-align: left;
+    color: var(--au-link); font: 300 17px/1.2 var(--au-font); letter-spacing: 0.04em;
+    transition: background var(--au-dur-fast) ease, color var(--au-dur-fast) ease, border-color var(--au-dur-fast) ease; }
+  .au-lang-row:hover { background: var(--au-pill-bg); color: var(--au-link-hover); }
+  .au-lang-row .au-flag { width: 26px; height: 17px; }
+  .au-lang-name { flex: 1; }
+  .au-lang-code { font: 300 12px/1 var(--au-font-data); letter-spacing: 0.2em; color: var(--au-muted); }
+  .au-lang-check { flex: none; width: 18px; height: 18px; color: var(--au-accent); opacity: 0; transform: scale(0.6);
+    transition: opacity var(--au-dur-fast) ease, transform 320ms var(--au-ease-spring); }
+  /* the active language: the nav's aria-current language — brighter, glowing, accent mark */
+  .au-lang-row[aria-current="true"] { color: var(--au-link-hover); text-shadow: var(--au-nav-glow-on); border-color: var(--au-accent-line);
+    background: var(--au-pill-bg-on); }
+  .au-lang-row[aria-current="true"] .au-lang-check { opacity: 1; transform: none; }
+
+  /* ---- QUOTE DIALOG — the glass recipe, centred over a dimmed, blurred page */
+  .au-modal { position: absolute; inset: 0; z-index: 8; display: grid; place-items: center; padding: var(--au-s-5);
+    background: var(--au-scrim); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    animation: auFade var(--au-dur-fast) ease both; }
+  .au-modal[data-closing="true"] { animation: auFadeOut 200ms ease both; }
+  .au-glass.au-modal-panel { width: min(600px, 100%); max-height: 100%; overflow-y: auto; overscroll-behavior: contain;
+    display: grid; gap: var(--au-s-3); padding: clamp(26px, 3.4vw, 40px); background: var(--au-glass-bg), var(--au-modal-fill);
+    scrollbar-width: thin; scrollbar-color: var(--au-scrollbar) transparent;
+    animation: auWipe 560ms var(--au-ease) both, auPop 680ms var(--au-ease-spring) both; }
+  .au-modal-panel[data-closing="true"] { animation: auPopOut 200ms ease-in both; }
+  .au-modal-close { position: absolute; top: 14px; right: 14px; width: 42px; height: 42px; display: grid; place-items: center; padding: 0;
+    border: 1px solid var(--au-hairline); border-radius: 50%; background: none; color: var(--au-link); cursor: pointer; z-index: 2;
+    transition: color var(--au-dur-fast) ease, border-color var(--au-dur-fast) ease, transform 320ms var(--au-ease-spring); }
+  .au-modal-close:hover { color: var(--au-link-hover); border-color: var(--au-accent-line); transform: rotate(90deg); }
+  .au-modal-title { margin: 0; font-weight: 200; font-size: clamp(26px, 3.2vw, 40px); line-height: 1.05; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--au-text); text-shadow: var(--au-title-glow); padding-right: 44px; }
+  .au-modal-sub { margin: 0; font-size: 17px; font-weight: 300; line-height: 1.5; color: var(--au-body); }
+  /* the service that opened the dialog, as a chip in its own swatch */
+  .au-quote-chip { justify-self: start; display: inline-flex; align-items: center; gap: 10px; margin: 0; padding: 8px 16px 8px 12px;
+    border: 1px solid var(--au-accent-line); border-radius: var(--au-radius-pill); background: var(--au-pill-bg-on);
+    font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--au-link-hover); }
+  .au-quote-chip-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--au-sw); box-shadow: 0 0 10px var(--au-sw); }
+  .au-quote-chip-k { color: var(--au-muted); }
+  .au-quote-form { display: grid; gap: 14px; margin-top: var(--au-s-1); }
+  .au-quote-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); gap: 12px; }
+  .au-quote-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--au-s-3) var(--au-s-5); }
+  .au-quote-full { font-size: 14px; font-weight: 300; color: var(--au-muted); letter-spacing: 0.04em; }
+  .au-quote-full > span { color: var(--au-link); letter-spacing: 0.16em; transition: color var(--au-dur-fast) ease; }
+  .au-quote-full:hover > span { color: var(--au-link-hover); }
+  .au-glass > .au-quote-flare { inset: 0; opacity: 0; background: radial-gradient(70% 55% at 50% 100%, var(--au-fire-glow), transparent 70%); }
+  .au-modal-panel[data-ok="true"] > .au-quote-flare { animation: auFlare 1.6s ease-out both; }
+
   /* ---- MOBILE MENU — full overlay, focus-trapped, Escape closes */
   .au-menu { position: absolute; inset: 0; z-index: 6; display: grid; padding: var(--au-s-3); animation: auFade 200ms ease both; }
   /* the overlay must fully mask the page under it: the recipe's own solid
      fallback fill, whatever backdrop-filter manages behind an animated parent */
   .au-glass.au-menu-panel { display: grid; align-content: center; justify-items: center; gap: var(--au-s-7); padding: var(--au-s-7) var(--au-s-5);
-    background: var(--au-glass-bg), var(--au-glass-fallback); }
+    background: var(--au-glass-bg), var(--au-glass-fallback);
+    animation: auPop 620ms var(--au-ease-spring) both; }
   .au-menu-close { position: absolute; top: var(--au-s-3); right: var(--au-s-3); width: 44px; height: 44px; padding: 0;
     border: 0; background: none; color: var(--au-heading); cursor: pointer; }
   .au-menu .au-navlist { flex-direction: column; align-items: center; gap: var(--au-s-5); }
@@ -757,6 +844,9 @@
     .au-dock { gap: var(--au-s-6); }
     .au-dock-label { font-size: 14px; }
     .au-dock-kicker { font-size: 9px; letter-spacing: 0.3em; }
+    .au-modal { place-items: end center; padding: var(--au-s-3); }
+    .au-glass.au-modal-panel { max-height: calc(100% - var(--au-s-5)); }
+    .au-lang-btn { padding: 7px 10px 7px 8px; }
     .au-btn-prime { max-width: 100%; white-space: normal; text-align: center; padding: 16px 22px; font-size: 15px; letter-spacing: 0.16em; }
   }
 
@@ -765,6 +855,11 @@
     /* SUB-PAGES (5e): the layout stays, the motion goes */
     .au-doc, .au-doc * { scroll-snap-type: none !important; scroll-snap-align: none !important; scroll-behavior: auto !important; }
     .au-social, .au-mq-link, .au-mq-link > svg { transition: none !important; }
+    .au-modal-panel, .au-lang-sheet, .au-glass.au-menu-panel, .au-modal, .au-sheet-scrim {
+      animation: auFade 120ms ease both !important; transform: none !important; clip-path: none !important; }
+    .au-modal-panel > .au-quote-flare { animation: none !important; }
+    .au-lang-row, .au-lang-check, .au-lang-btn, .au-modal-close { transition: none !important; }
+    .au-modal-close:hover { transform: none; }
     .au-marquee { -webkit-mask-image: none; mask-image: none; }
     .au-marquee-track { animation: none !important; width: auto; flex-wrap: wrap; justify-content: center; gap: var(--au-s-4) clamp(28px, 4vw, 64px); }
     .au-mq-dot { display: none; }
@@ -809,32 +904,35 @@
        Layout/pinning lives in the .au-* classes in the helmet; per-state
        values come from renderVals(). -->
   <sc-if value="{{ pageOpen }}" hint-placeholder-val="{{ false }}">
-  <div class="au-page" style="{{ pageStyle }}" data-gl="{{ glFlag }}" data-route="{{ route.key }}">
+  <div class="au-page" style="{{ pageStyle }}" data-gl="{{ glFlag }}" data-route="{{ route.key }}" lang="{{ lang }}">
 
     <!-- header: transparent, exactly like the hero's nav — bare glowing caps,
          centred; on scroll-down it only tightens (brand word folds away) -->
-    <header class="au-head" data-compact="{{ headCompact }}">
-      <a class="au-brand" href="#" onClick="{{ goStart }}" aria-label="AUVELIO WEBSITES — strona startowa" style-hover="color: var(--au-link-hover)"><span class="au-glyph" aria-hidden="true"></span><span class="au-brand-word" aria-hidden="true">AUVELIO</span></a>
-      <nav class="au-head-nav" aria-label="Podstrony">
+    <header class="au-head" data-compact="{{ headCompact }}" inert="{{ bgInert }}">
+      <a class="au-brand" href="#" onClick="{{ goStart }}" aria-label="{{ t.brandAria }}" style-hover="color: var(--au-link-hover)"><span class="au-glyph" aria-hidden="true"></span><span class="au-brand-word" aria-hidden="true">AUVELIO</span></a>
+      <nav class="au-head-nav" aria-label="{{ t.navAria }}">
         <ul class="au-navlist">
           <sc-for list="{{ routeLinks }}" as="link" hint-placeholder-count="5">
             <li><a class="au-navlink" href="{{ link.href }}" aria-current="{{ link.current }}" onClick="{{ link.open }}" data-interactive="true" style-hover="color: var(--au-link-hover); text-shadow: var(--au-nav-glow-on)">{{ link.label }}</a></li>
           </sc-for>
         </ul>
       </nav>
-      <button type="button" class="au-pill au-start" onClick="{{ goStart }}" data-interactive="true" style-hover="border-color: var(--au-pill-line-hover); color: var(--au-link-hover)">← START</button>
-      <button type="button" ref="{{ burgerRef }}" class="au-burger" aria-label="Menu" aria-expanded="{{ menuExpanded }}" aria-controls="au-menu" onClick="{{ toggleMenu }}"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span></button>
+      <!-- language: flag + code; opens the language sheet (sub-pages only —
+           the hero never shows it and never changes language) -->
+      <button type="button" ref="{{ langBtnRef }}" class="au-lang-btn" aria-haspopup="dialog" aria-expanded="{{ langExpanded }}" aria-controls="au-lang" aria-label="{{ langAria }}" onClick="{{ openLang }}"><svg class="au-flag" viewBox="0 0 30 20" aria-hidden="true"><path d="{{ curFlag.p0.d }}" fill="{{ curFlag.p0.fill }}" stroke="{{ curFlag.p0.stroke }}" strokeWidth="{{ curFlag.p0.sw }}"></path><path d="{{ curFlag.p1.d }}" fill="{{ curFlag.p1.fill }}" stroke="{{ curFlag.p1.stroke }}" strokeWidth="{{ curFlag.p1.sw }}"></path><path d="{{ curFlag.p2.d }}" fill="{{ curFlag.p2.fill }}" stroke="{{ curFlag.p2.stroke }}" strokeWidth="{{ curFlag.p2.sw }}"></path><path d="{{ curFlag.p3.d }}" fill="{{ curFlag.p3.fill }}" stroke="{{ curFlag.p3.stroke }}" strokeWidth="{{ curFlag.p3.sw }}"></path><path d="{{ curFlag.p4.d }}" fill="{{ curFlag.p4.fill }}" stroke="{{ curFlag.p4.stroke }}" strokeWidth="{{ curFlag.p4.sw }}"></path></svg><span aria-hidden="true">{{ langCode }}</span></button>
+      <button type="button" class="au-pill au-start" onClick="{{ goStart }}" data-interactive="true" style-hover="border-color: var(--au-pill-line-hover); color: var(--au-link-hover)">{{ t.start }}</button>
+      <button type="button" ref="{{ burgerRef }}" class="au-burger" aria-label="{{ t.menu }}" aria-expanded="{{ menuExpanded }}" aria-controls="au-menu" onClick="{{ toggleMenu }}"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span></button>
     </header>
 
     <!-- progress rail: one mark per step of this route, current one accented -->
-    <nav class="au-rail" aria-label="{{ railLabel }}">
+    <nav class="au-rail" aria-label="{{ railLabel }}" inert="{{ bgInert }}">
       <sc-for list="{{ railMarks }}" as="mark" hint-placeholder-count="4">
         <button type="button" class="au-rail-mark" aria-label="{{ mark.label }}" data-label="{{ mark.label }}" aria-current="{{ mark.current }}" onClick="{{ mark.jump }}"><span aria-hidden="true"></span></button>
       </sc-for>
     </nav>
 
     <!-- the scroll document -->
-    <div ref="{{ docRef }}" class="au-doc">
+    <div ref="{{ docRef }}" class="au-doc" inert="{{ bgInert }}">
       <main class="au-main" style="{{ mainStyle }}">
 
         <!-- OPENER — every page opens on the hero's typography (no sphere: the
@@ -849,7 +947,7 @@
             </div>
           </div>
           <p class="au-opener-lead" key="{{ route.key }}" data-flow="" style="--au-flow-extra: 0.5s">{{ route.lead }}</p>
-          <button type="button" class="au-cue" onClick="{{ cueJump }}" aria-label="Przewiń do treści"><span class="au-cue-label" aria-hidden="true">PRZEWIŃ</span><span class="au-cue-line" aria-hidden="true"><i></i></span></button>
+          <button type="button" class="au-cue" onClick="{{ cueJump }}" aria-label="{{ t.cueAria }}"><span class="au-cue-label" aria-hidden="true">{{ t.cue }}</span><span class="au-cue-line" aria-hidden="true"><i></i></span></button>
         </header>
 
         <!-- PROCES — pinned instrument (5b): the eased pathOffset journey as a
@@ -866,7 +964,7 @@
                     <sc-for list="{{ procesSteps }}" as="st" hint-placeholder-count="4"><i data-active="{{ st.active }}"></i></sc-for>
                   </div>
                   <div ref="{{ pathStageRef }}" class="au-stage" aria-hidden="true"></div>
-                  <div class="au-zones" role="group" aria-label="Etapy procesu">
+                  <div class="au-zones" role="group" aria-label="{{ t.stagesGroup }}">
                     <sc-for list="{{ procesSteps }}" as="st" hint-placeholder-count="4">
                       <button type="button" class="au-zone" data-active="{{ st.active }}" aria-current="{{ st.current }}" aria-label="{{ st.label }}" onClick="{{ st.jump }}" style="{{ st.vars }}" style-hover="border-color: var(--au-pill-line-hover)"><span class="au-zone-num">{{ st.num }}</span><span class="au-zone-meta">{{ st.meta }}</span></button>
                     </sc-for>
@@ -921,7 +1019,7 @@
                     <div class="au-card-top"><span class="au-card-num">{{ card.num }}</span><span class="au-label">{{ card.meta }}</span></div>
                     <h3 class="au-card-title" data-type="">{{ card.name }}</h3>
                     <p class="au-card-desc" data-flow="">{{ card.desc }}</p>
-                    <a class="au-card-cta" href="#kontakt" onClick="{{ card.ask }}"><span>ZAPYTAJ O WYCENĘ</span><span class="au-sr"> — {{ card.name }}</span><span class="au-card-cta-arrow" aria-hidden="true">→</span></a>
+                    <a class="au-card-cta" href="#kontakt" aria-haspopup="dialog" onClick="{{ card.ask }}"><span>{{ t.askQuote }}</span><span class="au-sr"> — {{ card.name }}</span><span class="au-card-cta-arrow" aria-hidden="true">→</span></a>
                   </article>
                   </div>
                 </sc-for>
@@ -942,8 +1040,8 @@
               <div class="au-inst-col">
                 <div class="au-inst au-inst--solo">
                   <div ref="{{ shardStageRef }}" class="au-stage" aria-hidden="true"></div>
-                  <p class="au-stage-hint" aria-hidden="true">KLIKNIJ ODŁAMEK</p>
-                  <div class="au-zones" role="group" aria-label="Kierunki">
+                  <p class="au-stage-hint" aria-hidden="true">{{ t.shardHint }}</p>
+                  <div class="au-zones" role="group" aria-label="{{ t.directionsGroup }}">
                     <sc-for list="{{ folioItems }}" as="dir" hint-placeholder-count="4">
                       <button type="button" class="au-zone" data-active="{{ dir.active }}" aria-pressed="{{ dir.pressed }}" onClick="{{ dir.pick }}" style="{{ dir.vars }}" style-hover="border-color: var(--au-pill-line-hover)"><span class="au-zone-num">{{ dir.num }}</span><span class="au-zone-meta">{{ dir.name }}</span></button>
                     </sc-for>
@@ -1022,15 +1120,15 @@
 
                   <div style="display: grid; gap: var(--au-s-3); align-content: start;">
                     <label style="display: grid; gap: 6px;">
-                      <span style="{{ labelStyle }}">Imię i nazwisko <span aria-hidden="true" style="color: var(--au-accent-soft);">*</span></span>
-                      <input type="text" name="name" autoComplete="name" aria-required="true" aria-invalid="{{ invalid.name }}" value="{{ form.name }}" onChange="{{ setName }}" placeholder="np. Anna Kowalska" style="{{ nameFieldStyle }}" style-focus="border-color: var(--au-accent-line); background: var(--au-field-bg-focus)" />
+                      <span style="{{ labelStyle }}">{{ t.fName }} <span aria-hidden="true" style="color: var(--au-accent-soft);">*</span></span>
+                      <input type="text" name="name" autoComplete="name" aria-required="true" aria-invalid="{{ invalid.name }}" value="{{ form.name }}" onChange="{{ setName }}" placeholder="{{ t.phName }}" style="{{ nameFieldStyle }}" style-focus="border-color: var(--au-accent-line); background: var(--au-field-bg-focus)" />
                     </label>
                     <label style="display: grid; gap: 6px;">
-                      <span style="{{ labelStyle }}">E-mail <span aria-hidden="true" style="color: var(--au-accent-soft);">*</span></span>
-                      <input type="email" name="email" autoComplete="email" aria-required="true" aria-invalid="{{ invalid.email }}" value="{{ form.email }}" onChange="{{ setEmail }}" placeholder="np. anna@firma.pl" style="{{ emailFieldStyle }}" style-focus="border-color: var(--au-accent-line); background: var(--au-field-bg-focus)" />
+                      <span style="{{ labelStyle }}">{{ t.fEmail }} <span aria-hidden="true" style="color: var(--au-accent-soft);">*</span></span>
+                      <input type="email" name="email" autoComplete="email" aria-required="true" aria-invalid="{{ invalid.email }}" value="{{ form.email }}" onChange="{{ setEmail }}" placeholder="{{ t.phEmail }}" style="{{ emailFieldStyle }}" style-focus="border-color: var(--au-accent-line); background: var(--au-field-bg-focus)" />
                     </label>
                     <div role="group" aria-labelledby="au-kind-label" style="display: grid; gap: 6px;">
-                      <span id="au-kind-label" style="{{ labelStyle }}">Rodzaj projektu</span>
+                      <span id="au-kind-label" style="{{ labelStyle }}">{{ t.fKind }}</span>
                       <div style="display: flex; flex-wrap: wrap; gap: 7px;">
                         <sc-for list="{{ kinds }}" as="kind" hint-placeholder-count="5">
                           <button type="button" onClick="{{ kind.pick }}" data-interactive="true" aria-pressed="{{ kind.pressed }}" style="{{ kind.style }}" style-hover="border-color: var(--au-pill-line-hover); color: var(--au-link-hover)">{{ kind.label }}</button>
@@ -1041,8 +1139,8 @@
 
                   <div style="display: grid; gap: var(--au-s-3); align-content: start;">
                     <label style="display: grid; gap: 6px;">
-                      <span style="{{ labelStyle }}">Czego potrzebujesz? <span aria-hidden="true" style="color: var(--au-accent-soft);">*</span></span>
-                      <textarea name="message" aria-required="true" aria-invalid="{{ invalid.message }}" value="{{ form.message }}" onChange="{{ setMessage }}" rows="4" placeholder="Krótko: co ma robić strona, na kiedy, jaki budżet." style="{{ messageFieldStyle }}" style-focus="border-color: var(--au-accent-line); background: var(--au-field-bg-focus)"></textarea>
+                      <span style="{{ labelStyle }}">{{ t.fMessage }} <span aria-hidden="true" style="color: var(--au-accent-soft);">*</span></span>
+                      <textarea name="message" aria-required="true" aria-invalid="{{ invalid.message }}" value="{{ form.message }}" onChange="{{ setMessage }}" rows="4" placeholder="{{ t.phMessage }}" style="{{ messageFieldStyle }}" style-focus="border-color: var(--au-accent-line); background: var(--au-field-bg-focus)"></textarea>
                       <span style="font-size: 16px; font-weight: 300; letter-spacing: 0.02em; color: var(--au-muted);">{{ counter }}</span>
                     </label>
 
@@ -1054,7 +1152,7 @@
                           <path d="M4 12.5 L9.5 18 L20 6.5" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" style="{{ tickStyle }}"></path>
                         </svg>
                       </span>
-                      <span style="font-size: 18px; font-weight: 300; line-height: 1.45; color: var(--au-body);">Zgadzam się na kontakt w sprawie tego zapytania. <span aria-hidden="true" style="color: var(--au-accent-soft);">*</span></span>
+                      <span style="font-size: 18px; font-weight: 300; line-height: 1.45; color: var(--au-body);">{{ t.fConsent }} <span aria-hidden="true" style="color: var(--au-accent-soft);">*</span></span>
                     </label>
 
                     <div style="display: grid; gap: var(--au-s-2);">
@@ -1070,9 +1168,9 @@
                 <span aria-hidden="true" class="au-gl au-gl-hair"></span>
                 <span aria-hidden="true" class="au-gl au-gl-sheen"></span>
                 <span aria-hidden="true" class="au-gl au-gl-vig"></span>
-                <h3 class="au-eyebrow" id="au-sum-title">PODSUMOWANIE</h3>
+                <h3 class="au-eyebrow" id="au-sum-title">{{ t.summary }}</h3>
                 <dl class="au-sum-row">
-                  <dt class="au-label">Rodzaj projektu</dt>
+                  <dt class="au-label">{{ t.fKind }}</dt>
                   <dd>{{ summary.kind }}</dd>
                 </dl>
                 <ul class="au-checks">
@@ -1143,11 +1241,11 @@
              plays in by itself once the page has been read to the bottom:
              WSTECZ to the previous route (from the 2nd on), DALEJ to the next
              (on the last route it leads back to START). -->
-        <nav class="au-dock" data-show="{{ dock.show }}" aria-label="Poprzednia i następna sekcja">
+        <nav class="au-dock" data-show="{{ dock.show }}" aria-label="{{ t.dockAria }}">
           <sc-if value="{{ dock.hasPrev }}" hint-placeholder-val="{{ false }}">
             <a class="au-dock-btn au-dock-btn--prev" href="{{ dock.prevHref }}" onClick="{{ dock.prevGo }}">
               <span class="au-dock-arrow" aria-hidden="true">←</span>
-              <span class="au-dock-copy"><span class="au-dock-kicker">WSTECZ · {{ dock.prevNum }}</span><span class="au-dock-label">{{ dock.prevLabel }}</span></span>
+              <span class="au-dock-copy"><span class="au-dock-kicker">{{ t.back }} · {{ dock.prevNum }}</span><span class="au-dock-label">{{ dock.prevLabel }}</span></span>
             </a>
           </sc-if>
           <a class="au-dock-btn au-dock-btn--next" href="{{ dock.nextHref }}" onClick="{{ dock.nextGo }}">
@@ -1156,7 +1254,7 @@
           </a>
         </nav>
         <div class="au-legal">
-          <nav aria-label="Podstrony — stopka">
+          <nav aria-label="{{ t.footerNavAria }}">
             <ul class="au-navlist">
               <sc-for list="{{ routeLinks }}" as="link" hint-placeholder-count="5">
                 <li><a class="au-navlink" href="{{ link.href }}" aria-current="{{ link.current }}" onClick="{{ link.open }}" style-hover="color: var(--au-link-hover)">{{ link.label }}</a></li>
@@ -1170,7 +1268,7 @@
               <sc-if value="{{ contact.hasPhone }}" hint-placeholder-val="{{ false }}"><a href="{{ contact.tel }}">{{ contact.phone }}</a></sc-if>
             </address>
           </sc-if>
-          <ul class="au-socials" aria-label="Auvelio w sieci">
+          <ul class="au-socials" aria-label="{{ t.socialsAria }}">
             <sc-for list="{{ socials }}" as="so" hint-placeholder-count="5">
               <li><a class="au-social" href="{{ so.href }}" target="_blank" rel="noopener noreferrer" aria-label="{{ so.label }}"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true"><path d="{{ so.d }}" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path></svg></a></li>
             </sc-for>
@@ -1186,20 +1284,88 @@
 
     <!-- mobile menu: full overlay, focus-trapped, Escape closes -->
     <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
-    <div id="au-menu" ref="{{ menuRef }}" class="au-menu" role="dialog" aria-modal="true" aria-label="Menu" onKeyDown="{{ menuKey }}">
+    <div id="au-menu" ref="{{ menuRef }}" class="au-menu" role="dialog" aria-modal="true" aria-label="{{ t.menu }}" onKeyDown="{{ menuKey }}">
       <div class="au-menu-panel au-glass">
         <span aria-hidden="true" class="au-gl au-gl-hair"></span>
         <span aria-hidden="true" class="au-gl au-gl-sheen"></span>
         <span aria-hidden="true" class="au-gl au-gl-vig"></span>
-        <button type="button" class="au-menu-close" aria-label="Zamknij menu" onClick="{{ closeMenu }}"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true"><path d="M5 5 L19 19 M19 5 L5 19" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"></path></svg></button>
-        <nav aria-label="Podstrony — menu">
+        <button type="button" class="au-menu-close" aria-label="{{ t.closeMenu }}" onClick="{{ closeMenu }}"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true"><path d="M5 5 L19 19 M19 5 L5 19" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"></path></svg></button>
+        <nav aria-label="{{ t.menuNavAria }}">
           <ul class="au-navlist">
             <sc-for list="{{ routeLinks }}" as="link" hint-placeholder-count="5">
               <li><a class="au-navlink" href="{{ link.href }}" aria-current="{{ link.current }}" onClick="{{ link.open }}">{{ link.label }}</a></li>
             </sc-for>
           </ul>
         </nav>
-        <button type="button" class="au-pill" onClick="{{ goStart }}">← START</button>
+        <button type="button" class="au-pill" onClick="{{ goStart }}">{{ t.start }}</button>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- QUOTE DIALOG — "ZAPYTAJ O WYCENĘ" on a service card opens this in
+         place (no navigation). Same architecture as the mobile menu: gated by
+         state, glass recipe, own focus trap, a branch in the global Escape
+         handler, backdrop click closes, focus returns to the exact card CTA
+         that opened it. Submits through the SAME path as the KONTAKT form. -->
+    <sc-if value="{{ quote.open }}" hint-placeholder-val="{{ false }}">
+    <div class="au-modal" data-closing="{{ quote.closing }}" onClick="{{ quoteBackdrop }}">
+      <div id="au-quote" ref="{{ quoteRef }}" class="au-modal-panel au-glass" role="dialog" aria-modal="true" aria-labelledby="au-quote-title" aria-describedby="au-quote-sub" data-ok="{{ quote.okFlag }}" data-closing="{{ quote.closing }}" onClick="{{ stopProp }}" onKeyDown="{{ quoteKey }}">
+        <span aria-hidden="true" class="au-gl au-gl-hair"></span>
+        <span aria-hidden="true" class="au-gl au-gl-sheen"></span>
+        <span aria-hidden="true" class="au-gl au-gl-vig"></span>
+        <span aria-hidden="true" class="au-gl au-quote-flare"></span>
+        <button type="button" class="au-modal-close" aria-label="{{ t.close }}" onClick="{{ closeQuote }}"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true"><path d="M6 6 L18 18 M18 6 L6 18" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"></path></svg></button>
+        <p class="au-quote-chip" style="{{ quote.chipVars }}"><span class="au-quote-chip-dot" aria-hidden="true"></span><span class="au-quote-chip-k">{{ t.service }}</span><span class="au-quote-chip-v">{{ quote.service }}</span></p>
+        <h2 id="au-quote-title" class="au-modal-title">{{ t.quoteTitle }}</h2>
+        <p id="au-quote-sub" class="au-modal-sub">{{ quote.sub }}</p>
+        <form onSubmit="{{ submitQuote }}" noValidate="true" aria-describedby="au-quote-status" class="au-quote-form">
+          <div class="au-quote-row">
+            <label style="display: grid; gap: 6px;">
+              <span style="{{ labelStyle }}">{{ t.fName }} <span aria-hidden="true" style="color: var(--au-accent-soft);">*</span></span>
+              <input type="text" name="name" autoComplete="name" aria-required="true" aria-invalid="{{ quote.invalid.name }}" value="{{ quote.form.name }}" onChange="{{ qSetName }}" placeholder="{{ t.phName }}" style="{{ quote.nameStyle }}" style-focus="border-color: var(--au-accent-line); background: var(--au-field-bg-focus)" />
+            </label>
+            <label style="display: grid; gap: 6px;">
+              <span style="{{ labelStyle }}">{{ t.fEmail }} <span aria-hidden="true" style="color: var(--au-accent-soft);">*</span></span>
+              <input type="email" name="email" autoComplete="email" aria-required="true" aria-invalid="{{ quote.invalid.email }}" value="{{ quote.form.email }}" onChange="{{ qSetEmail }}" placeholder="{{ t.phEmail }}" style="{{ quote.emailStyle }}" style-focus="border-color: var(--au-accent-line); background: var(--au-field-bg-focus)" />
+            </label>
+          </div>
+          <label style="display: grid; gap: 6px;">
+            <span style="{{ labelStyle }}">{{ t.fMessage }} <span aria-hidden="true" style="color: var(--au-accent-soft);">*</span></span>
+            <textarea name="message" aria-required="true" aria-invalid="{{ quote.invalid.message }}" value="{{ quote.form.message }}" onChange="{{ qSetMessage }}" rows="3" placeholder="{{ t.phMessage }}" style="{{ quote.messageStyle }}" style-focus="border-color: var(--au-accent-line); background: var(--au-field-bg-focus)"></textarea>
+          </label>
+          <label class="au-consent">
+            <input type="checkbox" name="consent" aria-required="true" aria-invalid="{{ quote.invalid.consent }}" checked="{{ quote.form.consent }}" onChange="{{ qSetConsent }}" />
+            <span aria-hidden="true" style="{{ quote.boxStyle }}">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" style="display: block;">
+                <path d="M4 12.5 L9.5 18 L20 6.5" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" style="{{ quote.tickStyle }}"></path>
+              </svg>
+            </span>
+            <span style="font-size: 17px; font-weight: 300; line-height: 1.45; color: var(--au-body);">{{ t.fConsent }} <span aria-hidden="true" style="color: var(--au-accent-soft);">*</span></span>
+          </label>
+          <div class="au-quote-foot">
+            <button type="submit" class="au-btn-prime au-btn-prime--form" aria-disabled="{{ quote.sendingAria }}" style="{{ quote.submitStyle }}"><span class="au-comet" aria-hidden="true"></span><span>{{ quote.submitLabel }}</span></button>
+            <a class="au-quote-full" href="#kontakt" onClick="{{ quoteToFull }}">{{ t.fullForm }} <span>→ {{ t.fullFormLink }}</span></a>
+          </div>
+          <span id="au-quote-status" role="status" aria-live="polite" style="{{ quote.statusStyle }}">{{ quote.status }}</span>
+        </form>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- LANGUAGE SHEET — compact, anchored under the header trigger (a Sheet
+         in behaviour: directional spring entry from the trigger's corner, not
+         a full-height edge panel). Same overlay architecture as the dialog. -->
+    <sc-if value="{{ langOpen }}" hint-placeholder-val="{{ false }}">
+    <div class="au-sheet-scrim" data-closing="{{ langClosing }}" onClick="{{ langBackdrop }}">
+      <div id="au-lang" ref="{{ langRef }}" class="au-lang-sheet au-glass" role="dialog" aria-modal="true" aria-labelledby="au-lang-title" data-closing="{{ langClosing }}" onClick="{{ stopProp }}" onKeyDown="{{ langKey }}">
+        <span aria-hidden="true" class="au-gl au-gl-hair"></span>
+        <span aria-hidden="true" class="au-gl au-gl-sheen"></span>
+        <p id="au-lang-title" class="au-lang-title">{{ t.langTitle }}</p>
+        <ul class="au-lang-list">
+          <sc-for list="{{ langs }}" as="lg" hint-placeholder-count="3">
+            <li><button type="button" class="au-lang-row" lang="{{ lg.code }}" aria-current="{{ lg.current }}" onClick="{{ lg.pick }}"><svg class="au-flag" viewBox="0 0 30 20" aria-hidden="true"><path d="{{ lg.f.p0.d }}" fill="{{ lg.f.p0.fill }}" stroke="{{ lg.f.p0.stroke }}" strokeWidth="{{ lg.f.p0.sw }}"></path><path d="{{ lg.f.p1.d }}" fill="{{ lg.f.p1.fill }}" stroke="{{ lg.f.p1.stroke }}" strokeWidth="{{ lg.f.p1.sw }}"></path><path d="{{ lg.f.p2.d }}" fill="{{ lg.f.p2.fill }}" stroke="{{ lg.f.p2.stroke }}" strokeWidth="{{ lg.f.p2.sw }}"></path><path d="{{ lg.f.p3.d }}" fill="{{ lg.f.p3.fill }}" stroke="{{ lg.f.p3.stroke }}" strokeWidth="{{ lg.f.p3.sw }}"></path><path d="{{ lg.f.p4.d }}" fill="{{ lg.f.p4.fill }}" stroke="{{ lg.f.p4.stroke }}" strokeWidth="{{ lg.f.p4.sw }}"></path></svg><span class="au-lang-name">{{ lg.name }}</span><span class="au-lang-code" aria-hidden="true">{{ lg.CODE }}</span><svg class="au-lang-check" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5 L10 17.5 L19 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"></path></svg></button></li>
+          </sc-for>
+        </ul>
       </div>
     </div>
     </sc-if>
@@ -1776,14 +1942,6 @@ function makeServiceTexture(THREE, item, scale) {
   return texture;
 }
 
-const KINDS = [
-  { key: 'wizytowka', label: 'Wizytówka' },
-  { key: 'firmowa', label: 'Strona firmowa' },
-  { key: 'sklep', label: 'Sklep' },
-  { key: 'webgl', label: '3D / WebGL' },
-  { key: 'inne', label: 'Jeszcze nie wiem' }
-];
-
 /* one field style, red-tinted when that field is the blocking error
    (values now read from the --au-field-* tokens, same colours as before) */
 const field = bad => ({
@@ -1795,63 +1953,9 @@ const field = bad => ({
   transition: 'border-color 200ms ease, background 200ms ease'
 });
 
-const SECTIONS = {
-  uslugi: {
-    title: 'Usługi',
-    lead: 'Budujemy strony na każdym poziomie złożoności — od jednostronicowej wizytówki, która ma po prostu działać i szybko się ładować, po interaktywne doświadczenia 3D w WebGL. Zakres dobieramy do celu, nie do mody.',
-    items: [
-      { name: 'Strona wizytówka', meta: 'OD 1 STRONY', desc: 'Jedna dobrze zaprojektowana strona: kim jesteś, co robisz, jak się skontaktować. Responsywna, szybka, gotowa do indeksowania w Google.', swatch: '#35c8f0' },
-      { name: 'Strona firmowa', meta: '4–12 PODSTRON', desc: 'Pełna struktura: oferta, realizacje, zespół, kontakt, blog. Panel do samodzielnej edycji treści i podstawowa optymalizacja SEO.', swatch: '#4fd6c8' },
-      { name: 'Landing page sprzedażowy', meta: 'KAMPANIE', desc: 'Jedna strona pod konkretną kampanię: czytelna argumentacja, formularz, integracja z analityką i systemem mailingowym.', swatch: '#5ab8ff' },
-      { name: 'Sklep internetowy', meta: 'E-COMMERCE', desc: 'Katalog, koszyk, płatności online, wysyłka i faktury. Wdrożenie na sprawdzonym silniku, bez eksperymentów na Twoim budżecie.', swatch: '#7ee0a8' },
-      { name: 'Animacje i WebGL', meta: 'ZAAWANSOWANE', desc: 'Scroll-telling, konfiguratory produktu, shadery i scenografia 3D w przeglądarce — bez wtyczek, na Three.js.', swatch: '#b08cff' },
-      { name: 'Redesign, audyt i opieka', meta: 'ISTNIEJĄCE STRONY', desc: 'Przegląd wydajności i dostępności, poprawki uszeregowane według wpływu na wynik, a potem stały pakiet zmian i monitoring.', swatch: '#ffb35a' },
-      // added 2026-09-24 at the owner's request (custom apps, Telegram bots)
-      { name: 'Aplikacja na zamówienie', meta: 'WEB I MOBILE', desc: 'Oprogramowanie dopasowane do sposobu pracy firmy: panel klienta, rezerwacje, system zamówień. Projekt, wdrożenie i dalszy rozwój — bez gotowego szablonu.', swatch: '#35c8f0' },
-      { name: 'Bot na Telegramie', meta: 'AUTOMATYZACJA', desc: 'Zamówienia, powiadomienia i obsługa klienta prosto w komunikatorze. Połączony ze stroną lub sklepem, odpowiada o każdej porze.', swatch: '#5ab8ff' }
-    ]
-  },
-  portfolio: {
-    title: 'Portfolio',
-    lead: 'Cztery studia stylu zamiast realizacji — każdy odłamek pokazuje, jak dopasowujemy język wizualny do marki. Miejsca gotowe do podmiany na prawdziwe realizacje.',
-    /* The four names used to be real third-party trademarks — not
-       shippable on a commercial site even as "style studies". They are now
-       original direction names drawn from each study's own description;
-       meta, desc, swatch and dark are untouched. */
-    items: [
-      { name: 'Czyste światło', meta: 'STUDIUM STYLU · MINIMAL', desc: 'Czysta siatka, biel i światło, produkt w centrum — zero szumu wokół.', swatch: ['#f2f4f6', '#c7ccd3'], dark: true },
-      { name: 'Chłodny obwód', meta: 'STUDIUM STYLU · TECH', desc: 'Chłodny granat i elektryczny akcent, mocna siatka produktowa.', swatch: ['#0a2a52', '#1665c9'] },
-      { name: 'Skala plakatu', meta: 'STUDIUM STYLU · KINO', desc: 'Czerń, czerwień i duży kontrast — plakatowa, kinowa skala.', swatch: ['#150404', '#9a0f14'] },
-      { name: 'Mrok i karmazyn', meta: 'STUDIUM STYLU · GAMEDEV', desc: 'Mrok, karmazyn i surowa typografia — klimat gry, nie strony firmowej.', swatch: ['#170406', '#7a0f1c'] }
-    ]
-  },
-  proces: {
-    title: 'Proces',
-    lead: 'Cztery etapy, jasne punkty decyzyjne, wycena znana przed startem prac.',
-    items: [
-      { name: '1. Rozmowa i zakres', meta: '2–4 DNI', desc: 'Cel strony, grupa odbiorców, konkurencja, lista funkcji i budżet. Na koniec: wycena i harmonogram.', swatch: '#35c8f0' },
-      { name: '2. Projekt', meta: '1–3 TYGODNIE', desc: 'Układ, typografia, kolory i kluczowe ekrany. Dwie rundy poprawek w cenie.', swatch: '#4fd6c8' },
-      { name: '3. Wdrożenie', meta: '2–6 TYGODNI', desc: 'Kodowanie, treści, testy na urządzeniach, wydajność i dostępność.', swatch: '#5ab8ff' },
-      { name: '4. Start i opieka', meta: 'PO WDROŻENIU', desc: 'Publikacja, analityka, szkolenie z panelu i dalsze zmiany w ramach opieki.', swatch: '#7ee0a8' }
-    ]
-  },
-  'o-marce': {
-    title: 'O marce',
-    lead: 'AUVELIO WEBSITES to studio projektowania i wdrażania stron internetowych. Pracujemy w małym zespole, prowadzimy niewiele projektów jednocześnie i odpowiadamy za wynik, nie za liczbę godzin.',
-    items: [
-      { name: 'Jak pracujemy', meta: 'ZASADY', desc: 'Jeden opiekun projektu, ustalony zakres, brak niespodzianek w fakturze. Kod i pliki projektowe przechodzą na Twoją własność.' },
-      { name: 'Technologie', meta: 'STACK', desc: 'HTML, CSS i JavaScript pisane ręcznie, Three.js do 3D, sprawdzone silniki CMS i e-commerce tam, gdzie mają sens.' },
-      { name: 'Wydajność i dostępność', meta: 'STANDARD', desc: 'Cel: szybkie ładowanie na telefonie w słabym zasięgu, kontrast zgodny z WCAG AA, obsługa klawiaturą.' }
-    ]
-  },
-  kontakt: {
-    title: 'Kontakt',
-    lead: 'Wypełnij trzy pola i wyślij. Odpowiadamy w ciągu jednego dnia roboczego — pytaniami albo wstępną wyceną.',
-    form: true,
-    items: []
-  }
-};
-
+/* The hero's own nav (and the route keys everywhere). These labels stay
+   Polish in EVERY language: the hero is frozen byte-for-byte, so the
+   language switcher only ever touches the sub-pages (see I18N below). */
 const LINKS = [
   { label: 'USŁUGI', key: 'uslugi' },
   { label: 'PORTFOLIO', key: 'portfolio' },
@@ -1861,40 +1965,474 @@ const LINKS = [
 ];
 
 /* =========================================================================
-   SUB-PAGE DATA — fields ADDED for the scroll documents. Nothing above was
-   reworded (only the four trademark names were replaced, as flagged).
+   I18N — the sub-pages in Polish, Spanish and English.
+
+   Split in two on purpose:
+   · SECTIONS_BASE holds everything that is NOT language: swatches, the
+     `dark` flag, the form flag, the stack names, item order. One copy.
+   · I18N[lang] holds only human-readable strings. `pl` is the original
+     copy, verbatim (checked string-for-string against the pre-i18n file).
+   useLang(code) builds the active language into the SAME module-level
+   shapes the rest of the file always read — SECTIONS, KINDS, FAQ, RAIL —
+   plus T for interface strings, so the routing / scroll driver /
+   instruments code needed no changes to become multilingual.
+   Route slugs (#uslugi …) are never translated.
    ========================================================================= */
+const LANGS = ['pl', 'es', 'en'];
+const LANG_KEY = 'auvelio-lang';
+const KIND_KEYS = ['wizytowka', 'firmowa', 'sklep', 'webgl', 'inne'];
 
-/* the stack strip on O MARCE — the technologies named, verbatim, in the
-   "Technologie" item's own description; no new claims */
-SECTIONS['o-marce'].stack = ['HTML', 'CSS', 'JavaScript', 'Three.js', 'CMS', 'e-commerce'];
-
-/* FAQ on KONTAKT — the questions are new, every ANSWER is an existing
-   sentence from SECTIONS (referenced, not copied), so nothing is invented */
-const FAQ = [
-  { q: 'Ile trwa realizacja?', a: SECTIONS.proces.items.map(it => it.name + ' — ' + it.meta).join('\n') },
-  { q: 'Kiedy poznam cenę?', a: SECTIONS.proces.lead },
-  { q: 'Ile poprawek jest w cenie?', a: SECTIONS.proces.items[1].desc },
-  { q: 'Czy kod i pliki będą moje?', a: SECTIONS['o-marce'].items[0].desc },
-  { q: 'Jak szybko odpowiadacie?', a: splitLead(SECTIONS.kontakt.lead).rest }
-];
-
-/* progress-rail labels per route — one per [data-step] block, in DOM order */
-const RAIL = {
-  uslugi: SECTIONS.uslugi.items.map(it => it.name),
-  portfolio: SECTIONS.portfolio.items.map(it => it.name),
-  proces: SECTIONS.proces.items.map(it => it.name),
-  'o-marce': SECTIONS['o-marce'].items.map(it => it.name).concat(SECTIONS['o-marce'].items[1].meta),
-  kontakt: ['Formularz', 'Częste pytania']
+const SECTIONS_BASE = {
+  uslugi: { items: [
+    { swatch: '#35c8f0' }, { swatch: '#4fd6c8' }, { swatch: '#5ab8ff' }, { swatch: '#7ee0a8' },
+    { swatch: '#b08cff' }, { swatch: '#ffb35a' },
+    // added 2026-09-24 at the owner's request (custom apps, Telegram bots)
+    { swatch: '#35c8f0' }, { swatch: '#5ab8ff' }
+  ] },
+  // PORTFOLIO names used to be real third-party trademarks — replaced with
+  // original direction names drawn from each study's own description
+  portfolio: { items: [
+    { swatch: ['#f2f4f6', '#c7ccd3'], dark: true },
+    { swatch: ['#0a2a52', '#1665c9'] },
+    { swatch: ['#150404', '#9a0f14'] },
+    { swatch: ['#170406', '#7a0f1c'] }
+  ] },
+  proces: { items: [{ swatch: '#35c8f0' }, { swatch: '#4fd6c8' }, { swatch: '#5ab8ff' }, { swatch: '#7ee0a8' }] },
+  // the stack strip: the technologies named, verbatim, in "Technologie"
+  'o-marce': { items: [{}, {}, {}], stack: ['HTML', 'CSS', 'JavaScript', 'Three.js', 'CMS', 'e-commerce'] },
+  kontakt: { form: true, items: [] }
 };
 
-/* opener sublines, set in the hero's tagline style — composed only of words
-   already on the site (item names / metas / project types), no new claims */
-SECTIONS.uslugi.tagline = 'WIZYTÓWKA · SKLEP · WEBGL';
-SECTIONS.portfolio.tagline = SECTIONS.portfolio.items.map(it => it.meta.replace(/^.*·\s*/, '')).join(' · ');
-SECTIONS.proces.tagline = 'ROZMOWA · PROJEKT · WDROŻENIE · OPIEKA';
-SECTIONS['o-marce'].tagline = SECTIONS['o-marce'].items.map(it => it.meta).join(' · ');
-SECTIONS.kontakt.tagline = KINDS.filter(k => k.key !== 'inne').map(k => k.label.toUpperCase()).join(' · ');
+const I18N = {
+  pl: {
+    name: 'Polski',
+    nav: { uslugi: 'USŁUGI', portfolio: 'PORTFOLIO', proces: 'PROCES', 'o-marce': 'O MARCE', kontakt: 'KONTAKT' },
+    kinds: { wizytowka: 'Wizytówka', firmowa: 'Strona firmowa', sklep: 'Sklep', webgl: '3D / WebGL', inne: 'Jeszcze nie wiem' },
+    sections: {
+      uslugi: {
+        title: 'Usługi',
+        lead: 'Budujemy strony na każdym poziomie złożoności — od jednostronicowej wizytówki, która ma po prostu działać i szybko się ładować, po interaktywne doświadczenia 3D w WebGL. Zakres dobieramy do celu, nie do mody.',
+        tagline: 'WIZYTÓWKA · SKLEP · WEBGL',
+        items: [
+          { name: 'Strona wizytówka', meta: 'OD 1 STRONY', desc: 'Jedna dobrze zaprojektowana strona: kim jesteś, co robisz, jak się skontaktować. Responsywna, szybka, gotowa do indeksowania w Google.' },
+          { name: 'Strona firmowa', meta: '4–12 PODSTRON', desc: 'Pełna struktura: oferta, realizacje, zespół, kontakt, blog. Panel do samodzielnej edycji treści i podstawowa optymalizacja SEO.' },
+          { name: 'Landing page sprzedażowy', meta: 'KAMPANIE', desc: 'Jedna strona pod konkretną kampanię: czytelna argumentacja, formularz, integracja z analityką i systemem mailingowym.' },
+          { name: 'Sklep internetowy', meta: 'E-COMMERCE', desc: 'Katalog, koszyk, płatności online, wysyłka i faktury. Wdrożenie na sprawdzonym silniku, bez eksperymentów na Twoim budżecie.' },
+          { name: 'Animacje i WebGL', meta: 'ZAAWANSOWANE', desc: 'Scroll-telling, konfiguratory produktu, shadery i scenografia 3D w przeglądarce — bez wtyczek, na Three.js.' },
+          { name: 'Redesign, audyt i opieka', meta: 'ISTNIEJĄCE STRONY', desc: 'Przegląd wydajności i dostępności, poprawki uszeregowane według wpływu na wynik, a potem stały pakiet zmian i monitoring.' },
+          { name: 'Aplikacja na zamówienie', meta: 'WEB I MOBILE', desc: 'Oprogramowanie dopasowane do sposobu pracy firmy: panel klienta, rezerwacje, system zamówień. Projekt, wdrożenie i dalszy rozwój — bez gotowego szablonu.' },
+          { name: 'Bot na Telegramie', meta: 'AUTOMATYZACJA', desc: 'Zamówienia, powiadomienia i obsługa klienta prosto w komunikatorze. Połączony ze stroną lub sklepem, odpowiada o każdej porze.' }
+        ]
+      },
+      portfolio: {
+        title: 'Portfolio',
+        lead: 'Cztery studia stylu zamiast realizacji — każdy odłamek pokazuje, jak dopasowujemy język wizualny do marki. Miejsca gotowe do podmiany na prawdziwe realizacje.',
+        items: [
+          { name: 'Czyste światło', meta: 'STUDIUM STYLU · MINIMAL', desc: 'Czysta siatka, biel i światło, produkt w centrum — zero szumu wokół.' },
+          { name: 'Chłodny obwód', meta: 'STUDIUM STYLU · TECH', desc: 'Chłodny granat i elektryczny akcent, mocna siatka produktowa.' },
+          { name: 'Skala plakatu', meta: 'STUDIUM STYLU · KINO', desc: 'Czerń, czerwień i duży kontrast — plakatowa, kinowa skala.' },
+          { name: 'Mrok i karmazyn', meta: 'STUDIUM STYLU · GAMEDEV', desc: 'Mrok, karmazyn i surowa typografia — klimat gry, nie strony firmowej.' }
+        ]
+      },
+      proces: {
+        title: 'Proces',
+        lead: 'Cztery etapy, jasne punkty decyzyjne, wycena znana przed startem prac.',
+        tagline: 'ROZMOWA · PROJEKT · WDROŻENIE · OPIEKA',
+        items: [
+          { name: '1. Rozmowa i zakres', meta: '2–4 DNI', desc: 'Cel strony, grupa odbiorców, konkurencja, lista funkcji i budżet. Na koniec: wycena i harmonogram.' },
+          { name: '2. Projekt', meta: '1–3 TYGODNIE', desc: 'Układ, typografia, kolory i kluczowe ekrany. Dwie rundy poprawek w cenie.' },
+          { name: '3. Wdrożenie', meta: '2–6 TYGODNI', desc: 'Kodowanie, treści, testy na urządzeniach, wydajność i dostępność.' },
+          { name: '4. Start i opieka', meta: 'PO WDROŻENIU', desc: 'Publikacja, analityka, szkolenie z panelu i dalsze zmiany w ramach opieki.' }
+        ]
+      },
+      'o-marce': {
+        title: 'O marce',
+        lead: 'AUVELIO WEBSITES to studio projektowania i wdrażania stron internetowych. Pracujemy w małym zespole, prowadzimy niewiele projektów jednocześnie i odpowiadamy za wynik, nie za liczbę godzin.',
+        items: [
+          { name: 'Jak pracujemy', meta: 'ZASADY', desc: 'Jeden opiekun projektu, ustalony zakres, brak niespodzianek w fakturze. Kod i pliki projektowe przechodzą na Twoją własność.' },
+          { name: 'Technologie', meta: 'STACK', desc: 'HTML, CSS i JavaScript pisane ręcznie, Three.js do 3D, sprawdzone silniki CMS i e-commerce tam, gdzie mają sens.' },
+          { name: 'Wydajność i dostępność', meta: 'STANDARD', desc: 'Cel: szybkie ładowanie na telefonie w słabym zasięgu, kontrast zgodny z WCAG AA, obsługa klawiaturą.' }
+        ]
+      },
+      kontakt: {
+        title: 'Kontakt',
+        lead: 'Wypełnij trzy pola i wyślij. Odpowiadamy w ciągu jednego dnia roboczego — pytaniami albo wstępną wyceną.'
+      }
+    },
+    faq: ['Ile trwa realizacja?', 'Kiedy poznam cenę?', 'Ile poprawek jest w cenie?', 'Czy kod i pliki będą moje?', 'Jak szybko odpowiadacie?'],
+    railKontakt: ['Formularz', 'Częste pytania'],
+    socials: { 'telegram-support': { name: 'Wsparcie', label: 'Wsparcie na Telegramie' } },
+    ui: {
+      brandAria: 'AUVELIO WEBSITES — strona startowa', start: '← START',
+      navAria: 'Podstrony', footerNavAria: 'Podstrony — stopka', menuNavAria: 'Podstrony — menu',
+      menu: 'Menu', closeMenu: 'Zamknij menu', close: 'Zamknij',
+      cue: 'PRZEWIŃ', cueAria: 'Przewiń do treści',
+      eyebrow: (n, of) => 'SEKCJA ' + n + ' Z ' + of,
+      railLabel: title => 'Postęp: ' + title,
+      stage: 'ETAP', directions: 'KIERUNKI',
+      stagesGroup: 'Etapy procesu', directionsGroup: 'Kierunki', shardHint: 'KLIKNIJ ODŁAMEK',
+      askQuote: 'ZAPYTAJ O WYCENĘ',
+      fName: 'Imię i nazwisko', fEmail: 'E-mail', fKind: 'Rodzaj projektu', fMessage: 'Czego potrzebujesz?',
+      fConsent: 'Zgadzam się na kontakt w sprawie tego zapytania.',
+      phName: 'np. Anna Kowalska', phEmail: 'np. anna@firma.pl', phMessage: 'Krótko: co ma robić strona, na kiedy, jaki budżet.',
+      counter: n => n + ' / min. 10 znaków',
+      send: 'WYŚLIJ ZAPYTANIE', sending: 'WYSYŁANIE…', sent: '✓ WYSŁANE',
+      err: {
+        name: 'Podaj imię i nazwisko.', email: 'Podaj poprawny adres e-mail.',
+        message: 'Opisz projekt w kilku słowach — minimum 10 znaków.', consent: 'Zaznacz zgodę na kontakt.'
+      },
+      thanks: first => 'Dziękujemy, ' + first + ' — odpowiemy w ciągu jednego dnia roboczego.',
+      netError: 'Nie udało się wysłać zapytania. Sprawdź połączenie i spróbuj ponownie — wpisane dane zostały w formularzu.',
+      notConnected: 'Formularz nie jest jeszcze podłączony — wiadomość nie została wysłana. Spróbuj ponownie później.',
+      summary: 'PODSUMOWANIE', chkMessage: 'Czego potrzebujesz? (min. 10 znaków)', chkConsent: 'Zgoda na kontakt',
+      srDone: '— gotowe', srTodo: '— do uzupełnienia',
+      faqTitle: 'Częste pytania', channelsTitle: 'Znajdziesz nas też tu', socialsAria: 'Auvelio w sieci',
+      dockAria: 'Poprzednia i następna sekcja', back: 'WSTECZ', next: 'DALEJ', toStart: 'NA POCZĄTEK', startLabel: 'START',
+      langTitle: 'Język', langAria: (code, name) => code + ' · Język: ' + name,
+      quoteTitle: 'Zapytaj o wycenę', service: 'Usługa',
+      fullForm: 'Wolisz pełny formularz?', fullFormLink: 'KONTAKT'
+    }
+  },
+
+  es: {
+    name: 'Español',
+    nav: { uslugi: 'SERVICIOS', portfolio: 'PORTFOLIO', proces: 'PROCESO', 'o-marce': 'NOSOTROS', kontakt: 'CONTACTO' },
+    kinds: { wizytowka: 'Web de presentación', firmowa: 'Web corporativa', sklep: 'Tienda online', webgl: '3D / WebGL', inne: 'Aún no lo sé' },
+    sections: {
+      uslugi: {
+        title: 'Servicios',
+        lead: 'Creamos webs de cualquier nivel de complejidad: desde una web de presentación de una sola página, que simplemente tiene que funcionar y cargar rápido, hasta experiencias interactivas en 3D con WebGL. Ajustamos el alcance al objetivo, no a la moda.',
+        tagline: 'PRESENTACIÓN · TIENDA · WEBGL',
+        items: [
+          { name: 'Web de presentación', meta: 'DESDE 1 PÁGINA', desc: 'Una sola página bien diseñada: quién eres, qué haces y cómo contactarte. Adaptable, rápida y lista para que Google la indexe.' },
+          { name: 'Web corporativa', meta: '4–12 PÁGINAS', desc: 'Estructura completa: servicios, proyectos, equipo, contacto y blog. Panel para editar los contenidos por tu cuenta y SEO básico.' },
+          { name: 'Landing page de ventas', meta: 'CAMPAÑAS', desc: 'Una página para una campaña concreta: argumentos claros, formulario e integración con tu analítica y tu herramienta de email marketing.' },
+          { name: 'Tienda online', meta: 'E-COMMERCE', desc: 'Catálogo, carrito, pagos online, envíos y facturas. Sobre una plataforma probada, sin experimentos con tu presupuesto.' },
+          { name: 'Animación y WebGL', meta: 'AVANZADO', desc: 'Scroll-telling, configuradores de producto, shaders y escenografía 3D en el navegador, sin plugins, con Three.js.' },
+          { name: 'Rediseño, auditoría y soporte', meta: 'WEBS EXISTENTES', desc: 'Revisión de rendimiento y accesibilidad, mejoras ordenadas según su impacto en los resultados y, después, un paquete fijo de cambios y monitorización.' },
+          { name: 'Aplicación a medida', meta: 'WEB Y MÓVIL', desc: 'Software adaptado a la forma de trabajar de tu empresa: área de clientes, reservas, sistema de pedidos. Diseño, desarrollo y evolución, sin plantillas prefabricadas.' },
+          { name: 'Bot de Telegram', meta: 'AUTOMATIZACIÓN', desc: 'Pedidos, notificaciones y atención al cliente directamente en el chat. Conectado a tu web o tienda, responde a cualquier hora.' }
+        ]
+      },
+      portfolio: {
+        title: 'Portfolio',
+        lead: 'Cuatro estudios de estilo en lugar de proyectos: cada fragmento muestra cómo adaptamos el lenguaje visual a la marca. Espacios listos para sustituirse por proyectos reales.',
+        items: [
+          { name: 'Luz limpia', meta: 'ESTUDIO DE ESTILO · MINIMAL', desc: 'Retícula limpia, blanco y luz, el producto en el centro, sin ruido alrededor.' },
+          { name: 'Circuito frío', meta: 'ESTUDIO DE ESTILO · TECH', desc: 'Azul marino frío y un acento eléctrico, con una retícula de producto sólida.' },
+          { name: 'Escala de cartel', meta: 'ESTUDIO DE ESTILO · CINE', desc: 'Negro, rojo y mucho contraste: escala de cartel, de cine.' },
+          { name: 'Sombra y carmesí', meta: 'ESTUDIO DE ESTILO · GAMEDEV', desc: 'Oscuridad, carmesí y tipografía cruda: ambiente de videojuego, no de web corporativa.' }
+        ]
+      },
+      proces: {
+        title: 'Proceso',
+        lead: 'Cuatro fases, puntos de decisión claros y el precio definido antes de empezar.',
+        tagline: 'CONVERSACIÓN · DISEÑO · DESARROLLO · SOPORTE',
+        items: [
+          { name: '1. Conversación y alcance', meta: '2–4 DÍAS', desc: 'Objetivo de la web, público, competencia, lista de funciones y presupuesto disponible. Al final: propuesta económica y calendario.' },
+          { name: '2. Diseño', meta: '1–3 SEMANAS', desc: 'Estructura, tipografía, colores y pantallas clave. Dos rondas de cambios incluidas.' },
+          { name: '3. Desarrollo', meta: '2–6 SEMANAS', desc: 'Programación, contenidos, pruebas en dispositivos, rendimiento y accesibilidad.' },
+          { name: '4. Lanzamiento y soporte', meta: 'TRAS EL LANZAMIENTO', desc: 'Publicación, analítica, formación en el panel y cambios posteriores dentro del plan de soporte.' }
+        ]
+      },
+      'o-marce': {
+        title: 'Nosotros',
+        lead: 'AUVELIO WEBSITES es un estudio de diseño y desarrollo web. Trabajamos en un equipo pequeño, llevamos pocos proyectos a la vez y respondemos por el resultado, no por las horas.',
+        items: [
+          { name: 'Cómo trabajamos', meta: 'PRINCIPIOS', desc: 'Un único responsable del proyecto, un alcance definido y ninguna sorpresa en la factura. El código y los archivos de diseño pasan a ser tuyos.' },
+          { name: 'Tecnología', meta: 'STACK', desc: 'HTML, CSS y JavaScript escritos a mano, Three.js para el 3D y plataformas CMS y e-commerce probadas donde tienen sentido.' },
+          { name: 'Rendimiento y accesibilidad', meta: 'ESTÁNDAR', desc: 'Objetivo: carga rápida en el teléfono incluso con poca cobertura, contraste conforme a WCAG AA y uso completo con teclado.' }
+        ]
+      },
+      kontakt: {
+        title: 'Contacto',
+        lead: 'Completa tres campos y envía. Respondemos en un día laborable, con preguntas o con un presupuesto inicial.'
+      }
+    },
+    faq: ['¿Cuánto dura un proyecto?', '¿Cuándo sabré el precio?', '¿Cuántas rondas de cambios incluye?', '¿El código y los archivos serán míos?', '¿Cuánto tardan en responder?'],
+    railKontakt: ['Formulario', 'Preguntas frecuentes'],
+    socials: { 'telegram-support': { name: 'Soporte', label: 'Soporte en Telegram' } },
+    ui: {
+      brandAria: 'AUVELIO WEBSITES — inicio', start: '← INICIO',
+      navAria: 'Secciones', footerNavAria: 'Secciones — pie de página', menuNavAria: 'Secciones — menú',
+      menu: 'Menú', closeMenu: 'Cerrar menú', close: 'Cerrar',
+      cue: 'DESLIZA', cueAria: 'Ir al contenido',
+      eyebrow: (n, of) => 'SECCIÓN ' + n + ' DE ' + of,
+      railLabel: title => 'Progreso: ' + title,
+      stage: 'FASE', directions: 'DIRECCIONES',
+      stagesGroup: 'Fases del proceso', directionsGroup: 'Direcciones', shardHint: 'HAZ CLIC EN UN FRAGMENTO',
+      askQuote: 'PEDIR PRESUPUESTO',
+      fName: 'Nombre y apellidos', fEmail: 'Email', fKind: 'Tipo de proyecto', fMessage: '¿Qué necesitas?',
+      fConsent: 'Acepto que me contacten en relación con esta consulta.',
+      phName: 'p. ej. Ana García', phEmail: 'p. ej. ana@empresa.com', phMessage: 'En breve: qué debe hacer la web, para cuándo y con qué presupuesto.',
+      counter: n => n + ' / mín. 10 caracteres',
+      send: 'ENVIAR CONSULTA', sending: 'ENVIANDO…', sent: '✓ ENVIADO',
+      err: {
+        name: 'Indica tu nombre y apellidos.', email: 'Indica un email válido.',
+        message: 'Describe el proyecto en pocas palabras (mínimo 10 caracteres).', consent: 'Marca la casilla de consentimiento.'
+      },
+      thanks: first => 'Gracias, ' + first + '. Te responderemos en un día laborable.',
+      netError: 'No se pudo enviar la consulta. Revisa tu conexión e inténtalo de nuevo; lo que escribiste sigue en el formulario.',
+      notConnected: 'El formulario aún no está conectado: el mensaje no se ha enviado. Inténtalo más tarde.',
+      summary: 'RESUMEN', chkMessage: '¿Qué necesitas? (mín. 10 caracteres)', chkConsent: 'Consentimiento de contacto',
+      srDone: '— listo', srTodo: '— pendiente',
+      faqTitle: 'Preguntas frecuentes', channelsTitle: 'También nos encontrarás aquí', socialsAria: 'Auvelio en redes',
+      dockAria: 'Sección anterior y siguiente', back: 'ATRÁS', next: 'SIGUIENTE', toStart: 'AL INICIO', startLabel: 'INICIO',
+      langTitle: 'Idioma', langAria: (code, name) => code + ' · Idioma: ' + name,
+      quoteTitle: 'Pide presupuesto', service: 'Servicio',
+      fullForm: '¿Prefieres el formulario completo?', fullFormLink: 'CONTACTO'
+    }
+  },
+
+  en: {
+    name: 'English',
+    nav: { uslugi: 'SERVICES', portfolio: 'PORTFOLIO', proces: 'PROCESS', 'o-marce': 'ABOUT', kontakt: 'CONTACT' },
+    kinds: { wizytowka: 'Business card site', firmowa: 'Company website', sklep: 'Online shop', webgl: '3D / WebGL', inne: 'Not sure yet' },
+    sections: {
+      uslugi: {
+        title: 'Services',
+        lead: 'We build websites at every level of complexity — from a one-page business card site that simply has to work and load fast, to interactive 3D experiences in WebGL. We match the scope to the goal, not to the trend.',
+        tagline: 'BUSINESS CARD · SHOP · WEBGL',
+        items: [
+          { name: 'Business card site', meta: 'FROM 1 PAGE', desc: 'One well-designed page: who you are, what you do, how to get in touch. Responsive, fast and ready for Google to index.' },
+          { name: 'Company website', meta: '4–12 PAGES', desc: 'The full structure: services, work, team, contact, blog. A panel to edit content yourself, plus core SEO.' },
+          { name: 'Sales landing page', meta: 'CAMPAIGNS', desc: 'One page built for a specific campaign: a clear argument, a form, and integration with your analytics and email platform.' },
+          { name: 'Online shop', meta: 'E-COMMERCE', desc: 'Catalogue, basket, online payments, shipping and invoices. Built on a proven platform — no experiments with your budget.' },
+          { name: 'Animation and WebGL', meta: 'ADVANCED', desc: 'Scroll-telling, product configurators, shaders and 3D scenery in the browser — no plugins, built on Three.js.' },
+          { name: 'Redesign, audit and care', meta: 'EXISTING SITES', desc: 'A performance and accessibility review, fixes ranked by their impact on results, then an ongoing package of changes and monitoring.' },
+          { name: 'Custom application', meta: 'WEB AND MOBILE', desc: 'Software shaped around the way your business works: client portal, bookings, order system. Design, build and ongoing development — no off-the-shelf template.' },
+          { name: 'Telegram bot', meta: 'AUTOMATION', desc: 'Orders, notifications and customer service right inside the messenger. Connected to your site or shop, it answers at any hour.' }
+        ]
+      },
+      portfolio: {
+        title: 'Portfolio',
+        lead: 'Four style studies in place of case studies — each shard shows how we fit a visual language to a brand. Slots ready to be swapped for real projects.',
+        items: [
+          { name: 'Clean light', meta: 'STYLE STUDY · MINIMAL', desc: 'A clean grid, white and light, the product at the centre — zero noise around it.' },
+          { name: 'Cool circuit', meta: 'STYLE STUDY · TECH', desc: 'Cool navy and an electric accent, with a strong product grid.' },
+          { name: 'Poster scale', meta: 'STYLE STUDY · CINEMA', desc: 'Black, red and high contrast — poster-sized, cinematic scale.' },
+          { name: 'Dark and crimson', meta: 'STYLE STUDY · GAMEDEV', desc: 'Darkness, crimson and raw typography — the mood of a game, not a company site.' }
+        ]
+      },
+      proces: {
+        title: 'Process',
+        lead: 'Four stages, clear decision points, a price agreed before work begins.',
+        tagline: 'CONVERSATION · DESIGN · BUILD · CARE',
+        items: [
+          { name: '1. Conversation and scope', meta: '2–4 DAYS', desc: 'The site’s goal, audience, competitors, feature list and budget. At the end: a quote and a schedule.' },
+          { name: '2. Design', meta: '1–3 WEEKS', desc: 'Layout, typography, colour and key screens. Two rounds of revisions included.' },
+          { name: '3. Build', meta: '2–6 WEEKS', desc: 'Code, content, device testing, performance and accessibility.' },
+          { name: '4. Launch and care', meta: 'AFTER LAUNCH', desc: 'Publishing, analytics, panel training and further changes under a care plan.' }
+        ]
+      },
+      'o-marce': {
+        title: 'About',
+        lead: 'AUVELIO WEBSITES is a studio that designs and builds websites. We work as a small team, take on few projects at a time and answer for the result, not the hours.',
+        items: [
+          { name: 'How we work', meta: 'PRINCIPLES', desc: 'One project lead, an agreed scope, no surprises on the invoice. The code and design files become yours.' },
+          { name: 'Technology', meta: 'STACK', desc: 'Hand-written HTML, CSS and JavaScript, Three.js for 3D, and proven CMS and e-commerce platforms where they make sense.' },
+          { name: 'Performance and accessibility', meta: 'STANDARD', desc: 'The target: fast loading on a phone with a weak signal, WCAG AA contrast, full keyboard use.' }
+        ]
+      },
+      kontakt: {
+        title: 'Contact',
+        lead: 'Fill in three fields and send. We reply within one working day — with questions or an initial quote.'
+      }
+    },
+    faq: ['How long does a project take?', 'When will I know the price?', 'How many revisions are included?', 'Will the code and files be mine?', 'How fast do you reply?'],
+    railKontakt: ['Form', 'FAQ'],
+    socials: { 'telegram-support': { name: 'Support', label: 'Support on Telegram' } },
+    ui: {
+      brandAria: 'AUVELIO WEBSITES — home', start: '← START',
+      navAria: 'Sections', footerNavAria: 'Sections — footer', menuNavAria: 'Sections — menu',
+      menu: 'Menu', closeMenu: 'Close menu', close: 'Close',
+      cue: 'SCROLL', cueAria: 'Scroll to content',
+      eyebrow: (n, of) => 'SECTION ' + n + ' OF ' + of,
+      railLabel: title => 'Progress: ' + title,
+      stage: 'STAGE', directions: 'DIRECTIONS',
+      stagesGroup: 'Process stages', directionsGroup: 'Directions', shardHint: 'CLICK A SHARD',
+      askQuote: 'REQUEST A QUOTE',
+      fName: 'Full name', fEmail: 'Email', fKind: 'Project type', fMessage: 'What do you need?',
+      fConsent: 'I agree to be contacted about this enquiry.',
+      phName: 'e.g. Anna Smith', phEmail: 'e.g. anna@company.com', phMessage: 'Briefly: what the site should do, by when, and the budget.',
+      counter: n => n + ' / min. 10 characters',
+      send: 'SEND ENQUIRY', sending: 'SENDING…', sent: '✓ SENT',
+      err: {
+        name: 'Please enter your full name.', email: 'Please enter a valid email address.',
+        message: 'Describe the project in a few words — at least 10 characters.', consent: 'Please tick the consent box.'
+      },
+      thanks: first => 'Thank you, ' + first + ' — we’ll reply within one working day.',
+      netError: 'We couldn’t send your enquiry. Check your connection and try again — what you typed is still in the form.',
+      notConnected: 'The form isn’t connected yet — your message was not sent. Please try again later.',
+      summary: 'SUMMARY', chkMessage: 'What do you need? (min. 10 characters)', chkConsent: 'Consent to contact',
+      srDone: '— done', srTodo: '— to do',
+      faqTitle: 'Frequently asked', channelsTitle: 'Find us here too', socialsAria: 'Auvelio online',
+      dockAria: 'Previous and next section', back: 'BACK', next: 'NEXT', toStart: 'BACK TO START', startLabel: 'START',
+      langTitle: 'Language', langAria: (code, name) => code + ' · Language: ' + name,
+      quoteTitle: 'Request a quote', service: 'Service',
+      fullForm: 'Prefer the full form?', fullFormLink: 'CONTACT'
+    }
+  }
+};
+
+/* builds one language pack into the shapes the rest of the file reads */
+function buildLang(P) {
+  const S = {};
+  for (const key in SECTIONS_BASE) {
+    const base = SECTIONS_BASE[key], txt = P.sections[key];
+    S[key] = Object.assign({ title: txt.title, lead: txt.lead }, base.form ? { form: true } : {}, {
+      items: base.items.map((b, i) => Object.assign({}, txt.items[i], b))
+    });
+    if (base.stack) S[key].stack = base.stack.slice();
+  }
+  const K = KIND_KEYS.map(k => ({ key: k, label: P.kinds[k] }));
+  // opener sublines, set in the hero's tagline style — composed only of words
+  // already on the site (item names / metas / project types), no new claims
+  S.uslugi.tagline = P.sections.uslugi.tagline;
+  S.portfolio.tagline = S.portfolio.items.map(it => it.meta.replace(/^.*·\s*/, '')).join(' · ');
+  S.proces.tagline = P.sections.proces.tagline;
+  S['o-marce'].tagline = S['o-marce'].items.map(it => it.meta).join(' · ');
+  S.kontakt.tagline = K.filter(k => k.key !== 'inne').map(k => k.label.toUpperCase()).join(' · ');
+  // FAQ on KONTAKT — the questions are new, every ANSWER is an existing
+  // sentence of this language's copy (referenced, not re-written)
+  const F = [
+    { q: P.faq[0], a: S.proces.items.map(it => it.name + ' — ' + it.meta).join('\n') },
+    { q: P.faq[1], a: S.proces.lead },
+    { q: P.faq[2], a: S.proces.items[1].desc },
+    { q: P.faq[3], a: S['o-marce'].items[0].desc },
+    { q: P.faq[4], a: splitLead(S.kontakt.lead).rest }
+  ];
+  // progress-rail labels per route — one per [data-step] block, in DOM order
+  const R = {
+    uslugi: S.uslugi.items.map(it => it.name),
+    portfolio: S.portfolio.items.map(it => it.name),
+    proces: S.proces.items.map(it => it.name),
+    'o-marce': S['o-marce'].items.map(it => it.name).concat(S['o-marce'].items[1].meta),
+    kontakt: P.railKontakt.slice()
+  };
+  return { S, K, F, R };
+}
+
+// the ACTIVE language, as the shapes the file has always read
+let LANG = 'pl', SECTIONS, KINDS, FAQ, RAIL, T, NAV, SOCIAL_T;
+function useLang(code) {
+  const P = I18N[code] || I18N.pl;
+  if (!P.built) P.built = buildLang(P);
+  LANG = I18N[code] ? code : 'pl';
+  SECTIONS = P.built.S; KINDS = P.built.K; FAQ = P.built.F; RAIL = P.built.R; T = P.ui;
+  NAV = P.nav; SOCIAL_T = P.socials || {};
+}
+useLang('pl');
+
+/* LANGUAGE DETECTION — synchronous part (the async geo step runs after
+   mount, see detectGeo). Order: an explicit stored choice always wins →
+   otherwise navigator.language (pl* → pl, es* → es, else → en) as the
+   provisional pick → otherwise 'pl'. localStorage can throw (private mode,
+   blocked storage): every access is guarded and a failure only means "no
+   persistence". */
+function readStoredLang() {
+  try { const v = window.localStorage.getItem(LANG_KEY); return LANGS.indexOf(v) >= 0 ? v : null; } catch (_) { return null; }
+}
+function storeLang(code) {
+  try { window.localStorage.setItem(LANG_KEY, code); } catch (_) { /* no persistence, page still works */ }
+}
+function navigatorLang() {
+  try {
+    const primary = (navigator.languages && navigator.languages[0]) || navigator.language;
+    if (!primary) return null;
+    const c = String(primary).slice(0, 2).toLowerCase();
+    return c === 'pl' ? 'pl' : c === 'es' ? 'es' : 'en';
+  } catch (_) { return null; }
+}
+let LANG_SOURCE = 'default';
+function bootLang() {
+  const stored = readStoredLang();
+  if (stored) { LANG_SOURCE = 'stored'; return stored; }
+  const nav = navigatorLang();
+  if (nav) { LANG_SOURCE = 'navigator'; return nav; }
+  return 'pl';
+}
+
+/* IP geolocation — a free, key-less endpoint, only asked when nothing is
+   stored, never awaited before paint (2.2 s abort). Country → language is a
+   best-effort heuristic, not an exhaustive linguistic map. */
+const GEO_ENDPOINT = 'https://get.geojs.io/v1/ip/country.json';
+const GEO_TIMEOUT_MS = 2200;
+const ES_COUNTRIES = ['ES', 'MX', 'AR', 'CO', 'CL', 'PE', 'VE', 'EC', 'GT', 'CU', 'BO', 'DO', 'HN', 'PY', 'SV', 'NI', 'CR', 'PA', 'UY', 'GQ', 'PR'];
+const countryToLang = c => { const u = String(c || '').toUpperCase(); return u === 'PL' ? 'pl' : ES_COUNTRIES.indexOf(u) >= 0 ? 'es' : 'en'; };
+
+/* FLAGS — drawn here as fill/stroke data in a 30×20 box (no emoji: their
+   rendering differs per platform; no files). Five path slots per flag so
+   the template stays a fixed shape; unused slots draw nothing. The Union
+   Jack is geometrically simplified — it only has to read as "UK" at 24 px. */
+const FLAG_EMPTY = { d: 'M0 0', fill: 'none', stroke: 'none', sw: 0 };
+const flagOf = (...parts) => { const f = {}; for (let i = 0; i < 5; i++) f['p' + i] = Object.assign({}, FLAG_EMPTY, parts[i] || {}); return f; };
+const FLAGS = {
+  pl: flagOf({ d: 'M0 0H30V10H0Z', fill: '#ffffff' }, { d: 'M0 10H30V20H0Z', fill: '#dc143c' }),
+  es: flagOf({ d: 'M0 0H30V20H0Z', fill: '#aa151b' }, { d: 'M0 5H30V15H0Z', fill: '#f1bf00' }),
+  en: flagOf(
+    { d: 'M0 0H30V20H0Z', fill: '#012169' },
+    { d: 'M0 0L30 20M30 0L0 20', stroke: '#ffffff', sw: 4 },
+    { d: 'M0 0L30 20M30 0L0 20', stroke: '#c8102e', sw: 1.4 },
+    { d: 'M15 0V20M0 10H30', stroke: '#ffffff', sw: 6 },
+    { d: 'M15 0V20M0 10H30', stroke: '#c8102e', sw: 3.4 }
+  )
+};
+
+/* the enquiry surfaces' shared styles — the KONTAKT form and the quote
+   dialog render the same submit button / status line / consent box */
+const submitStyleOf = (sending, ok) => ({
+  justifySelf: 'start', padding: '16px 32px', borderRadius: 'var(--au-radius-pill)',
+  cursor: sending ? 'progress' : 'pointer',
+  fontFamily: 'var(--au-font)', fontSize: '18px', fontWeight: 400, letterSpacing: 'var(--au-track-button)',
+  // same glass language as every other pill: gradient fill + blur + inset sheen
+  border: '1px solid ' + (ok ? 'var(--au-ok-line)' : 'var(--au-accent-line)'),
+  background: ok ? 'var(--au-pill-bg-ok)' : 'var(--au-pill-bg-on)',
+  backdropFilter: 'var(--au-glass-blur)', WebkitBackdropFilter: 'var(--au-glass-blur)',
+  boxShadow: 'var(--au-button-shadow)',
+  color: 'var(--au-link-hover)',
+  opacity: sending ? 0.75 : 1,
+  transition: 'border-color 220ms ease, background 260ms ease, opacity 200ms ease'
+});
+const statusStyleOf = (status, ok) => ({
+  minHeight: '16px', fontSize: '18px', fontWeight: 300, lineHeight: 1.4,
+  color: ok ? 'var(--au-ok)' : 'var(--au-err)',
+  opacity: status ? 1 : 0,
+  transform: status ? 'none' : 'translateY(-4px)',
+  transition: 'opacity 240ms ease, transform 240ms ease'
+});
+// checkbox: box springs and fills, tick strokes itself in
+const boxStyleOf = (on, bad) => ({
+  flex: 'none', display: 'grid', placeItems: 'center',
+  width: '20px', height: '20px', marginTop: '1px', borderRadius: '6px',
+  border: '1px solid ' + (on ? 'var(--au-accent)' : bad ? 'var(--au-field-line-bad)' : 'var(--au-field-line)'),
+  background: on ? 'var(--au-accent)' : 'var(--au-field-bg)',
+  transform: on ? 'scale(1.06)' : 'scale(1)',
+  transition: 'background 200ms ease, border-color 200ms ease, transform 260ms var(--au-ease-spring)'
+});
+const tickStyleOf = on => ({
+  stroke: 'var(--au-ink-on-accent)',
+  strokeDasharray: 26,
+  strokeDashoffset: on ? 0 : 26,
+  transition: 'stroke-dashoffset 300ms cubic-bezier(0.65,0,0.35,1) 60ms'
+});
+const EMPTY_QFORM = () => ({ name: '', email: '', message: '', consent: false });
+const ENQUIRY_SCOPES = {
+  kontakt: { form: 'form', status: 'status', ok: 'statusOk', err: 'errorField', sending: 'sending' },
+  quote: { form: 'qform', status: 'qStatus', ok: 'qOk', err: 'qError', sending: 'qSending' }
+};
+
+/* one Tab-cycle trap for every overlay (mobile menu, quote dialog, language
+   sheet): Tab / Shift+Tab wrap inside `root`; Escape is handled globally */
+function trapTab(root, e) {
+  if (e.key !== 'Tab' || !root) return;
+  const f = [...root.querySelectorAll('a[href], button:not([disabled]), input:not([type="hidden"]), textarea, select')]
+    .filter(el => el.tabIndex >= 0 && el.offsetParent !== null);
+  if (!f.length) return;
+  const first = f[0], last = f[f.length - 1];
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+}
 
 /* service → the form's project type, so "ZAPYTAJ O WYCENĘ" on a service
    card arrives with it pre-picked; null = no exact match, leave the choice */
@@ -1977,7 +2515,14 @@ class Component extends DCLogic {
     page: null, stepActive: 0, headCompact: false, menuOpen: false, faqOpen: null,
     // route switch phases (out → parked on the far side → glide in) and
     // "the page has been read to the bottom" (shows the end dock)
-    swapIn: false, atEnd: false
+    swapIn: false, atEnd: false,
+    // language (sub-pages only): resolved synchronously before first paint
+    // (stored choice → navigator → 'pl'); geolocation may refine it after mount
+    lang: (() => { const l = bootLang(); useLang(l); return l; })(),
+    langSwap: false, langOpen: false, langClosing: false,
+    // quote dialog: which service opened it, its own form slice
+    quoteOpen: false, quoteClosing: false, quoteSvc: 0, quoteKind: null,
+    qform: EMPTY_QFORM(), qStatus: '', qOk: false, qError: null, qSending: false
   };
 
   // continuous progress, eased in updatePath()/updateRing() — the path's is
@@ -2075,23 +2620,68 @@ class Component extends DCLogic {
   };
   closeMenu = () => this.setState({ menuOpen: false }, () => { if (this.burgerEl) this.burgerEl.focus(); });
   // focus trap: Tab / Shift+Tab cycle inside the overlay (Escape is global)
-  menuKey = e => {
-    if (e.key !== 'Tab' || !this.menuEl) return;
-    const f = [...this.menuEl.querySelectorAll('a[href], button:not([disabled])')];
-    if (!f.length) return;
-    const first = f[0], last = f[f.length - 1];
-    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  menuKey = e => trapTab(this.menuEl, e);
+
+  /* ---------------- OVERLAYS: quote dialog + language sheet ----------------
+     Focus rule, the same for both (and for the menu): on open, focus lands
+     on the control the visitor most likely wants next — the dialog's first
+     field, the sheet's CURRENT language row. On any close path it returns to
+     the element that opened the overlay. */
+  stopProp = e => e.stopPropagation();
+  quoteRef = el => {
+    this.quoteEl = el;
+    if (el) requestAnimationFrame(() => { const f = el.querySelector('input'); if (f) f.focus({ preventScroll: true }); });
   };
+  quoteKey = e => trapTab(this.quoteEl, e);
+  closeQuote = () => this.closeOverlay('quote');
+  quoteBackdrop = e => { if (e.target === e.currentTarget) this.closeQuote(); };
+  submitQuote = e => this.submitEnquiry(e, 'quote');
+  qSetName = e => this.setQField('name', e.target.value);
+  qSetEmail = e => this.setQField('email', e.target.value);
+  qSetMessage = e => this.setQField('message', e.target.value);
+  qSetConsent = e => this.setQField('consent', e.target.checked);
+  // "prefer the full form?" — carry what was typed over to KONTAKT
+  quoteToFull = e => {
+    if (e) e.preventDefault();
+    const q = this.state.qform, kind = this.state.quoteKind;
+    this.setState(s => ({
+      form: Object.assign({}, s.form, { name: q.name, email: q.email, message: q.message, consent: q.consent }, kind ? { kind } : {}),
+      quoteOpen: false, quoteClosing: false
+    }));
+    if (this.scrollMemory) this.scrollMemory.kontakt = 0;
+    this.navigate('kontakt');
+  };
+
+  langBtnRef = el => { this.langBtnEl = el; };
+  langRef = el => {
+    this.langEl = el;
+    if (el) requestAnimationFrame(() => { const cur = el.querySelector('[aria-current="true"]') || el.querySelector('button'); if (cur) cur.focus({ preventScroll: true }); });
+  };
+  langKey = e => trapTab(this.langEl, e);
+  openLang = () => {
+    if (this.state.langOpen) return this.closeLang();
+    clearTimeout(this._close_lang);
+    this.setState({ langOpen: true, langClosing: false, menuOpen: false });
+  };
+  closeLang = () => this.closeOverlay('lang');
+  langBackdrop = e => { if (e.target === e.currentTarget) this.closeLang(); };
+  langPickers = Object.fromEntries(LANGS.map(c => [c, () => this.pickLang(c)]));
   // one jumper per step index, shared by the rail and the instrument zones
   stepJumpers = Array.from({ length: 12 }, (_, i) => e => { if (e) e.preventDefault(); this.scrollToStep(i); });
   cueJump = e => { if (e) e.preventDefault(); this.scrollToStep(0); };
   // conversion shortcuts: a service card / a project-type chip goes straight
   // to the form with the matching project type already chosen
+  // "ZAPYTAJ O WYCENĘ" on service card i: opens the quote dialog in place
+  // (it used to navigate to #kontakt). The kind is still tagged — on the
+  // dialog AND on the KONTAKT form, so "full form" arrives pre-picked.
   askers = SECTIONS.uslugi.items.map((_, i) => e => {
     if (e) e.preventDefault();
-    if (USLUGI_KIND[i]) this.setField('kind', USLUGI_KIND[i]);
-    this.routeOpeners.kontakt();
+    this.quoteTriggerEl = e && e.currentTarget ? e.currentTarget : null;
+    const kind = USLUGI_KIND[i];
+    if (kind) this.setField('kind', kind);
+    clearTimeout(this._close_quote); clearTimeout(this._qAuto);
+    this.setState({ quoteOpen: true, quoteClosing: false, quoteSvc: i, quoteKind: kind,
+      qStatus: '', qOk: false, qError: null, langOpen: false, menuOpen: false });
   });
   shardPickers = SECTIONS.portfolio.items.map((_, i) => () => this.pickShard(i));
   faqTogglers = FAQ.map((_, i) => () => this.setState(s => ({ faqOpen: s.faqOpen === i ? null : i })));
@@ -2112,57 +2702,85 @@ class Component extends DCLogic {
     }));
   }
 
+  /* the quote dialog's own form slice — same shape, same reset rules */
+  setQField(key, value) {
+    this.setState(s => ({
+      qform: Object.assign({}, s.qform, { [key]: value }),
+      qStatus: '', qOk: false,
+      qError: s.qError === key ? null : s.qError
+    }));
+  }
+
   /* front-end validation only — a real backend still has to validate.
-     One error at a time, the offending field is highlighted. The rules and
-     messages are exactly the old ones; what changed is that a valid form is
-     now actually POSTed (see FORM_ENDPOINT) instead of a 700 ms timeout
-     that claimed success without sending anything. */
-  handleSubmit(e) {
-    e.preventDefault();
-    if (this.state.sending) return;
-    const f = this.state.form;
-    const fail = (errorField, status) => {
-      if (this.orbs && this.orbs.kontakt) this.orbs.kontakt.pulse = 1;
-      this.setState({ errorField, status, statusOk: false });
-    };
-    if (!f.name.trim()) return fail('name', 'Podaj imię i nazwisko.');
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.email)) return fail('email', 'Podaj poprawny adres e-mail.');
-    if (f.message.trim().length < 10) return fail('message', 'Opisz projekt w kilku słowach — minimum 10 znaków.');
-    if (!f.consent) return fail('consent', 'Zaznacz zgodę na kontakt.');
-    // optimistic: the button flips to WYSYŁANIE… and the orb pulses at once
-    this.setState({ sending: true, errorField: null, status: '' });
-    if (this.orbs && this.orbs.kontakt) this.orbs.kontakt.pulse = 1;
-    this.sendEnquiry(f).then(() => {
-      if (this.orbs && this.orbs.kontakt) this.orbs.kontakt.flare = 1;
-      this.setState({
-        sending: false, statusOk: true,
-        status: 'Dziękujemy, ' + f.name.trim().split(' ')[0] + ' — odpowiemy w ciągu jednego dnia roboczego.'
-      });
+     ONE rule set and ONE message set (in the active language) for both
+     enquiry surfaces; one error at a time, first failing field first. */
+  validateEnquiry(f) {
+    if (!f.name.trim()) return ['name', T.err.name];
+    if (!EMAIL_RE.test(f.email)) return ['email', T.err.email];
+    if (f.message.trim().length < 10) return ['message', T.err.message];
+    if (!f.consent) return ['consent', T.err.consent];
+    return null;
+  }
+
+  /* ONE submission path for the KONTAKT page and the quote dialog: same
+     validation, same messages, same endpoint (sendEnquiry). `which` only
+     picks the slice of state to read and write. */
+  submitEnquiry(e, which) {
+    if (e) e.preventDefault();
+    const S = ENQUIRY_SCOPES[which], st = this.state;
+    if (st[S.sending]) return;
+    const f = st[S.form];
+    const orb = which === 'kontakt' && this.orbs && this.orbs.kontakt ? this.orbs.kontakt : null;
+    const bad = this.validateEnquiry(f);
+    if (bad) {
+      if (orb) orb.pulse = 1;
+      return this.setState({ [S.err]: bad[0], [S.status]: bad[1], [S.ok]: false });
+    }
+    // optimistic: the button flips to "sending" and the orb pulses at once
+    this.setState({ [S.sending]: true, [S.err]: null, [S.status]: '' });
+    if (orb) orb.pulse = 1;
+    const meta = which === 'quote'
+      ? { kind: st.quoteKind, service: st.quoteSvc, source: 'wycena' }
+      : { kind: f.kind, service: null, source: 'kontakt' };
+    this.sendEnquiry(f, meta).then(() => {
+      if (orb) orb.flare = 1;
+      this.setState({ [S.sending]: false, [S.ok]: true, [S.status]: T.thanks(f.name.trim().split(' ')[0]) });
+      // the dialog closes itself a beat after success; the visitor stays
+      // exactly where they were (no navigation)
+      if (which === 'quote') {
+        clearTimeout(this._qAuto);
+        this._qAuto = setTimeout(() => { if (this.state.quoteOpen && this.state.qOk) this.closeQuote(); }, 2600);
+      }
     }, err => {
       // a real error state: nothing is cleared, the visitor can simply retry
-      this.setState({
-        sending: false, statusOk: false,
-        status: (err && err.userMessage) || 'Nie udało się wysłać zapytania. Sprawdź połączenie i spróbuj ponownie — wpisane dane zostały w formularzu.'
-      });
+      this.setState({ [S.sending]: false, [S.ok]: false, [S.status]: (err && err.userMessage) || T.netError });
     });
   }
 
-  sendEnquiry(f) {
+  handleSubmit(e) { this.submitEnquiry(e, 'kontakt'); }
+
+  sendEnquiry(f, meta) {
+    meta = meta || { kind: f.kind, service: null, source: 'kontakt' };
     if (!FORM_ENDPOINT) {
       console.warn('[Auvelio] FORM_ENDPOINT is empty — the enquiry was NOT sent. Set it in the CONTACT FORM ENDPOINT block.');
       const err = new Error('FORM_ENDPOINT not configured');
-      err.userMessage = 'Formularz nie jest jeszcze podłączony — wiadomość nie została wysłana. Spróbuj ponownie później.';
+      err.userMessage = T.notConnected;
       return Promise.reject(err);
     }
-    const kind = (KINDS.find(k => k.key === f.kind) || KINDS[0]).label;
+    // the e-mail goes to the owner, so it is always written in Polish,
+    // whatever language the visitor browsed in (theirs travels in `lang`)
+    const PL = I18N.pl.built;
+    const kind = meta.kind ? (PL.K.find(k => k.key === meta.kind) || PL.K[0]).label : '';
+    const service = meta.service != null && PL.S.uslugi.items[meta.service] ? PL.S.uslugi.items[meta.service].name : '';
     const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
     const timer = ctrl ? setTimeout(() => ctrl.abort(), FORM_TIMEOUT_MS) : 0;
     return fetch(FORM_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify(Object.assign({}, FORM_EXTRA_FIELDS, {
-        name: f.name.trim(), email: f.email.trim(), kind, message: f.message.trim(), consent: 'tak',
-        subject: 'Zapytanie ze strony — ' + kind
+        name: f.name.trim(), email: f.email.trim(), kind, service, message: f.message.trim(), consent: 'tak',
+        lang: LANG, source: meta.source,
+        subject: 'Zapytanie ze strony — ' + (service || kind)
       })),
       signal: ctrl ? ctrl.signal : undefined
     }).then(res => res.json().catch(() => null).then(body => {
@@ -2210,7 +2828,7 @@ class Component extends DCLogic {
     this._entering = false;
     clearTimeout(this._swap);
     clearTimeout(this._unmount);
-    this.setState({ section: null, switching: false, menuOpen: false }, () => {
+    this.setState({ section: null, switching: false, menuOpen: false, quoteOpen: false, quoteClosing: false, langOpen: false, langClosing: false }, () => {
       // focus returns to the hero's own nav item for the page being left
       const a = document.querySelector('nav[aria-label="Nawigacja główna"] a[href="#' + from + '"]');
       if (a) a.focus({ preventScroll: true });
@@ -2228,7 +2846,8 @@ class Component extends DCLogic {
   goToSection(key) {
     if (this.state.section === key) return;
     clearTimeout(this._unmount);
-    const reset = { stepActive: 0, shardFocus: null, faqOpen: null, menuOpen: false, headCompact: false, atEnd: false };
+    const reset = { stepActive: 0, shardFocus: null, faqOpen: null, menuOpen: false, headCompact: false, atEnd: false,
+      quoteOpen: false, quoteClosing: false, langOpen: false, langClosing: false };
     if (!this.state.section) {
       // opening from the hero: the content waits for the sphere to burn out
       this._entering = true;
@@ -2261,6 +2880,79 @@ class Component extends DCLogic {
     el.removeAttribute('data-run');
     void el.offsetWidth;          // restart the CSS animation
     el.setAttribute('data-run', dir);
+  }
+
+  /* closes the quote dialog or the language sheet: exit animation, then
+     unmount, then focus back to whatever opened it */
+  closeOverlay(which) {
+    const open = which + 'Open', closing = which + 'Closing';
+    if (!this.state[open] || this.state[closing]) return;
+    this.setState({ [closing]: true });
+    clearTimeout(this['_close_' + which]);
+    this['_close_' + which] = setTimeout(() => {
+      const reset = which === 'quote' && this.state.qOk ? { qform: EMPTY_QFORM(), qOk: false, qStatus: '' } : {};
+      this.setState(Object.assign({ [open]: false, [closing]: false }, reset), () => {
+        const back = which === 'lang' ? this.langBtnEl : this.quoteTriggerEl;
+        if (back && back.isConnected) back.focus({ preventScroll: true });
+      });
+    }, this.reduced ? 0 : 200);
+  }
+
+  /* an explicit choice: remembered on this device, and never overridden by
+     geolocation or the browser language again */
+  pickLang(code) {
+    this.langExplicit = true;
+    storeLang(code);
+    this.closeLang();
+    this.switchLang(code);
+  }
+
+  /* swaps the sub-pages' language. On a visible page the content dips out
+     (160 ms), the data swaps while it is invisible, and it comes back — one
+     batched re-render, no flash of half-translated text. */
+  switchLang(code) {
+    if (!I18N[code] || code === this.state.lang) return;
+    clearTimeout(this._langT);
+    if (!this.state.section || this.reduced) return this.applyLang(code);
+    this.setState({ langSwap: true });
+    this._langT = setTimeout(() => this.applyLang(code), 170);
+  }
+
+  applyLang(code) {
+    this.finishTyping();
+    useLang(code);
+    this.setState({ lang: code, langSwap: false });
+  }
+
+  /* any heading still typing itself is completed at once, so a language
+     swap never leaves half an old word behind */
+  finishTyping() {
+    for (const t of this._typing || []) {
+      t.nodes.forEach(n => { n.node.nodeValue = n.full; });
+      t.el.removeAttribute('data-typing'); t.el.setAttribute('data-typed', '');
+      t.el.style.minHeight = ''; t.el.removeAttribute('aria-label');
+    }
+    this._typing = [];
+  }
+
+  /* IP geolocation — only when nothing is stored; never awaited before
+     paint. If it answers, maps to a language and, unless the visitor has
+     explicitly chosen since, switches to it. Blocked / offline / slow → the
+     navigator-based pick already on screen simply stays. */
+  detectGeo() {
+    if (typeof fetch === 'undefined') return;
+    const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = ctrl ? setTimeout(() => ctrl.abort(), GEO_TIMEOUT_MS) : 0;
+    fetch(GEO_ENDPOINT, { signal: ctrl ? ctrl.signal : undefined, credentials: 'omit' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(j => {
+        if (!j || !j.country) return;
+        const lang = countryToLang(j.country);
+        this.geoLang = lang;
+        if (!this.langExplicit && lang !== this.state.lang) this.switchLang(lang);
+      })
+      .catch(() => { /* blocked, offline or timed out: keep the current pick */ })
+      .finally(() => clearTimeout(timer));
   }
 
   /* ==================== ROUTE MOUNT ====================
@@ -2590,6 +3282,42 @@ class Component extends DCLogic {
 
       /* ---------------- SUB-PAGE LAYER ---------------- */
       pageOpen: !!key,
+      t: T,
+      lang: this.state.lang,
+      langCode: this.state.lang.toUpperCase(),
+      langAria: T.langAria(this.state.lang.toUpperCase(), I18N[this.state.lang].name),
+      langExpanded: this.state.langOpen ? 'true' : 'false',
+      curFlag: FLAGS[this.state.lang],
+      langBtnRef: this.langBtnRef, openLang: this.openLang,
+      langOpen: this.state.langOpen, langClosing: this.state.langClosing ? 'true' : 'false',
+      langRef: this.langRef, langKey: this.langKey, langBackdrop: this.langBackdrop, stopProp: this.stopProp,
+      langs: LANGS.map(c => ({
+        code: c, CODE: c.toUpperCase(), name: I18N[c].name, f: FLAGS[c],
+        current: c === this.state.lang ? 'true' : undefined, pick: this.langPickers[c]
+      })),
+      // everything behind an open overlay is inert (unfocusable, unclickable)
+      bgInert: this.state.menuOpen || this.state.quoteOpen || this.state.langOpen ? '' : undefined,
+      quoteRef: this.quoteRef, quoteKey: this.quoteKey, quoteBackdrop: this.quoteBackdrop, closeQuote: this.closeQuote,
+      submitQuote: this.submitQuote, quoteToFull: this.quoteToFull,
+      qSetName: this.qSetName, qSetEmail: this.qSetEmail, qSetMessage: this.qSetMessage, qSetConsent: this.qSetConsent,
+      quote: (() => {
+        const q = this.state.qform, err = this.state.qError, svc = SECTIONS.uslugi.items[this.state.quoteSvc] || SECTIONS.uslugi.items[0];
+        return {
+          open: this.state.quoteOpen, closing: this.state.quoteClosing ? 'true' : 'false', okFlag: this.state.qOk ? 'true' : 'false',
+          service: svc.name, chipVars: { '--au-sw': svc.swatch },
+          sub: splitLead(SECTIONS.kontakt.lead).rest,
+          form: q, status: this.state.qStatus,
+          invalid: { name: err === 'name' ? 'true' : undefined, email: err === 'email' ? 'true' : undefined,
+            message: err === 'message' ? 'true' : undefined, consent: err === 'consent' ? 'true' : undefined },
+          nameStyle: field(err === 'name'), emailStyle: field(err === 'email'),
+          messageStyle: Object.assign(field(err === 'message'), { lineHeight: 1.5, resize: 'none' }),
+          boxStyle: boxStyleOf(q.consent, err === 'consent'), tickStyle: tickStyleOf(q.consent),
+          sendingAria: this.state.qSending ? 'true' : undefined,
+          submitLabel: this.state.qSending ? T.sending : this.state.qOk ? T.sent : T.send,
+          submitStyle: submitStyleOf(this.state.qSending, this.state.qOk),
+          statusStyle: statusStyleOf(this.state.qStatus, this.state.qOk)
+        };
+      })(),
       // hands off at the moment the old panel used to fade in (820 ms, the
       // sphere burning out at the camera); animations, not transitions,
       // because the layer mounts fresh on every open
@@ -2600,7 +3328,10 @@ class Component extends DCLogic {
         pointerEvents: open ? 'auto' : 'none'
       },
       // route switch: out (blur + lift away) → parked on the far side → glide in
-      mainStyle: this.state.switching
+      // language swap: a short dip, the data swaps while it is invisible
+      mainStyle: this.state.langSwap
+        ? { opacity: 0, filter: 'blur(6px)', transition: 'opacity 160ms ease, filter 160ms ease' }
+        : this.state.switching
         ? { opacity: 0, filter: 'blur(10px)', willChange: 'transform, opacity, filter', transform: 'translateY(' + (-28 * (this.starDir || 1)) + 'px) scale(0.985)',
             transition: 'opacity 300ms ease-in, filter 300ms ease-in, transform 300ms cubic-bezier(0.55,0,1,0.45)' }
         : this.state.swapIn
@@ -2613,7 +3344,7 @@ class Component extends DCLogic {
       routeRef: this.routeRef,
       route: {
         key: key || '', title: sec.title, lead: sec.lead,
-        eyebrow: 'SEKCJA ' + (idx + 1) + ' Z ' + LINKS.length,
+        eyebrow: T.eyebrow(idx + 1, LINKS.length),
         tagline: sec.tagline || ''
       },
       sweepRef: this.sweepRef,
@@ -2626,7 +3357,7 @@ class Component extends DCLogic {
 
       headCompact: this.state.headCompact ? 'true' : 'false',
       routeLinks: LINKS.map(l => ({
-        label: l.label, href: '#' + l.key,
+        label: NAV[l.key], href: '#' + l.key,
         current: l.key === key ? 'page' : undefined,
         open: this.routeOpeners[l.key]
       })),
@@ -2638,7 +3369,7 @@ class Component extends DCLogic {
       menuRef: this.menuRef,
       menuOpen: this.state.menuOpen,
       menuExpanded: this.state.menuOpen ? 'true' : 'false',
-      railLabel: 'Postęp: ' + sec.title,
+      railLabel: T.railLabel(sec.title),
       railMarks: (RAIL[key] || []).map((label, i) => ({
         label: pad2(i + 1) + ' — ' + label,
         current: i === active ? 'step' : undefined,
@@ -2655,7 +3386,7 @@ class Component extends DCLogic {
         jump: this.stepJumpers[i],
         vars: { '--au-sw': it.swatch }
       })),
-      procesMeta: 'ETAP ' + pad2(active + 1) + ' / ' + pad2(SECTIONS.proces.items.length)
+      procesMeta: T.stage + ' ' + pad2(active + 1) + ' / ' + pad2(SECTIONS.proces.items.length)
         + ' · ' + (SECTIONS.proces.items[active] || SECTIONS.proces.items[0]).meta,
 
       // USŁUGI
@@ -2683,7 +3414,7 @@ class Component extends DCLogic {
         };
       }),
       folioMeta: this.state.shardFocus == null
-        ? pad2(SECTIONS.portfolio.items.length) + ' KIERUNKI'
+        ? pad2(SECTIONS.portfolio.items.length) + ' ' + T.directions
         : pad2(this.state.shardFocus + 1) + ' / ' + pad2(SECTIONS.portfolio.items.length) + ' · '
           + SECTIONS.portfolio.items[this.state.shardFocus].meta.replace(/^.*·\s*/, ''),
 
@@ -2719,7 +3450,7 @@ class Component extends DCLogic {
       messageFieldStyle: Object.assign(field(this.state.errorField === 'message'), {
         lineHeight: 1.5, resize: 'none'
       }),
-      counter: f.message.trim().length + ' / min. 10 znaków',
+      counter: T.counter(f.message.trim().length),
       kinds: KINDS.map(k => {
         const on = f.kind === k.key;
         return {
@@ -2739,68 +3470,36 @@ class Component extends DCLogic {
           }
         };
       }),
-      // checkbox: box springs and fills, tick strokes itself in
-      boxStyle: {
-        flex: 'none', display: 'grid', placeItems: 'center',
-        width: '20px', height: '20px', marginTop: '1px', borderRadius: '6px',
-        border: '1px solid ' + (f.consent ? 'var(--au-accent)'
-          : this.state.errorField === 'consent' ? 'var(--au-field-line-bad)' : 'var(--au-field-line)'),
-        background: f.consent ? 'var(--au-accent)' : 'var(--au-field-bg)',
-        transform: f.consent ? 'scale(1.06)' : 'scale(1)',
-        transition: 'background 200ms ease, border-color 200ms ease, transform 260ms var(--au-ease-spring)'
-      },
-      tickStyle: {
-        stroke: 'var(--au-ink-on-accent)',
-        strokeDasharray: 26,
-        strokeDashoffset: f.consent ? 0 : 26,
-        transition: 'stroke-dashoffset 300ms cubic-bezier(0.65,0,0.35,1) 60ms'
-      },
+      boxStyle: boxStyleOf(f.consent, this.state.errorField === 'consent'),
+      tickStyle: tickStyleOf(f.consent),
       sendingAria: this.state.sending ? 'true' : undefined,
-      submitLabel: this.state.sending ? 'WYSYŁANIE…' : this.state.statusOk ? '✓ WYSŁANE' : 'WYŚLIJ ZAPYTANIE',
-      submitStyle: {
-        justifySelf: 'start', padding: '16px 32px', borderRadius: 'var(--au-radius-pill)',
-        cursor: this.state.sending ? 'progress' : 'pointer',
-        fontFamily: 'var(--au-font)', fontSize: '18px', fontWeight: 400, letterSpacing: 'var(--au-track-button)',
-        // same glass language as every other pill: gradient fill + blur + inset sheen
-        border: '1px solid ' + (this.state.statusOk ? 'var(--au-ok-line)' : 'var(--au-accent-line)'),
-        background: this.state.statusOk ? 'var(--au-pill-bg-ok)' : 'var(--au-pill-bg-on)',
-        backdropFilter: 'var(--au-glass-blur)', WebkitBackdropFilter: 'var(--au-glass-blur)',
-        boxShadow: 'var(--au-button-shadow)',
-        color: 'var(--au-link-hover)',
-        opacity: this.state.sending ? 0.75 : 1,
-        transition: 'border-color 220ms ease, background 260ms ease, opacity 200ms ease'
-      },
-      statusStyle: {
-        minHeight: '16px', fontSize: '18px', fontWeight: 300, lineHeight: 1.4,
-        color: this.state.statusOk ? 'var(--au-ok)' : 'var(--au-err)',
-        opacity: this.state.status ? 1 : 0,
-        transform: this.state.status ? 'none' : 'translateY(-4px)',
-        transition: 'opacity 240ms ease, transform 240ms ease'
-      },
+      submitLabel: this.state.sending ? T.sending : this.state.statusOk ? T.sent : T.send,
+      submitStyle: submitStyleOf(this.state.sending, this.state.statusOk),
+      statusStyle: statusStyleOf(this.state.status, this.state.statusOk),
       summary: {
         kind: (KINDS.find(k => k.key === f.kind) || KINDS[0]).label,
         checks: [
-          { label: 'Imię i nazwisko', ok: !!f.name.trim() },
-          { label: 'E-mail', ok: EMAIL_RE.test(f.email) },
-          { label: 'Czego potrzebujesz? (min. 10 znaków)', ok: f.message.trim().length >= 10 },
-          { label: 'Zgoda na kontakt', ok: !!f.consent }
-        ].map(c => ({ label: c.label, ok: c.ok ? 'true' : 'false', sr: c.ok ? '— gotowe' : '— do uzupełnienia' })),
+          { label: T.fName, ok: !!f.name.trim() },
+          { label: T.fEmail, ok: EMAIL_RE.test(f.email) },
+          { label: T.chkMessage, ok: f.message.trim().length >= 10 },
+          { label: T.chkConsent, ok: !!f.consent }
+        ].map(c => ({ label: c.label, ok: c.ok ? 'true' : 'false', sr: c.ok ? T.srDone : T.srTodo })),
         response: splitLead(SECTIONS.kontakt.lead).rest
       },
-      faqTitle: 'Częste pytania',
+      faqTitle: T.faqTitle,
       faq: FAQ.map((qa, i) => ({
         q: qa.q, a: qa.a, num: pad2(i + 1),
         expanded: this.state.faqOpen === i ? 'true' : 'false',
         toggle: this.faqTogglers[i],
         btnId: 'au-faq-b' + i, panelId: 'au-faq-p' + i
       })),
-      socials: SOCIALS.map(so => ({ key: so.key, name: so.name, label: so.label, href: so.href, d: so.d })),
-      channelsTitle: 'Znajdziesz nas też tu',
+      socials: SOCIALS.map(so => Object.assign({ key: so.key, name: so.name, label: so.label, href: so.href, d: so.d }, SOCIAL_T[so.key] || {})),
+      channelsTitle: T.channelsTitle,
       mqRef: this.mqRef,
       // 4 repeats of the five links; only the first five are real (focusable,
       // announced) — the rest exist purely to make the loop seamless
       marquee: [0, 1, 2, 3].flatMap(r => SOCIALS.map(so => ({
-        name: so.name, label: so.label, href: so.href, d: so.d,
+        name: (SOCIAL_T[so.key] || so).name, label: (SOCIAL_T[so.key] || so).label, href: so.href, d: so.d,
         hidden: r ? 'true' : undefined, tab: r ? '-1' : undefined
       }))),
       contact: {
@@ -2817,10 +3516,10 @@ class Component extends DCLogic {
         const show = !!this.state.atEnd && open && !this.state.switching && !this.state.swapIn;
         return {
           show: show ? 'true' : 'false',
-          hasPrev: !!prev, prevHref: prev ? '#' + prev.key : '#', prevLabel: prev ? prev.label : '',
+          hasPrev: !!prev, prevHref: prev ? '#' + prev.key : '#', prevLabel: prev ? NAV[prev.key] : '',
           prevNum: pad2(idx) + ' / ' + pad2(LINKS.length), prevGo: prev ? this.routeOpeners[prev.key] : this.goStart,
-          nextHref: next ? '#' + next.key : '#', nextLabel: next ? next.label : 'START',
-          nextKicker: next ? 'DALEJ · ' + pad2(idx + 2) + ' / ' + pad2(LINKS.length) : 'NA POCZĄTEK',
+          nextHref: next ? '#' + next.key : '#', nextLabel: next ? NAV[next.key] : T.startLabel,
+          nextKicker: next ? T.next + ' · ' + pad2(idx + 2) + ' / ' + pad2(LINKS.length) : T.toStart,
           nextGo: next ? this.routeOpeners[next.key] : this.goStart
         };
       })(),
@@ -2883,6 +3582,9 @@ class Component extends DCLogic {
     // Escape: closes the mobile menu first, otherwise leaves to START
     this.onEsc = e => {
       if (e.key !== 'Escape') return;
+      // one overlay at a time; the innermost closes first
+      if (this.state.quoteOpen) return this.closeQuote();
+      if (this.state.langOpen) return this.closeLang();
       if (this.state.menuOpen) return this.closeMenu();
       if (this.state.section) this.leaveToStart();
     };
@@ -2899,6 +3601,8 @@ class Component extends DCLogic {
     this.scrollMemory = {};
     window.addEventListener('hashchange', this.syncRoute);
     window.addEventListener('popstate', this.syncRoute);
+    // language: nothing stored → ask geolocation, in the background
+    if (LANG_SOURCE !== 'stored') this.detectGeo();
     // cold load on a deep link (#proces pasted): show the page at once in
     // the hero's end pose — the transition is for in-session navigation
     const cold = this.routeFromHash();
@@ -2911,7 +3615,12 @@ class Component extends DCLogic {
 
   componentDidUpdate(prevProps, prevState) {
     // one document title per route (tabs, history, screen-reader page announce)
-    if (!prevState || prevState.section !== this.state.section) {
+    // a language change re-bakes the two card instruments' textures
+    if (prevState && prevState.lang !== this.state.lang) {
+      if (this.RING && this.ringAnchor) this.initRing(this.ringAnchor);
+      if (this.SHARDS && this.shardsAnchor) this.initShards(this.shardsAnchor);
+    }
+    if (!prevState || prevState.section !== this.state.section || prevState.lang !== this.state.lang) {
       const sec = SECTIONS[this.state.section];
       document.title = sec ? sec.title + ' — AUVELIO WEBSITES' : 'AUVELIO WEBSITES';
     }
@@ -2929,6 +3638,7 @@ class Component extends DCLogic {
     window.removeEventListener('popstate', this.syncRoute);
     this.unmountRoute();
     clearTimeout(this._swap); clearTimeout(this._enter); clearTimeout(this._unmount);
+    clearTimeout(this._langT); clearTimeout(this._qAuto); clearTimeout(this._close_quote); clearTimeout(this._close_lang);
     this.teardownPath();
     this.teardownShards();
     this.teardownRing();
