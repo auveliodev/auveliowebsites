@@ -113,6 +113,13 @@
     --au-scrim-soft: rgba(1,4,9,0.34);       /* behind the language sheet */
     --au-modal-fill: rgba(4,12,22,0.8);      /* keeps overlay copy legible over any page */
     --au-fire-glow: rgba(59,255,122,0.26);   /* the burst fire, for a sent enquiry */
+    /* the quote dialog's tilt: from 'top' (−20°); docked at the bottom on
+       mobile it comes from 'bottom' (+20°), as in the reference */
+    --au-dlg-rot: -20deg;
+    /* the channel icon badge: a small orb of light behind each mark */
+    --au-badge-bg: radial-gradient(circle at 50% 30%, rgba(53,200,240,0.2), rgba(8,20,38,0.55) 68%);
+    --au-badge-ring: inset 0 0 0 1px var(--au-accent-line), inset 0 1px 0 rgba(190,235,255,0.25), 0 0 26px -8px var(--au-accent-glow);
+    --au-badge-ring-on: inset 0 0 0 1px var(--au-accent-line-hover), inset 0 1px 0 rgba(190,235,255,0.35), 0 0 38px -4px var(--au-accent-glow);
     --au-button-shadow: inset 0 1px 0 rgba(190,235,255,0.2), 0 10px 26px -14px rgba(0,0,0,0.6), 0 0 34px -6px rgba(53,200,240,0.45);
     /* form fields (lifted from the old field() helper, lighter) */
     --au-field-bg: rgba(6,20,36,0.46);
@@ -203,11 +210,23 @@
   @keyframes auSweepFade { 0% { opacity: 0; } 10% { opacity: 1; } 78% { opacity: 1; } 100% { opacity: 0; } }
   @keyframes auSweepDown { from { transform: translateY(0); } to { transform: translateY(365%); } }
   @keyframes auSweepUp { from { transform: translateY(0); } to { transform: translateY(-365%); } }
-  @keyframes auMarquee { to { transform: translateX(-50%); } }
   /* OVERLAY ENTRANCES — the house reveal (scanIn's top-down clip wipe) under
      a spring pop, the Dialog's snap-in feel expressed in Auvelio's own moves:
      the wipe runs on --au-ease, the scale/lift on --au-ease-spring (slight
      overshoot). Ends at a negative inset so the panel's shadow is not cut. */
+  /* QUOTE DIALOG — animate-ui's Dialog motion reproduced 1:1 (behaviour only):
+     from { opacity 0, blur 4px, perspective(500px) rotateX(∓20°), scale .8 }
+     to rest, and the same way back out, on their spring (stiffness 150,
+     damping 25, mass 1). That spring is slightly over-damped — roots −10 and
+     −15, so x(t) = 1 − 3e^(−10t) + 2e^(−15t): no overshoot, settled in
+     ~0.65 s. The easing below IS that curve, sampled into CSS linear();
+     browsers without linear() fall back to a close cubic-bezier. */
+  @keyframes auDialogIn {
+    from { opacity: 0; filter: blur(4px); transform: perspective(500px) rotateX(var(--au-dlg-rot)) scale(0.8); }
+    to { opacity: 1; filter: blur(0); transform: perspective(500px) rotateX(0deg) scale(1); } }
+  @keyframes auDialogOut {
+    from { opacity: 1; filter: blur(0); transform: perspective(500px) rotateX(0deg) scale(1); }
+    to { opacity: 0; filter: blur(4px); transform: perspective(500px) rotateX(var(--au-dlg-rot)) scale(0.8); } }
   @keyframes auWipe { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(-40% -40% -40% -40%); } }
   @keyframes auPop { from { opacity: 0; transform: translateY(16px) scale(0.94); } 45% { opacity: 1; } to { opacity: 1; transform: none; } }
   @keyframes auPopOut { to { opacity: 0; transform: translateY(8px) scale(0.97); } }
@@ -642,32 +661,30 @@
     transition: color var(--au-dur-fast) ease, border-color var(--au-dur-fast) ease, box-shadow var(--au-dur-fast) ease, transform var(--au-dur-fast) var(--au-ease); }
   .au-social:hover { color: var(--au-link-hover); border-color: var(--au-accent-line); box-shadow: 0 0 18px -4px var(--au-accent-glow); transform: translateY(-2px); }
   .au-social:focus-visible { outline: 2px solid var(--au-focus); outline-offset: 4px; border-radius: var(--au-radius-pill); }
-  /* ---- CHANNELS MARQUEE — the socials in the hero's type: thin, widely
-     tracked caps with the title glow, an accent mark per platform and a
-     glowing dot between entries. Full-bleed, edges dissolve into the scene. */
-  .au-channels { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--au-s-5); justify-items: center; padding-top: var(--au-s-9); }
+  /* ---- CHANNELS — the owner's social profiles as glass tiles. One line-icon
+     family in the accent, each inside a glowing ring (the orb's light, drawn
+     in CSS); name + handle; the tile lifts and brightens on hover. */
+  .au-channels { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--au-s-6); justify-items: center;
+    padding: var(--au-s-9) var(--au-gutter) 0; }
   .au-channels-title { margin: 0; font-size: 13px; font-weight: 400; letter-spacing: 0.5em; text-indent: 0.5em; text-transform: uppercase;
     color: var(--au-eyebrow); text-align: center; }
-  .au-marquee { position: relative; justify-self: stretch; overflow: hidden; padding: var(--au-s-3) 0;
-    -webkit-mask-image: linear-gradient(90deg, transparent, black 12%, black 88%, transparent);
-            mask-image: linear-gradient(90deg, transparent, black 12%, black 88%, transparent); }
-  .au-marquee-track { list-style: none; margin: 0; padding: 0; display: flex; width: max-content;
-    /* duration is set from JS so the band always moves at the same calm
-       speed in px/s (MQ_SPEED), whatever the screen width or font size */
-    animation: auMarquee var(--au-mq-dur, 160s) linear infinite; }
-  .au-marquee:hover .au-marquee-track, .au-marquee:focus-within .au-marquee-track { animation-play-state: paused; }
-  .au-mq-item { display: flex; align-items: center; }
-  .au-mq-link { display: inline-flex; align-items: center; gap: 0.45em; padding: 0.2em 0.1em;
-    font-size: clamp(26px, 4vw, 60px); font-weight: 200; line-height: 1; letter-spacing: 0.24em; text-transform: uppercase;
-    color: var(--au-text); text-shadow: var(--au-title-glow); white-space: nowrap;
-    transition: color var(--au-dur-fast) ease, text-shadow var(--au-dur-fast) ease; }
-  .au-mq-link > svg { flex: none; width: 0.78em; height: 0.78em; color: var(--au-accent);
-    filter: drop-shadow(0 0 10px var(--au-accent-glow)); transition: transform 320ms var(--au-ease); }
-  .au-mq-link:hover { color: var(--au-link-hover); text-shadow: var(--au-nav-glow-on), var(--au-title-glow); }
-  .au-mq-link:hover > svg { transform: scale(1.12) rotate(-6deg); }
-  .au-mq-link:focus-visible { outline: 2px solid var(--au-focus); outline-offset: 8px; border-radius: 12px; }
-  .au-mq-dot { flex: none; width: 7px; height: 7px; margin: 0 clamp(26px, 3.6vw, 60px); border-radius: 50%;
-    background: var(--au-accent); box-shadow: 0 0 12px var(--au-accent-glow); }
+  .au-ch-grid { list-style: none; margin: 0; padding: 0; width: 100%; max-width: 1240px;
+    display: flex; flex-wrap: wrap; justify-content: center; gap: clamp(12px, 1.6vw, 22px); }
+  .au-ch-item { flex: 1 1 196px; max-width: 236px; display: grid; }
+  .au-glass.au-ch-tile { display: grid; justify-items: center; align-content: start; gap: var(--au-s-4);
+    padding: 30px 18px 26px; border-radius: 26px / 36px; text-align: center; text-decoration: none; color: var(--au-heading); }
+  .au-ch-badge { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; color: var(--au-accent);
+    background: var(--au-badge-bg); box-shadow: var(--au-badge-ring);
+    transition: box-shadow 320ms ease, transform 420ms var(--au-ease-spring), color var(--au-dur-fast) ease; }
+  .au-ch-badge > svg { width: 28px; height: 28px; filter: drop-shadow(0 0 6px var(--au-accent-glow)); }
+  .au-ch-text { display: grid; gap: 5px; }
+  .au-ch-name { font: 500 18px/1.2 var(--au-font-data); letter-spacing: 0.01em; color: var(--au-heading); }
+  .au-ch-handle { font: 300 14px/1.2 var(--au-font-data); letter-spacing: 0.02em; color: var(--au-muted); }
+  .au-glass > .au-ch-arrow { position: absolute; top: 16px; right: 18px; font-size: 15px; line-height: 1; color: var(--au-muted);
+    transition: transform 320ms var(--au-ease), color var(--au-dur-fast) ease; }
+  .au-ch-tile:hover .au-ch-badge, .au-ch-tile:focus-visible .au-ch-badge { transform: scale(1.07); color: var(--au-link-hover); box-shadow: var(--au-badge-ring-on); }
+  .au-ch-tile:hover .au-ch-arrow, .au-ch-tile:focus-visible .au-ch-arrow { color: var(--au-accent); transform: translate(3px, -3px); }
+  .au-ch-tile:focus-visible { outline: 2px solid var(--au-focus); outline-offset: 4px; }
   .au-legal-contact { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--au-s-2) var(--au-s-5); font-style: normal; font-size: 13px; }
 
   /* ---- END DOCK — in the flow at the end of the page, above the footer
@@ -719,6 +736,15 @@
     background: linear-gradient(0deg, transparent 0%, rgba(53,200,240,0.05) 55%, rgba(53,200,240,0.2) 95%, rgba(210,248,255,0.95) 99.3%, transparent 100%);
     animation: auSweepUp 780ms cubic-bezier(0.6,0,0.2,1) both; }
 
+  /* the header folds into the hamburger below 980 px — with the language
+     trigger beside START, the five routes no longer fit centred between the
+     brand and the right-hand controls (checked in pl/es/en; Spanish is the
+     longest). The rest of the mobile layout still switches at 760 px. */
+  @media (max-width: 979px) {
+    .au-head-nav, .au-head .au-start { display: none; }
+    .au-burger { display: inline-grid; }
+  }
+
   /* ---- LANGUAGE TRIGGER — flag + code, a thin pill beside START */
   .au-lang-btn { margin-left: auto; display: inline-flex; align-items: center; gap: 9px; padding: 8px 13px 8px 10px;
     border: var(--au-pill-border); border-radius: var(--au-radius-pill); background: transparent; cursor: pointer;
@@ -757,15 +783,19 @@
   .au-lang-row[aria-current="true"] .au-lang-check { opacity: 1; transform: none; }
 
   /* ---- QUOTE DIALOG — the glass recipe, centred over a dimmed, blurred page */
-  .au-modal { position: absolute; inset: 0; z-index: 8; display: grid; place-items: center; padding: var(--au-s-5);
-    background: var(--au-scrim); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
-    animation: auFade var(--au-dur-fast) ease both; }
-  .au-modal[data-closing="true"] { animation: auFadeOut 200ms ease both; }
+  .au-modal { position: absolute; inset: 0; z-index: 8; display: grid; place-items: center; padding: var(--au-s-5); }
+  /* the backdrop: its own layer, fading in/out over 0.2 s ease-in-out (the
+     reference's backdrop timing) while the panel runs its spring */
+  .au-modal-scrim { position: absolute; inset: 0; background: var(--au-scrim);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); animation: auFade 200ms ease-in-out both; }
+  .au-modal[data-closing="true"] > .au-modal-scrim { animation: auFadeOut 200ms ease-in-out both; }
   .au-glass.au-modal-panel { width: min(600px, 100%); max-height: 100%; overflow-y: auto; overscroll-behavior: contain;
     display: grid; gap: var(--au-s-3); padding: clamp(26px, 3.4vw, 40px); background: var(--au-glass-bg), var(--au-modal-fill);
     scrollbar-width: thin; scrollbar-color: var(--au-scrollbar) transparent;
-    animation: auWipe 560ms var(--au-ease) both, auPop 680ms var(--au-ease-spring) both; }
-  .au-modal-panel[data-closing="true"] { animation: auPopOut 200ms ease-in both; }
+    animation: auDialogIn 650ms cubic-bezier(0.25, 0.8, 0.3, 1) both;
+    animation-timing-function: linear(0.0000 0%, 0.0382 3.8%, 0.1251 7.7%, 0.2322 11.5%, 0.3426 15.4%, 0.4472 19.2%, 0.5414 23.1%, 0.6236 26.9%, 0.6936 30.8%, 0.7522 34.6%, 0.8008 38.5%, 0.8405 42.3%, 0.8729 46.2%, 0.8989 50%, 0.9199 53.8%, 0.9367 57.7%, 0.9500 61.5%, 0.9606 65.4%, 0.9690 69.2%, 0.9757 73.1%, 0.9809 76.9%, 0.9850 80.8%, 0.9883 84.6%, 0.9908 88.5%, 0.9928 92.3%, 0.9944 96.2%, 1.0000 100%); }
+  .au-modal-panel[data-closing="true"] { animation: auDialogOut 650ms cubic-bezier(0.25, 0.8, 0.3, 1) both;
+    animation-timing-function: linear(0.0000 0%, 0.0382 3.8%, 0.1251 7.7%, 0.2322 11.5%, 0.3426 15.4%, 0.4472 19.2%, 0.5414 23.1%, 0.6236 26.9%, 0.6936 30.8%, 0.7522 34.6%, 0.8008 38.5%, 0.8405 42.3%, 0.8729 46.2%, 0.8989 50%, 0.9199 53.8%, 0.9367 57.7%, 0.9500 61.5%, 0.9606 65.4%, 0.9690 69.2%, 0.9757 73.1%, 0.9809 76.9%, 0.9850 80.8%, 0.9883 84.6%, 0.9908 88.5%, 0.9928 92.3%, 0.9944 96.2%, 1.0000 100%); }
   .au-modal-close { position: absolute; top: 14px; right: 14px; width: 42px; height: 42px; display: grid; place-items: center; padding: 0;
     border: 1px solid var(--au-hairline); border-radius: 50%; background: none; color: var(--au-link); cursor: pointer; z-index: 2;
     transition: color var(--au-dur-fast) ease, border-color var(--au-dur-fast) ease, transform 320ms var(--au-ease-spring); }
@@ -844,7 +874,15 @@
     .au-dock { gap: var(--au-s-6); }
     .au-dock-label { font-size: 14px; }
     .au-dock-kicker { font-size: 9px; letter-spacing: 0.3em; }
+    .au-ch-grid { flex-direction: column; gap: 10px; }
+    .au-ch-item { flex: none; max-width: none; }
+    .au-glass.au-ch-tile { grid-template-columns: auto minmax(0, 1fr); justify-items: start; align-items: center; text-align: left;
+      gap: 14px; padding: 14px 46px 14px 14px; border-radius: 22px / 30px; }
+    .au-ch-badge { width: 48px; height: 48px; }
+    .au-ch-badge > svg { width: 22px; height: 22px; }
+    .au-glass > .au-ch-arrow { top: calc(50% - 8px); right: 18px; }
     .au-modal { place-items: end center; padding: var(--au-s-3); }
+    .au-modal-panel { --au-dlg-rot: 20deg; }
     .au-glass.au-modal-panel { max-height: calc(100% - var(--au-s-5)); }
     .au-lang-btn { padding: 7px 10px 7px 8px; }
     .au-btn-prime { max-width: 100%; white-space: normal; text-align: center; padding: 16px 22px; font-size: 15px; letter-spacing: 0.16em; }
@@ -854,17 +892,14 @@
     *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
     /* SUB-PAGES (5e): the layout stays, the motion goes */
     .au-doc, .au-doc * { scroll-snap-type: none !important; scroll-snap-align: none !important; scroll-behavior: auto !important; }
-    .au-social, .au-mq-link, .au-mq-link > svg { transition: none !important; }
-    .au-modal-panel, .au-lang-sheet, .au-glass.au-menu-panel, .au-modal, .au-sheet-scrim {
+    .au-social, .au-ch-badge, .au-ch-arrow { transition: none !important; }
+    .au-ch-tile:hover .au-ch-badge, .au-ch-tile:focus-visible .au-ch-badge,
+    .au-ch-tile:hover .au-ch-arrow, .au-ch-tile:focus-visible .au-ch-arrow { transform: none; }
+    .au-modal-panel, .au-lang-sheet, .au-glass.au-menu-panel, .au-modal-scrim, .au-sheet-scrim {
       animation: auFade 120ms ease both !important; transform: none !important; clip-path: none !important; }
     .au-modal-panel > .au-quote-flare { animation: none !important; }
     .au-lang-row, .au-lang-check, .au-lang-btn, .au-modal-close { transition: none !important; }
     .au-modal-close:hover { transform: none; }
-    .au-marquee { -webkit-mask-image: none; mask-image: none; }
-    .au-marquee-track { animation: none !important; width: auto; flex-wrap: wrap; justify-content: center; gap: var(--au-s-4) clamp(28px, 4vw, 64px); }
-    .au-mq-dot { display: none; }
-    .au-mq-item[aria-hidden="true"] { display: none; }
-    .au-mq-link:hover > svg { transform: none; }
     .au-social:hover { transform: none !important; }
     [data-io] [data-reveal], [data-io] [data-reveal]:not([data-in]) { opacity: 1 !important; transform: none !important; filter: none !important; transition: none !important; }
     [data-io] [data-flow] { -webkit-mask-image: none !important; mask-image: none !important; animation: none !important; filter: none !important; }
@@ -1191,22 +1226,17 @@
 
           </div>
 
-            <!-- CHANNELS — the owner's social links as an endless marquee in the
-                 hero's type. One track = the five links repeated 4×; it slides by
-                 -50% (exactly two repeats), so the loop is seamless. Only the first
-                 five are real links for keyboard / screen readers; the repeats are
-                 aria-hidden and unfocusable. Pauses on hover and on focus. -->
-            <!-- (outside .au-section on purpose: the band is full-bleed across the
-                 scroll document, so it and its title centre on the page itself) -->
+            <!-- CHANNELS — the owner's social profiles as glass tiles: one
+                 line-icon family in the accent, each in a glowing ring, name +
+                 handle, opens in a new tab. Outside .au-section on purpose: the
+                 band spans the page and centres on it. -->
             <div class="au-channels">
               <p class="au-channels-title" id="au-ch-title">{{ channelsTitle }}</p>
-              <div class="au-marquee">
-                <ul ref="{{ mqRef }}" class="au-marquee-track" aria-labelledby="au-ch-title">
-                  <sc-for list="{{ marquee }}" as="mq" hint-placeholder-count="20">
-                    <li class="au-mq-item" aria-hidden="{{ mq.hidden }}"><a class="au-mq-link" href="{{ mq.href }}" target="_blank" rel="noopener noreferrer" tabIndex="{{ mq.tab }}" aria-label="{{ mq.label }}"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="{{ mq.d }}" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"></path></svg><span aria-hidden="true">{{ mq.name }}</span></a><span class="au-mq-dot" aria-hidden="true"></span></li>
-                  </sc-for>
-                </ul>
-              </div>
+              <ul class="au-ch-grid" aria-labelledby="au-ch-title">
+                <sc-for list="{{ socials }}" as="so" hint-placeholder-count="5">
+                  <li class="au-ch-item"><a class="au-ch-tile au-glass" href="{{ so.href }}" target="_blank" rel="noopener noreferrer" data-spot="" data-reveal="" style="{{ so.vars }}"><span aria-hidden="true" class="au-gl au-gl-hair"></span><span aria-hidden="true" class="au-gl au-gl-sheen"></span><span class="au-ch-badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="{{ so.d }}" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path></svg></span><span class="au-ch-text"><span class="au-ch-name">{{ so.name }}</span><sc-if value="{{ so.hasHandle }}" hint-placeholder-val="{{ false }}"><span class="au-ch-handle">{{ so.handle }}</span></sc-if><span class="au-sr"> {{ t.newTab }}</span></span><span class="au-ch-arrow" aria-hidden="true">↗</span></a></li>
+                </sc-for>
+              </ul>
             </div>
 
           <div class="au-section">
@@ -1309,6 +1339,7 @@
          that opened it. Submits through the SAME path as the KONTAKT form. -->
     <sc-if value="{{ quote.open }}" hint-placeholder-val="{{ false }}">
     <div class="au-modal" data-closing="{{ quote.closing }}" onClick="{{ quoteBackdrop }}">
+      <div class="au-modal-scrim" aria-hidden="true"></div>
       <div id="au-quote" ref="{{ quoteRef }}" class="au-modal-panel au-glass" role="dialog" aria-modal="true" aria-labelledby="au-quote-title" aria-describedby="au-quote-sub" data-ok="{{ quote.okFlag }}" data-closing="{{ quote.closing }}" onClick="{{ stopProp }}" onKeyDown="{{ quoteKey }}">
         <span aria-hidden="true" class="au-gl au-gl-hair"></span>
         <span aria-hidden="true" class="au-gl au-gl-sheen"></span>
@@ -2086,7 +2117,7 @@ const I18N = {
       notConnected: 'Formularz nie jest jeszcze podłączony — wiadomość nie została wysłana. Spróbuj ponownie później.',
       summary: 'PODSUMOWANIE', chkMessage: 'Czego potrzebujesz? (min. 10 znaków)', chkConsent: 'Zgoda na kontakt',
       srDone: '— gotowe', srTodo: '— do uzupełnienia',
-      faqTitle: 'Częste pytania', channelsTitle: 'Znajdziesz nas też tu', socialsAria: 'Auvelio w sieci',
+      faqTitle: 'Częste pytania', channelsTitle: 'Znajdziesz nas też tu', socialsAria: 'Auvelio w sieci', newTab: '(nowa karta)',
       dockAria: 'Poprzednia i następna sekcja', back: 'WSTECZ', next: 'DALEJ', toStart: 'NA POCZĄTEK', startLabel: 'START',
       langTitle: 'Język', langAria: (code, name) => code + ' · Język: ' + name,
       quoteTitle: 'Zapytaj o wycenę', service: 'Usługa',
@@ -2176,7 +2207,7 @@ const I18N = {
       notConnected: 'El formulario aún no está conectado: el mensaje no se ha enviado. Inténtalo más tarde.',
       summary: 'RESUMEN', chkMessage: '¿Qué necesitas? (mín. 10 caracteres)', chkConsent: 'Consentimiento de contacto',
       srDone: '— listo', srTodo: '— pendiente',
-      faqTitle: 'Preguntas frecuentes', channelsTitle: 'También nos encontrarás aquí', socialsAria: 'Auvelio en redes',
+      faqTitle: 'Preguntas frecuentes', channelsTitle: 'También nos encontrarás aquí', socialsAria: 'Auvelio en redes', newTab: '(nueva pestaña)',
       dockAria: 'Sección anterior y siguiente', back: 'ATRÁS', next: 'SIGUIENTE', toStart: 'AL INICIO', startLabel: 'INICIO',
       langTitle: 'Idioma', langAria: (code, name) => code + ' · Idioma: ' + name,
       quoteTitle: 'Pide presupuesto', service: 'Servicio',
@@ -2266,7 +2297,7 @@ const I18N = {
       notConnected: 'The form isn’t connected yet — your message was not sent. Please try again later.',
       summary: 'SUMMARY', chkMessage: 'What do you need? (min. 10 characters)', chkConsent: 'Consent to contact',
       srDone: '— done', srTodo: '— to do',
-      faqTitle: 'Frequently asked', channelsTitle: 'Find us here too', socialsAria: 'Auvelio online',
+      faqTitle: 'Frequently asked', channelsTitle: 'Find us here too', socialsAria: 'Auvelio online', newTab: '(new tab)',
       dockAria: 'Previous and next section', back: 'BACK', next: 'NEXT', toStart: 'BACK TO START', startLabel: 'START',
       langTitle: 'Language', langAria: (code, name) => code + ' · Language: ' + name,
       quoteTitle: 'Request a quote', service: 'Service',
@@ -2459,21 +2490,25 @@ const FORM_TIMEOUT_MS = 12000;
    as soon as it is non-empty. */
 const CONTACT = { company: '', email: '', phone: '' };
 
-/* SOCIAL LINKS — supplied by the owner (2026-09-24). Each mark is a small
-   inline stroke path (24×24, drawn here, no icon library, no files).
+/* SOCIAL LINKS — supplied by the owner (2026-09-24). One line-icon family,
+   drawn here for this site (24-px grid, 1.5 stroke, round caps and joins —
+   the site's hairline language; no icon library, no files): Instagram's
+   rounded frame + lens, Telegram's paper plane, a life-buoy for support,
+   the Facebook "f", the X mark.
    NOTE: X is the bare homepage as supplied — it needs the real profile URL
    (https://x.com/<handle>) before launch; no handle has been given. */
 const SOCIALS = [
-  { key: 'instagram', name: 'Instagram', label: 'Instagram', href: 'https://instagram.com/auveliopl',
-    d: 'M7.5 3h9A4.5 4.5 0 0 1 21 7.5v9a4.5 4.5 0 0 1-4.5 4.5h-9A4.5 4.5 0 0 1 3 16.5v-9A4.5 4.5 0 0 1 7.5 3z M12 8.25a3.75 3.75 0 1 0 0 7.5a3.75 3.75 0 1 0 0-7.5z M17.25 6.75h.01' },
-  { key: 'telegram', name: 'Telegram', label: 'Telegram', href: 'https://t.me/auveliopl',
-    d: 'M21 4 3 11.2l6 2.1 2.2 6.2 3.2-4 5 3.6L21 4z M9 13.3l8.6-5.9-6.4 7.2' },
-  { key: 'telegram-support', name: 'Wsparcie', label: 'Wsparcie na Telegramie', href: 'https://t.me/auveliosupport',
-    d: 'M5 4h14a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-8l-5 4v-4H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z M9.8 8.2a2.2 2.2 0 1 1 3 2c-.5.2-.8.7-.8 1.2v.4 M12 14h.01' },
-  { key: 'facebook', name: 'Facebook', label: 'Facebook', href: 'https://fb.com/auveliopl',
-    d: 'M14.5 21v-7.5h2.6l.4-3.2h-3V8.4c0-.9.3-1.6 1.6-1.6h1.6V4c-.3 0-1.2-.1-2.3-.1-2.3 0-3.8 1.4-3.8 3.9v2.5H9v3.2h2.6V21' },
-  { key: 'x', name: 'X', label: 'X', href: 'https://x.com',
-    d: 'M4 4h4.5L20 20h-4.5z M19.5 4l-6.6 7.3 M4.5 20l6.6-7.3' }
+  { key: 'instagram', name: 'Instagram', label: 'Instagram', href: 'https://instagram.com/auveliopl', handle: '@auveliopl',
+    d: 'M7 2.75h10A4.25 4.25 0 0 1 21.25 7v10A4.25 4.25 0 0 1 17 21.25H7A4.25 4.25 0 0 1 2.75 17V7A4.25 4.25 0 0 1 7 2.75z M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8z M17.4 6.6h.01' },
+  { key: 'telegram', name: 'Telegram', label: 'Telegram', href: 'https://t.me/auveliopl', handle: '@auveliopl',
+    d: 'M21.5 2.5 14.8 21.2a.6.6 0 0 1-1.1.05L10.4 13.6 2.75 10.3a.6.6 0 0 1 .05-1.1z M21.5 2.5 10.4 13.6' },
+  { key: 'telegram-support', name: 'Wsparcie', label: 'Wsparcie na Telegramie', href: 'https://t.me/auveliosupport', handle: '@auveliosupport',
+    d: 'M12 2.75a9.25 9.25 0 1 0 0 18.5a9.25 9.25 0 1 0 0-18.5z M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8z M5.46 5.46l3.71 3.71 M14.83 9.17l3.71-3.71 M14.83 14.83l3.71 3.71 M9.17 14.83l-3.71 3.71' },
+  { key: 'facebook', name: 'Facebook', label: 'Facebook', href: 'https://fb.com/auveliopl', handle: 'auveliopl',
+    d: 'M15.5 3.25h-2.25A4.25 4.25 0 0 0 9 7.5v2.75H6.5v3.5H9v7.5h3.5v-7.5h2.75l.75-3.5h-3.5V7.75c0-.7.55-1.25 1.25-1.25h1.75z' },
+  // X: bare homepage as supplied — no handle shown until the owner gives one
+  { key: 'x', name: 'X', label: 'X', href: 'https://x.com', handle: '',
+    d: 'M3.75 3.75h4.6l11.9 16.5h-4.6z M20 3.75l-6.55 7.05 M4 20.25l6.6-7.1' }
 ];
 
 /* the same e-mail rule handleSubmit() validates with, reused by the live summary */
@@ -2493,8 +2528,6 @@ function centreLine(R, d) {
 const STAGE_COLOR = { accent: 0x35c8f0, road: 0x5fb9d8, deep: 0x081426, lit: 0x14425e };
 
 const pad2 = n => String(n).padStart(2, '0');
-// the channels marquee's travel speed, px per second — slow enough to read
-const MQ_SPEED = 30;
 const smoothstep = (a, b, x) => { const t = clamp01((x - a) / (b - a)); return t * t * (3 - 2 * t); };
 // tan(22°): half of the 44° vertical FOV the ring and shard cameras use
 const TAN_HALF_FOV44 = Math.tan(Math.PI * 22 / 180);
@@ -2588,7 +2621,6 @@ class Component extends DCLogic {
     if (!el) { this.shardsAnchor = null; this.teardownShards(); }
   };
   sweepRef = el => { this.sweepEl = el; };
-  mqRef = el => { this.mqEl = el; };
   kontaktOrbRef = el => {
     if (el && el !== this.kontaktAnchor) {
       this.kontaktAnchor = el;
@@ -2634,7 +2666,7 @@ class Component extends DCLogic {
   };
   quoteKey = e => trapTab(this.quoteEl, e);
   closeQuote = () => this.closeOverlay('quote');
-  quoteBackdrop = e => { if (e.target === e.currentTarget) this.closeQuote(); };
+  quoteBackdrop = () => this.closeQuote();   // the panel stops propagation, so this is always "outside"
   submitQuote = e => this.submitEnquiry(e, 'quote');
   qSetName = e => this.setQField('name', e.target.value);
   qSetEmail = e => this.setQField('email', e.target.value);
@@ -2895,7 +2927,7 @@ class Component extends DCLogic {
         const back = which === 'lang' ? this.langBtnEl : this.quoteTriggerEl;
         if (back && back.isConnected) back.focus({ preventScroll: true });
       });
-    }, this.reduced ? 0 : 200);
+    }, this.reduced ? 0 : which === 'quote' ? 520 : 200);
   }
 
   /* an explicit choice: remembered on this device, and never overridden by
@@ -3046,6 +3078,12 @@ class Component extends DCLogic {
     if (R && R.doc && this.scrollMemory) this.scrollMemory[R.key] = R.doc.scrollTop;
   }
 
+  // the header's own breakpoint (hamburger below 980 px), see the CSS
+  isBurger() {
+    if (!this._mqBurger && window.matchMedia) this._mqBurger = window.matchMedia('(max-width: 979px)');
+    return !!(this._mqBurger && this._mqBurger.matches);
+  }
+
   isMobile() {
     if (!this._mq && window.matchMedia) this._mq = window.matchMedia('(max-width: 759px)');
     return !!(this._mq && this._mq.matches);
@@ -3098,7 +3136,6 @@ class Component extends DCLogic {
     const spotRect = spot ? spot.el.getBoundingClientRect() : null;
     const maxTop = doc.scrollHeight - doc.clientHeight;
     const instH = R.inst ? R.inst.offsetHeight : 0;
-    const mqW = this.mqEl && this.mqEl.isConnected ? this.mqEl.offsetWidth : 0;
     R.clip = d;
     // the top dissolve the stages must share with the DOM: under a stuck
     // title band on desktop, otherwise the page mask under the header
@@ -3186,9 +3223,6 @@ class Component extends DCLogic {
       const el = R.steps[i];
       if (el._auP !== pv) { el._auP = pv; el.style.setProperty('--au-p', pv); }
     });
-    // marquee: one loop is half the track (two of four repeats); a constant
-    // MQ_SPEED px/s whatever the width, re-set only when the width changes
-    if (mqW && mqW !== this._mqW) { this._mqW = mqW; this.mqEl.style.setProperty('--au-mq-dur', (mqW / 2 / MQ_SPEED).toFixed(1) + 's'); }
     // the pointer light on the hovered tile
     if (spot) {
       const x = Math.round(spot.x - spotRect.left), y = Math.round(spot.y - spotRect.top);
@@ -3242,7 +3276,7 @@ class Component extends DCLogic {
         if (focus !== this.state.shardFocus) patch.shardFocus = focus;
       }
     }
-    if (this.state.menuOpen && !this.isMobile()) patch.menuOpen = false;
+    if (this.state.menuOpen && !this.isBurger()) patch.menuOpen = false;
     for (const k in patch) { this.setState(patch); break; }
   }
 
@@ -3493,15 +3527,11 @@ class Component extends DCLogic {
         toggle: this.faqTogglers[i],
         btnId: 'au-faq-b' + i, panelId: 'au-faq-p' + i
       })),
-      socials: SOCIALS.map(so => Object.assign({ key: so.key, name: so.name, label: so.label, href: so.href, d: so.d }, SOCIAL_T[so.key] || {})),
+      socials: SOCIALS.map((so, i) => Object.assign({
+        key: so.key, name: so.name, label: so.label, href: so.href, d: so.d,
+        handle: so.handle, hasHandle: !!so.handle, vars: { '--au-delay': (i * 0.06) + 's' }
+      }, SOCIAL_T[so.key] || {})),
       channelsTitle: T.channelsTitle,
-      mqRef: this.mqRef,
-      // 4 repeats of the five links; only the first five are real (focusable,
-      // announced) — the rest exist purely to make the loop seamless
-      marquee: [0, 1, 2, 3].flatMap(r => SOCIALS.map(so => ({
-        name: (SOCIAL_T[so.key] || so).name, label: (SOCIAL_T[so.key] || so).label, href: so.href, d: so.d,
-        hidden: r ? 'true' : undefined, tab: r ? '-1' : undefined
-      }))),
       contact: {
         has: contactHas,
         hasCompany: !!CONTACT.company, company: CONTACT.company,
