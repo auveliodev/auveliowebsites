@@ -628,14 +628,16 @@
   /* ---- CHANNELS MARQUEE — the socials in the hero's type: thin, widely
      tracked caps with the title glow, an accent mark per platform and a
      glowing dot between entries. Full-bleed, edges dissolve into the scene. */
-  .au-channels { display: grid; gap: var(--au-s-5); justify-items: center; padding-top: var(--au-s-9); }
+  .au-channels { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--au-s-5); justify-items: center; padding-top: var(--au-s-9); }
   .au-channels-title { margin: 0; font-size: 13px; font-weight: 400; letter-spacing: 0.5em; text-indent: 0.5em; text-transform: uppercase;
     color: var(--au-eyebrow); text-align: center; }
-  .au-marquee { position: relative; width: 100vw; overflow: hidden; padding: var(--au-s-3) 0;
+  .au-marquee { position: relative; justify-self: stretch; overflow: hidden; padding: var(--au-s-3) 0;
     -webkit-mask-image: linear-gradient(90deg, transparent, black 12%, black 88%, transparent);
             mask-image: linear-gradient(90deg, transparent, black 12%, black 88%, transparent); }
   .au-marquee-track { list-style: none; margin: 0; padding: 0; display: flex; width: max-content;
-    animation: auMarquee 48s linear infinite; }
+    /* duration is set from JS so the band always moves at the same calm
+       speed in px/s (MQ_SPEED), whatever the screen width or font size */
+    animation: auMarquee var(--au-mq-dur, 160s) linear infinite; }
   .au-marquee:hover .au-marquee-track, .au-marquee:focus-within .au-marquee-track { animation-play-state: paused; }
   .au-mq-item { display: flex; align-items: center; }
   .au-mq-link { display: inline-flex; align-items: center; gap: 0.45em; padding: 0.2em 0.1em;
@@ -763,7 +765,7 @@
     /* SUB-PAGES (5e): the layout stays, the motion goes */
     .au-doc, .au-doc * { scroll-snap-type: none !important; scroll-snap-align: none !important; scroll-behavior: auto !important; }
     .au-social, .au-mq-link, .au-mq-link > svg { transition: none !important; }
-    .au-marquee { width: 100%; -webkit-mask-image: none; mask-image: none; }
+    .au-marquee { -webkit-mask-image: none; mask-image: none; }
     .au-marquee-track { animation: none !important; width: auto; flex-wrap: wrap; justify-content: center; gap: var(--au-s-4) clamp(28px, 4vw, 64px); }
     .au-mq-dot { display: none; }
     .au-mq-item[aria-hidden="true"] { display: none; }
@@ -1089,15 +1091,19 @@
               </section>
             </div>
 
+          </div>
+
             <!-- CHANNELS — the owner's social links as an endless marquee in the
                  hero's type. One track = the five links repeated 4×; it slides by
                  -50% (exactly two repeats), so the loop is seamless. Only the first
                  five are real links for keyboard / screen readers; the repeats are
                  aria-hidden and unfocusable. Pauses on hover and on focus. -->
+            <!-- (outside .au-section on purpose: the band is full-bleed across the
+                 scroll document, so it and its title centre on the page itself) -->
             <div class="au-channels">
               <p class="au-channels-title" id="au-ch-title">{{ channelsTitle }}</p>
               <div class="au-marquee">
-                <ul class="au-marquee-track" aria-labelledby="au-ch-title">
+                <ul ref="{{ mqRef }}" class="au-marquee-track" aria-labelledby="au-ch-title">
                   <sc-for list="{{ marquee }}" as="mq" hint-placeholder-count="20">
                     <li class="au-mq-item" aria-hidden="{{ mq.hidden }}"><a class="au-mq-link" href="{{ mq.href }}" target="_blank" rel="noopener noreferrer" tabIndex="{{ mq.tab }}" aria-label="{{ mq.label }}"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="{{ mq.d }}" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"></path></svg><span aria-hidden="true">{{ mq.name }}</span></a><span class="au-mq-dot" aria-hidden="true"></span></li>
                   </sc-for>
@@ -1105,6 +1111,7 @@
               </div>
             </div>
 
+          <div class="au-section">
             <!-- FAQ (5d) — centred; every answer is existing copy from SECTIONS -->
             <div class="au-faq" data-step="">
               <h3 class="au-section-title" data-type="">{{ faqTitle }}</h3>
@@ -1948,6 +1955,8 @@ function centreLine(R, d) {
 const STAGE_COLOR = { accent: 0x35c8f0, road: 0x5fb9d8, deep: 0x081426, lit: 0x14425e };
 
 const pad2 = n => String(n).padStart(2, '0');
+// the channels marquee's travel speed, px per second — slow enough to read
+const MQ_SPEED = 30;
 const smoothstep = (a, b, x) => { const t = clamp01((x - a) / (b - a)); return t * t * (3 - 2 * t); };
 // tan(22°): half of the 44° vertical FOV the ring and shard cameras use
 const TAN_HALF_FOV44 = Math.tan(Math.PI * 22 / 180);
@@ -2034,6 +2043,7 @@ class Component extends DCLogic {
     if (!el) { this.shardsAnchor = null; this.teardownShards(); }
   };
   sweepRef = el => { this.sweepEl = el; };
+  mqRef = el => { this.mqEl = el; };
   kontaktOrbRef = el => {
     if (el && el !== this.kontaktAnchor) {
       this.kontaktAnchor = el;
@@ -2396,6 +2406,7 @@ class Component extends DCLogic {
     const spotRect = spot ? spot.el.getBoundingClientRect() : null;
     const maxTop = doc.scrollHeight - doc.clientHeight;
     const instH = R.inst ? R.inst.offsetHeight : 0;
+    const mqW = this.mqEl && this.mqEl.isConnected ? this.mqEl.offsetWidth : 0;
     R.clip = d;
     // the top dissolve the stages must share with the DOM: under a stuck
     // title band on desktop, otherwise the page mask under the header
@@ -2483,6 +2494,9 @@ class Component extends DCLogic {
       const el = R.steps[i];
       if (el._auP !== pv) { el._auP = pv; el.style.setProperty('--au-p', pv); }
     });
+    // marquee: one loop is half the track (two of four repeats); a constant
+    // MQ_SPEED px/s whatever the width, re-set only when the width changes
+    if (mqW && mqW !== this._mqW) { this._mqW = mqW; this.mqEl.style.setProperty('--au-mq-dur', (mqW / 2 / MQ_SPEED).toFixed(1) + 's'); }
     // the pointer light on the hovered tile
     if (spot) {
       const x = Math.round(spot.x - spotRect.left), y = Math.round(spot.y - spotRect.top);
@@ -2782,6 +2796,7 @@ class Component extends DCLogic {
       })),
       socials: SOCIALS.map(so => ({ key: so.key, name: so.name, label: so.label, href: so.href, d: so.d })),
       channelsTitle: 'Znajdziesz nas też tu',
+      mqRef: this.mqRef,
       // 4 repeats of the five links; only the first five are real (focusable,
       // announced) — the rest exist purely to make the loop seamless
       marquee: [0, 1, 2, 3].flatMap(r => SOCIALS.map(so => ({
