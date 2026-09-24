@@ -199,6 +199,7 @@
   @keyframes auSweepFade { 0% { opacity: 0; } 10% { opacity: 1; } 78% { opacity: 1; } 100% { opacity: 0; } }
   @keyframes auSweepDown { from { transform: translateY(0); } to { transform: translateY(365%); } }
   @keyframes auSweepUp { from { transform: translateY(0); } to { transform: translateY(-365%); } }
+  @keyframes auMarquee { to { transform: translateX(-50%); } }
 
   /* ---- PAGE LAYER: fixed exactly between the letterbox bars (open pose).
      The hero canvas keeps rendering underneath as the living background,
@@ -555,8 +556,11 @@
   .au-stack > li { cursor: default; }
 
   /* ---- KONTAKT — the form, a live summary pinned beside it, then FAQ */
+  /* form and summary stand side by side at the SAME height (stretch), so
+     neither card sticks out past the other */
   .au-contact { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: clamp(20px, 3vw, 48px);
-    align-items: start; padding-top: var(--au-s-9); }
+    align-items: stretch; padding-top: var(--au-s-9); }
+  .au-contact > [data-step] { display: grid; }
   .au-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 16px 22px;
     padding: clamp(20px, 2.4vw, 28px) clamp(18px, 2.4vw, 28px); text-align: left; }
   .au-glass > .au-form-orb { position: absolute; z-index: 0; top: -92px; right: 18px; width: 86px; height: 86px;
@@ -565,8 +569,9 @@
   .au-consent { position: relative; display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
   .au-consent > input { position: absolute; opacity: 0; width: 1px; height: 1px; }
   .au-consent > input:focus-visible + span { outline: 2px solid var(--au-focus); outline-offset: 3px; }
-  .au-summary { position: sticky; top: var(--au-fade); display: grid; gap: var(--au-s-4);
+  .au-summary { display: flex; flex-direction: column; gap: var(--au-s-4);
     padding: clamp(22px, 2.4vw, 32px); }
+  .au-summary > .au-sum-note { margin-top: auto; }   /* the response note sits on the card's floor */
   .au-sum-row { display: grid; gap: var(--au-s-1); margin: 0; }
   .au-sum-row dd { margin: 0; font: 400 20px/1.3 var(--au-font-data); color: var(--au-heading); }
   .au-checks { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--au-s-2); }
@@ -619,13 +624,31 @@
     color: var(--au-link); border: 1px solid var(--au-hairline);
     transition: color var(--au-dur-fast) ease, border-color var(--au-dur-fast) ease, box-shadow var(--au-dur-fast) ease, transform var(--au-dur-fast) var(--au-ease); }
   .au-social:hover { color: var(--au-link-hover); border-color: var(--au-accent-line); box-shadow: 0 0 18px -4px var(--au-accent-glow); transform: translateY(-2px); }
-  .au-social:focus-visible, .au-soc-row:focus-visible { outline: 2px solid var(--au-focus); outline-offset: 4px; border-radius: var(--au-radius-pill); }
-  .au-sum-socials { display: grid; gap: var(--au-s-2); padding-top: var(--au-s-3); border-top: 1px solid var(--au-hairline); }
-  .au-soc-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
-  .au-soc-row { display: flex; align-items: center; gap: var(--au-s-3); padding: 6px 0; font-size: 16px; font-weight: 300; color: var(--au-text);
-    transition: color var(--au-dur-fast) ease; }
-  .au-soc-row:hover { color: var(--au-link-hover); }
-  .au-soc-row > svg { flex: none; color: var(--au-accent); }
+  .au-social:focus-visible { outline: 2px solid var(--au-focus); outline-offset: 4px; border-radius: var(--au-radius-pill); }
+  /* ---- CHANNELS MARQUEE — the socials in the hero's type: thin, widely
+     tracked caps with the title glow, an accent mark per platform and a
+     glowing dot between entries. Full-bleed, edges dissolve into the scene. */
+  .au-channels { display: grid; gap: var(--au-s-5); justify-items: center; padding-top: var(--au-s-9); }
+  .au-channels-title { margin: 0; font-size: 13px; font-weight: 400; letter-spacing: 0.5em; text-indent: 0.5em; text-transform: uppercase;
+    color: var(--au-eyebrow); text-align: center; }
+  .au-marquee { position: relative; width: 100vw; overflow: hidden; padding: var(--au-s-3) 0;
+    -webkit-mask-image: linear-gradient(90deg, transparent, black 12%, black 88%, transparent);
+            mask-image: linear-gradient(90deg, transparent, black 12%, black 88%, transparent); }
+  .au-marquee-track { list-style: none; margin: 0; padding: 0; display: flex; width: max-content;
+    animation: auMarquee 48s linear infinite; }
+  .au-marquee:hover .au-marquee-track, .au-marquee:focus-within .au-marquee-track { animation-play-state: paused; }
+  .au-mq-item { display: flex; align-items: center; }
+  .au-mq-link { display: inline-flex; align-items: center; gap: 0.45em; padding: 0.2em 0.1em;
+    font-size: clamp(26px, 4vw, 60px); font-weight: 200; line-height: 1; letter-spacing: 0.24em; text-transform: uppercase;
+    color: var(--au-text); text-shadow: var(--au-title-glow); white-space: nowrap;
+    transition: color var(--au-dur-fast) ease, text-shadow var(--au-dur-fast) ease; }
+  .au-mq-link > svg { flex: none; width: 0.78em; height: 0.78em; color: var(--au-accent);
+    filter: drop-shadow(0 0 10px var(--au-accent-glow)); transition: transform 320ms var(--au-ease); }
+  .au-mq-link:hover { color: var(--au-link-hover); text-shadow: var(--au-nav-glow-on), var(--au-title-glow); }
+  .au-mq-link:hover > svg { transform: scale(1.12) rotate(-6deg); }
+  .au-mq-link:focus-visible { outline: 2px solid var(--au-focus); outline-offset: 8px; border-radius: 12px; }
+  .au-mq-dot { flex: none; width: 7px; height: 7px; margin: 0 clamp(26px, 3.6vw, 60px); border-radius: 50%;
+    background: var(--au-accent); box-shadow: 0 0 12px var(--au-accent-glow); }
   .au-legal-contact { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--au-s-2) var(--au-s-5); font-style: normal; font-size: 13px; }
 
   /* ---- END DOCK — in the flow at the end of the page, above the footer
@@ -739,7 +762,12 @@
     *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
     /* SUB-PAGES (5e): the layout stays, the motion goes */
     .au-doc, .au-doc * { scroll-snap-type: none !important; scroll-snap-align: none !important; scroll-behavior: auto !important; }
-    .au-social, .au-soc-row { transition: none !important; }
+    .au-social, .au-mq-link, .au-mq-link > svg { transition: none !important; }
+    .au-marquee { width: 100%; -webkit-mask-image: none; mask-image: none; }
+    .au-marquee-track { animation: none !important; width: auto; flex-wrap: wrap; justify-content: center; gap: var(--au-s-4) clamp(28px, 4vw, 64px); }
+    .au-mq-dot { display: none; }
+    .au-mq-item[aria-hidden="true"] { display: none; }
+    .au-mq-link:hover > svg { transform: none; }
     .au-social:hover { transform: none !important; }
     [data-io] [data-reveal], [data-io] [data-reveal]:not([data-in]) { opacity: 1 !important; transform: none !important; filter: none !important; transition: none !important; }
     [data-io] [data-flow] { -webkit-mask-image: none !important; mask-image: none !important; animation: none !important; filter: none !important; }
@@ -1051,14 +1079,6 @@
                   </sc-for>
                 </ul>
                 <p class="au-sum-note">{{ summary.response }}</p>
-                <div class="au-sum-socials">
-                  <p class="au-label" id="au-sum-soc">Znajdziesz nas też tu</p>
-                  <ul class="au-soc-list" aria-labelledby="au-sum-soc">
-                    <sc-for list="{{ socials }}" as="so" hint-placeholder-count="5">
-                      <li><a class="au-soc-row" href="{{ so.href }}" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true"><path d="{{ so.d }}" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path></svg><span>{{ so.label }}</span></a></li>
-                    </sc-for>
-                  </ul>
-                </div>
                 <sc-if value="{{ contact.has }}" hint-placeholder-val="{{ false }}">
                   <address class="au-sum-contact">
                     <sc-if value="{{ contact.hasCompany }}" hint-placeholder-val="{{ false }}"><span>{{ contact.company }}</span></sc-if>
@@ -1067,6 +1087,22 @@
                   </address>
                 </sc-if>
               </section>
+            </div>
+
+            <!-- CHANNELS — the owner's social links as an endless marquee in the
+                 hero's type. One track = the five links repeated 4×; it slides by
+                 -50% (exactly two repeats), so the loop is seamless. Only the first
+                 five are real links for keyboard / screen readers; the repeats are
+                 aria-hidden and unfocusable. Pauses on hover and on focus. -->
+            <div class="au-channels">
+              <p class="au-channels-title" id="au-ch-title">{{ channelsTitle }}</p>
+              <div class="au-marquee">
+                <ul class="au-marquee-track" aria-labelledby="au-ch-title">
+                  <sc-for list="{{ marquee }}" as="mq" hint-placeholder-count="20">
+                    <li class="au-mq-item" aria-hidden="{{ mq.hidden }}"><a class="au-mq-link" href="{{ mq.href }}" target="_blank" rel="noopener noreferrer" tabIndex="{{ mq.tab }}" aria-label="{{ mq.label }}"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="{{ mq.d }}" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"></path></svg><span aria-hidden="true">{{ mq.name }}</span></a><span class="au-mq-dot" aria-hidden="true"></span></li>
+                  </sc-for>
+                </ul>
+              </div>
             </div>
 
             <!-- FAQ (5d) — centred; every answer is existing copy from SECTIONS -->
@@ -1883,15 +1919,15 @@ const CONTACT = { company: '', email: '', phone: '' };
    NOTE: X is the bare homepage as supplied — it needs the real profile URL
    (https://x.com/<handle>) before launch; no handle has been given. */
 const SOCIALS = [
-  { key: 'instagram', name: 'Instagram', label: 'Auvelio na Instagramie', href: 'https://instagram.com/auveliopl',
+  { key: 'instagram', name: 'Instagram', label: 'Instagram', href: 'https://instagram.com/auveliopl',
     d: 'M7.5 3h9A4.5 4.5 0 0 1 21 7.5v9a4.5 4.5 0 0 1-4.5 4.5h-9A4.5 4.5 0 0 1 3 16.5v-9A4.5 4.5 0 0 1 7.5 3z M12 8.25a3.75 3.75 0 1 0 0 7.5a3.75 3.75 0 1 0 0-7.5z M17.25 6.75h.01' },
-  { key: 'telegram', name: 'Telegram', label: 'Auvelio na Telegramie', href: 'https://t.me/auveliopl',
+  { key: 'telegram', name: 'Telegram', label: 'Telegram', href: 'https://t.me/auveliopl',
     d: 'M21 4 3 11.2l6 2.1 2.2 6.2 3.2-4 5 3.6L21 4z M9 13.3l8.6-5.9-6.4 7.2' },
-  { key: 'telegram-support', name: 'Wsparcie', label: 'Wsparcie Auvelio na Telegramie', href: 'https://t.me/auveliosupport',
+  { key: 'telegram-support', name: 'Wsparcie', label: 'Wsparcie na Telegramie', href: 'https://t.me/auveliosupport',
     d: 'M5 4h14a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-8l-5 4v-4H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z M9.8 8.2a2.2 2.2 0 1 1 3 2c-.5.2-.8.7-.8 1.2v.4 M12 14h.01' },
-  { key: 'facebook', name: 'Facebook', label: 'Auvelio na Facebooku', href: 'https://fb.com/auveliopl',
+  { key: 'facebook', name: 'Facebook', label: 'Facebook', href: 'https://fb.com/auveliopl',
     d: 'M14.5 21v-7.5h2.6l.4-3.2h-3V8.4c0-.9.3-1.6 1.6-1.6h1.6V4c-.3 0-1.2-.1-2.3-.1-2.3 0-3.8 1.4-3.8 3.9v2.5H9v3.2h2.6V21' },
-  { key: 'x', name: 'X', label: 'Auvelio na X', href: 'https://x.com',
+  { key: 'x', name: 'X', label: 'X', href: 'https://x.com',
     d: 'M4 4h4.5L20 20h-4.5z M19.5 4l-6.6 7.3 M4.5 20l6.6-7.3' }
 ];
 
@@ -2745,6 +2781,13 @@ class Component extends DCLogic {
         btnId: 'au-faq-b' + i, panelId: 'au-faq-p' + i
       })),
       socials: SOCIALS.map(so => ({ key: so.key, name: so.name, label: so.label, href: so.href, d: so.d })),
+      channelsTitle: 'Znajdziesz nas też tu',
+      // 4 repeats of the five links; only the first five are real (focusable,
+      // announced) — the rest exist purely to make the loop seamless
+      marquee: [0, 1, 2, 3].flatMap(r => SOCIALS.map(so => ({
+        name: so.name, label: so.label, href: so.href, d: so.d,
+        hidden: r ? 'true' : undefined, tab: r ? '-1' : undefined
+      }))),
       contact: {
         has: contactHas,
         hasCompany: !!CONTACT.company, company: CONTACT.company,
