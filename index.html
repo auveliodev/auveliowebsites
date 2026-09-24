@@ -172,7 +172,7 @@
     --au-dur-fast: 220ms;
     --au-dur-step: 0.3s;
     --au-dur-accordion: 0.28s;
-    --au-dur-reveal: 0.7s;
+    --au-dur-reveal: 0.6s;              /* §5c spec: the one reveal duration */
     --au-dur-flow: 1.5s;
   }
 
@@ -205,12 +205,14 @@
      and the per-route 3D stages are drawn into that same canvas. */
   .au-page { position: fixed; inset: var(--au-bar-h) 0; z-index: 2;
     font-family: var(--au-font); color: var(--au-text); }
-  /* the scroll document: native scroll that STOPS — proximity snapping parks
-     each tile/stage on the reading line; content dissolves into the scene as
-     it rises under the (transparent) header */
+  /* the scroll document: plain native scroll, ONE author of its position at
+     a time — the user's wheel/touch, or (rail/zone/cue clicks) the JS glide
+     in the frame loop. No CSS snap, no native smooth-scroll: the "stop" at
+     each tile lives in the easing of the pinned instruments (magnetism in
+     updateScroll), not in a fight over scrollTop. Content dissolves into
+     the scene as it rises under the (transparent) header. */
   .au-doc { position: absolute; inset: 0; overflow-x: hidden; overflow-y: auto;
-    overscroll-behavior: contain; scroll-behavior: smooth;
-    scroll-snap-type: y proximity; scroll-padding-top: var(--au-head-zone);
+    overscroll-behavior: contain;
     scrollbar-width: thin; scrollbar-color: var(--au-scrollbar) transparent;
     padding-top: var(--au-head-zone);
     -webkit-mask-image: linear-gradient(180deg, transparent 0, transparent calc(var(--au-head-zone) - var(--au-s-5)), black calc(var(--au-head-zone) + var(--au-fade)));
@@ -222,14 +224,6 @@
   .au-page [tabindex="-1"]:focus { outline: none; }
   .au-page [tabindex="-1"]:focus-visible, .au-page input:focus-visible, .au-page textarea:focus-visible {
     outline: 2px solid var(--au-focus); outline-offset: 6px; }
-  /* snap points: the opener, every step/tile/card at the reading line, and
-     the big blocks at their tops */
-  .au-opener { scroll-snap-align: start; }
-  .au-step, .au-card, .au-principle { scroll-snap-align: center; }
-  .au-stackstrip, .au-contact, .au-faq { scroll-snap-align: start; scroll-margin-top: var(--au-s-5); }
-  /* the very bottom is a stop too, so the end dock is always reachable */
-  .au-legal { scroll-snap-align: end; }
-
   /* ---- GLASS — the five-layer recipe as a class. Decorative layers are
      real spans (aria-hidden) kept UNDER the content, so the edge vignette
      never dims text. Tiles marked data-spot carry a light that follows the
@@ -378,6 +372,9 @@
      delay AND a shorter duration by the same amount, so a staggered group
      still lands together. */
   [data-io] [data-reveal]:not([data-in]) { opacity: 0; transform: perspective(900px) translateY(40px) rotateX(10deg); filter: blur(6px); }
+  /* compositing hint only while a tile can still move; dropped (data-settled)
+     once its reveal has finished, so no idle layers are left behind */
+  [data-io] [data-reveal]:not([data-settled]) { will-change: transform, opacity; }
   [data-io] [data-reveal] {
     transition: opacity calc(var(--au-dur-reveal) - var(--au-delay, 0s)) ease-out var(--au-delay, 0s),
                 transform calc(var(--au-dur-reveal) - var(--au-delay, 0s)) var(--au-ease) var(--au-delay, 0s),
@@ -530,6 +527,9 @@
   .au-pin-count { margin: 0; font: 300 15px/1.4 var(--au-font-data); letter-spacing: var(--au-track-label); color: var(--au-muted);
     text-transform: uppercase; animation: auFade 500ms ease both; }
   .au-split-list { display: grid; gap: clamp(20px, 4vh, 40px); align-content: start; }
+  /* .au-cell = the node the scroll driver MEASURES (carries data-step, never
+     transformed); the tile inside it is the one that reveals and moves */
+  .au-cell { display: grid; }
   .au-card { display: grid; align-content: center; gap: var(--au-s-3); min-height: 34vh;
     padding: clamp(24px, 3vw, 40px) clamp(24px, 3vw, 44px) clamp(24px, 3vw, 40px) clamp(30px, 3.6vw, 52px); }
   .au-glass > .au-card-edge { left: 0; top: 24%; bottom: 24%; width: 3px; border-radius: 3px;
@@ -613,6 +613,19 @@
   .au-legal .au-navlist { gap: var(--au-s-2) var(--au-s-6); }
   .au-legal .au-navlink { font-size: 12px; }
   .au-legal-line { font-size: 11px; font-weight: 300; letter-spacing: 0.12em; color: var(--au-legal); }
+  /* social marks — icon links, the focus token's ring, a small lift on hover */
+  .au-socials { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: var(--au-s-3); }
+  .au-social { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%;
+    color: var(--au-link); border: 1px solid var(--au-hairline);
+    transition: color var(--au-dur-fast) ease, border-color var(--au-dur-fast) ease, box-shadow var(--au-dur-fast) ease, transform var(--au-dur-fast) var(--au-ease); }
+  .au-social:hover { color: var(--au-link-hover); border-color: var(--au-accent-line); box-shadow: 0 0 18px -4px var(--au-accent-glow); transform: translateY(-2px); }
+  .au-social:focus-visible, .au-soc-row:focus-visible { outline: 2px solid var(--au-focus); outline-offset: 4px; border-radius: var(--au-radius-pill); }
+  .au-sum-socials { display: grid; gap: var(--au-s-2); padding-top: var(--au-s-3); border-top: 1px solid var(--au-hairline); }
+  .au-soc-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  .au-soc-row { display: flex; align-items: center; gap: var(--au-s-3); padding: 6px 0; font-size: 16px; font-weight: 300; color: var(--au-text);
+    transition: color var(--au-dur-fast) ease; }
+  .au-soc-row:hover { color: var(--au-link-hover); }
+  .au-soc-row > svg { flex: none; color: var(--au-accent); }
   .au-legal-contact { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--au-s-2) var(--au-s-5); font-style: normal; font-size: 13px; }
 
   /* ---- END DOCK — in the flow at the end of the page, above the footer
@@ -725,6 +738,9 @@
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
     /* SUB-PAGES (5e): the layout stays, the motion goes */
+    .au-doc, .au-doc * { scroll-snap-type: none !important; scroll-snap-align: none !important; scroll-behavior: auto !important; }
+    .au-social, .au-soc-row { transition: none !important; }
+    .au-social:hover { transform: none !important; }
     [data-io] [data-reveal], [data-io] [data-reveal]:not([data-in]) { opacity: 1 !important; transform: none !important; filter: none !important; transition: none !important; }
     [data-io] [data-flow] { -webkit-mask-image: none !important; mask-image: none !important; animation: none !important; filter: none !important; }
     [data-typing]::after { display: none; }
@@ -740,7 +756,6 @@
     .au-sweep { display: none; }
     /* entrances collapse to a plain opacity change */
     .au-scan, .au-menu, .au-bignum-n, .au-pin-count { animation-name: auFade !important; }
-    .au-doc { scroll-behavior: auto; }
   }
 </style>
 </helmet>
@@ -867,7 +882,8 @@
               </div>
               <div class="au-split-list">
                 <sc-for list="{{ uslugiCards }}" as="card" hint-placeholder-count="6">
-                  <article class="au-card au-glass" data-step="" data-reveal="" data-spot="" style="{{ card.vars }}">
+                  <div class="au-cell" data-step="">
+                  <article class="au-card au-glass" data-reveal="" data-spot="" style="{{ card.vars }}">
                     <span aria-hidden="true" class="au-gl au-gl-hair"></span>
                     <span aria-hidden="true" class="au-gl au-gl-sheen"></span>
                     <span aria-hidden="true" class="au-gl au-gl-vig"></span>
@@ -877,6 +893,7 @@
                     <p class="au-card-desc" data-flow="">{{ card.desc }}</p>
                     <a class="au-card-cta" href="#kontakt" onClick="{{ card.ask }}"><span>ZAPYTAJ O WYCENĘ</span><span class="au-sr"> — {{ card.name }}</span><span class="au-card-cta-arrow" aria-hidden="true">→</span></a>
                   </article>
+                  </div>
                 </sc-for>
               </div>
             </div>
@@ -928,7 +945,8 @@
           <div class="au-section">
             <div class="au-principles">
               <sc-for list="{{ marcaItems }}" as="item" hint-placeholder-count="3">
-                <article class="au-principle au-glass" data-step="" data-reveal="" data-spot="" style="{{ item.vars }}">
+                <div class="au-cell" data-step="">
+                <article class="au-principle au-glass" data-reveal="" data-spot="" style="{{ item.vars }}">
                   <span aria-hidden="true" class="au-gl au-gl-hair"></span>
                   <span aria-hidden="true" class="au-gl au-gl-sheen"></span>
                   <span aria-hidden="true" class="au-gl au-gl-vig"></span>
@@ -937,15 +955,18 @@
                   <h3 class="au-card-title" data-type="">{{ item.name }}</h3>
                   <p class="au-card-desc" data-flow="">{{ item.desc }}</p>
                 </article>
+                </div>
               </sc-for>
             </div>
-            <div class="au-stackstrip" data-step="" data-reveal="">
+            <div data-step="">
+            <div class="au-stackstrip" data-reveal="">
               <p class="au-section-title" id="au-stack-label" data-type="">{{ stackLabel }}</p>
               <ul class="au-stack" aria-labelledby="au-stack-label">
                 <sc-for list="{{ stack }}" as="tech" hint-placeholder-count="6">
                   <li class="au-pill">{{ tech }}</li>
                 </sc-for>
               </ul>
+            </div>
             </div>
           </div>
         </section>
@@ -1030,6 +1051,14 @@
                   </sc-for>
                 </ul>
                 <p class="au-sum-note">{{ summary.response }}</p>
+                <div class="au-sum-socials">
+                  <p class="au-label" id="au-sum-soc">Znajdziesz nas też tu</p>
+                  <ul class="au-soc-list" aria-labelledby="au-sum-soc">
+                    <sc-for list="{{ socials }}" as="so" hint-placeholder-count="5">
+                      <li><a class="au-soc-row" href="{{ so.href }}" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true"><path d="{{ so.d }}" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path></svg><span>{{ so.label }}</span></a></li>
+                    </sc-for>
+                  </ul>
+                </div>
                 <sc-if value="{{ contact.has }}" hint-placeholder-val="{{ false }}">
                   <address class="au-sum-contact">
                     <sc-if value="{{ contact.hasCompany }}" hint-placeholder-val="{{ false }}"><span>{{ contact.company }}</span></sc-if>
@@ -1098,6 +1127,11 @@
               <sc-if value="{{ contact.hasPhone }}" hint-placeholder-val="{{ false }}"><a href="{{ contact.tel }}">{{ contact.phone }}</a></sc-if>
             </address>
           </sc-if>
+          <ul class="au-socials" aria-label="Auvelio w sieci">
+            <sc-for list="{{ socials }}" as="so" hint-placeholder-count="5">
+              <li><a class="au-social" href="{{ so.href }}" target="_blank" rel="noopener noreferrer" aria-label="{{ so.label }}"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true"><path d="{{ so.d }}" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path></svg></a></li>
+            </sc-for>
+          </ul>
           <span class="au-legal-line">© {{ year }} AUVELIO WEBSITES</span>
         </div>
       </footer>
@@ -1330,7 +1364,8 @@ function makeHoloOrb(THREE, opts) {
     stripeFreq: 7.0, scanSpeed: 0.5, holoIntensity: 0.4, fresnelPower: 2.6, glitch: 0.004
   }, opts || {});
 
-  const uniforms = { uTime: { value: 0 }, uFade: { value: 1 }, uBurst: { value: 0 },
+  // uSat: 1 = full colour, 0.5 = the 2D zones' grayscale(0.5) — inactive stations
+  const uniforms = { uTime: { value: 0 }, uFade: { value: 1 }, uBurst: { value: 0 }, uSat: { value: 1 },
     uRect: o.rect || { value: { x: 0, y: 0, z: 0, w: 0 } }, uCut: o.cut || { value: { x: 0, y: 0 } } };
 
   const bodyUniforms = Object.assign({
@@ -1374,7 +1409,7 @@ function makeHoloOrb(THREE, opts) {
         }`,
       fragmentShader: STAGE_EDGE_GLSL + `
         uniform vec3 uColorDeep, uColorLit, uAccent, uFire;
-        uniform float uDispAmp, uFade, uBurst, uFireGain;
+        uniform float uDispAmp, uFade, uBurst, uFireGain, uSat;
         varying vec3 vN; varying vec3 vViewPos; varying float vH;
         void main(){
           vec3 n = normalize(vN), v = normalize(-vViewPos);
@@ -1387,6 +1422,7 @@ function makeHoloOrb(THREE, opts) {
           c += vec3(0.55, 0.80, 0.95) * spec;
           c += uFire * uBurst * fres * uFireGain;
           c += uAccent * uBurst * 0.4;
+          c = mix(vec3(dot(c, vec3(0.299, 0.587, 0.114))), c, uSat);
           float f = uFade * stageEdge();
           gl_FragColor = vec4(c * f, f);
         }`
@@ -1419,7 +1455,7 @@ function makeHoloOrb(THREE, opts) {
           gl_Position = projectionMatrix * mv;
         }`,
       fragmentShader: STAGE_EDGE_GLSL + `
-        uniform float uTime, uStripeFreq, uScanSpeed, uHoloIntensity, uFresnelPower, uFade;
+        uniform float uTime, uStripeFreq, uScanSpeed, uHoloIntensity, uFresnelPower, uFade, uSat;
         uniform vec3 uAccent;
         varying vec3 vN; varying vec3 vViewPos; varying vec3 vLocal;
         void main(){
@@ -1428,7 +1464,8 @@ function makeHoloOrb(THREE, opts) {
           stripes = pow(stripes, 3.0);
           float fres = pow(1.0 - abs(dot(n, v)), uFresnelPower);
           float a = (stripes * 0.45 + fres * 0.9) * uHoloIntensity * uFade * stageEdge();
-          gl_FragColor = vec4(uAccent * (0.7 + 0.6 * fres), a);
+          vec3 acc = mix(vec3(dot(uAccent, vec3(0.299, 0.587, 0.114))), uAccent, uSat);
+          gl_FragColor = vec4(acc * (0.7 + 0.6 * fres), a);
         }`
     })
   );
@@ -1725,7 +1762,10 @@ const SECTIONS = {
       { name: 'Landing page sprzedażowy', meta: 'KAMPANIE', desc: 'Jedna strona pod konkretną kampanię: czytelna argumentacja, formularz, integracja z analityką i systemem mailingowym.', swatch: '#5ab8ff' },
       { name: 'Sklep internetowy', meta: 'E-COMMERCE', desc: 'Katalog, koszyk, płatności online, wysyłka i faktury. Wdrożenie na sprawdzonym silniku, bez eksperymentów na Twoim budżecie.', swatch: '#7ee0a8' },
       { name: 'Animacje i WebGL', meta: 'ZAAWANSOWANE', desc: 'Scroll-telling, konfiguratory produktu, shadery i scenografia 3D w przeglądarce — bez wtyczek, na Three.js.', swatch: '#b08cff' },
-      { name: 'Redesign, audyt i opieka', meta: 'ISTNIEJĄCE STRONY', desc: 'Przegląd wydajności i dostępności, poprawki uszeregowane według wpływu na wynik, a potem stały pakiet zmian i monitoring.', swatch: '#ffb35a' }
+      { name: 'Redesign, audyt i opieka', meta: 'ISTNIEJĄCE STRONY', desc: 'Przegląd wydajności i dostępności, poprawki uszeregowane według wpływu na wynik, a potem stały pakiet zmian i monitoring.', swatch: '#ffb35a' },
+      // added 2026-09-24 at the owner's request (custom apps, Telegram bots)
+      { name: 'Aplikacja na zamówienie', meta: 'WEB I MOBILE', desc: 'Oprogramowanie dopasowane do sposobu pracy firmy: panel klienta, rezerwacje, system zamówień. Projekt, wdrożenie i dalszy rozwój — bez gotowego szablonu.', swatch: '#35c8f0' },
+      { name: 'Bot na Telegramie', meta: 'AUTOMATYZACJA', desc: 'Zamówienia, powiadomienia i obsługa klienta prosto w komunikatorze. Połączony ze stroną lub sklepem, odpowiada o każdej porze.', swatch: '#5ab8ff' }
     ]
   },
   portfolio: {
@@ -1815,7 +1855,7 @@ SECTIONS.kontakt.tagline = KINDS.filter(k => k.key !== 'inne').map(k => k.label.
 
 /* service → the form's project type, so "ZAPYTAJ O WYCENĘ" on a service
    card arrives with it pre-picked; null = no exact match, leave the choice */
-const USLUGI_KIND = ['wizytowka', 'firmowa', null, 'sklep', 'webgl', null];
+const USLUGI_KIND = ['wizytowka', 'firmowa', null, 'sklep', 'webgl', null, null, null];
 
 /* ╔═══════════════════════════════════════════════════════════════════════╗
    ║ CONTACT FORM ENDPOINT — the ONE place the form is wired to a backend. ║
@@ -1838,12 +1878,29 @@ const FORM_TIMEOUT_MS = 12000;
    as soon as it is non-empty. */
 const CONTACT = { company: '', email: '', phone: '' };
 
+/* SOCIAL LINKS — supplied by the owner (2026-09-24). Each mark is a small
+   inline stroke path (24×24, drawn here, no icon library, no files).
+   NOTE: X is the bare homepage as supplied — it needs the real profile URL
+   (https://x.com/<handle>) before launch; no handle has been given. */
+const SOCIALS = [
+  { key: 'instagram', name: 'Instagram', label: 'Auvelio na Instagramie', href: 'https://instagram.com/auveliopl',
+    d: 'M7.5 3h9A4.5 4.5 0 0 1 21 7.5v9a4.5 4.5 0 0 1-4.5 4.5h-9A4.5 4.5 0 0 1 3 16.5v-9A4.5 4.5 0 0 1 7.5 3z M12 8.25a3.75 3.75 0 1 0 0 7.5a3.75 3.75 0 1 0 0-7.5z M17.25 6.75h.01' },
+  { key: 'telegram', name: 'Telegram', label: 'Auvelio na Telegramie', href: 'https://t.me/auveliopl',
+    d: 'M21 4 3 11.2l6 2.1 2.2 6.2 3.2-4 5 3.6L21 4z M9 13.3l8.6-5.9-6.4 7.2' },
+  { key: 'telegram-support', name: 'Wsparcie', label: 'Wsparcie Auvelio na Telegramie', href: 'https://t.me/auveliosupport',
+    d: 'M5 4h14a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-8l-5 4v-4H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z M9.8 8.2a2.2 2.2 0 1 1 3 2c-.5.2-.8.7-.8 1.2v.4 M12 14h.01' },
+  { key: 'facebook', name: 'Facebook', label: 'Auvelio na Facebooku', href: 'https://fb.com/auveliopl',
+    d: 'M14.5 21v-7.5h2.6l.4-3.2h-3V8.4c0-.9.3-1.6 1.6-1.6h1.6V4c-.3 0-1.2-.1-2.3-.1-2.3 0-3.8 1.4-3.8 3.9v2.5H9v3.2h2.6V21' },
+  { key: 'x', name: 'X', label: 'Auvelio na X', href: 'https://x.com',
+    d: 'M4 4h4.5L20 20h-4.5z M19.5 4l-6.6 7.3 M4.5 20l6.6-7.3' }
+];
+
 /* the same e-mail rule handleSubmit() validates with, reused by the live summary */
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
-/* THE CENTRE LINE — the middle of the visible area below the header. The
-   scroll stops park each tile with its centre on it (scroll-snap-align:
-   center), the active step is the one whose centre is nearest to it, and
+/* THE CENTRE LINE — the middle of the visible area below the header. Rail /
+   zone clicks glide a tile's centre onto it, the active step is the one
+   whose centre is nearest to it, and
    the pinned instrument / pinned display are centred on it too — so what
    you are reading and the 3-D that answers it sit side by side, mid-screen. */
 function centreLine(R, d) {
@@ -1907,7 +1964,7 @@ class Component extends DCLogic {
   docRef = el => {
     // the pointer light on data-spot tiles: the listener only records where
     // the pointer is; the frame loop does the layout read and the write.
-    // Any hand on the controls also cancels a pending jump re-aim.
+    // Any hand on the controls also cancels a running glide.
     const USER = ['wheel', 'touchstart', 'keydown'];
     if (this.docEl && this.docEl !== el) {
       this.docEl.removeEventListener('pointermove', this.onSpot);
@@ -1919,7 +1976,7 @@ class Component extends DCLogic {
     }
     this.docEl = el;
   };
-  onUserScroll = () => { if (this.ROUTE) this.ROUTE.jump = null; };
+  onUserScroll = () => { if (this.ROUTE) this.ROUTE.glide = null; };
   onSpot = e => {
     const t = e.target && e.target.closest ? e.target.closest('[data-spot]') : null;
     this._spot = t ? { el: t, x: e.clientX, y: e.clientY, lx: this._spot && this._spot.el === t ? this._spot.lx : null } : null;
@@ -1981,7 +2038,7 @@ class Component extends DCLogic {
     else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
   };
   // one jumper per step index, shared by the rail and the instrument zones
-  stepJumpers = Array.from({ length: 8 }, (_, i) => e => { if (e) e.preventDefault(); this.scrollToStep(i); });
+  stepJumpers = Array.from({ length: 12 }, (_, i) => e => { if (e) e.preventDefault(); this.scrollToStep(i); });
   cueJump = e => { if (e) e.preventDefault(); this.scrollToStep(0); };
   // conversion shortcuts: a service card / a project-type chip goes straight
   // to the form with the matching project type already chosen
@@ -2192,7 +2249,10 @@ class Component extends DCLogic {
           R.io.unobserve(t);
           if (t.hasAttribute('data-type')) this.startTyping(t, batch++);
           else if (t.hasAttribute('data-flow')) this.startFlow(t);
-          else t.setAttribute('data-in', '');
+          else {
+            t.setAttribute('data-in', '');
+            setTimeout(() => { if (t.isConnected) t.setAttribute('data-settled', ''); }, 700);
+          }
         }
       }, { threshold: 0.15, rootMargin: '0px 0px -6% 0px' });
       reveals.concat(flows, types).forEach(n => R.io.observe(n));
@@ -2253,18 +2313,15 @@ class Component extends DCLogic {
     return !!(this._mq && this._mq.matches);
   }
 
-  /* scroll so step i's centre sits on the centre line (smooth, native).
-     scrollIntoView({ block: 'center' }) centres it in the snapport — the
-     scroller minus its header padding, i.e. exactly on the centre line — and
-     lets the browser resolve the target together with the scroll stops, so
-     a layout change mid-flight can't land it one stop short. */
+  /* glide so step i's centre lands on the centre line. It does not scroll by
+     itself: it sets a target the frame loop eases scrollTop toward
+     (updateScroll), re-measured every frame — a reflow mid-flight can't land
+     it short, and there is exactly one author of the scroll position. Any
+     wheel/touch/key input cancels the glide. */
   scrollToStep(i) {
     const R = this.ROUTE;
     if (!R || !R.doc || !R.steps[i]) return;
-    R.steps[i].scrollIntoView({ block: 'center', inline: 'nearest', behavior: this.reduced ? 'auto' : 'smooth' });
-    // watched by the scroll driver: if the page reflows mid-flight (web fonts
-    // swapping in on a first visit) and it lands short, it is re-aimed
-    R.jump = { i, tries: 0, still: 0, last: -1 };
+    R.glide = { i };
   }
 
   /* PORTFOLIO two-way binding, click side: focus now, then scroll to the
@@ -2281,7 +2338,7 @@ class Component extends DCLogic {
      All layout reads happen first, then all writes, so the frame costs one
      layout at most. Scroll only ever writes *targets* (pathTarget,
      ringTarget, shardFocus); the existing per-frame easing resolves them. */
-  updateScroll() {
+  updateScroll(dt) {
     const R = this.ROUTE;
     if (!R || !R.doc || !R.doc.isConnected) return;
     if (this.renderer && !this._glSeen) { this._glSeen = true; this.forceUpdate(); }
@@ -2340,18 +2397,19 @@ class Component extends DCLogic {
 
     // ---- WRITE ----
     if (this.scrollMemory) this.scrollMemory[R.key] = top;
-    // a programmatic jump that settled off-centre (the page reflowed while it
-    // was flying) is re-aimed, at most twice
-    if (R.jump) {
-      const J = R.jump;
-      J.still = top === J.last ? J.still + 1 : 0;
-      J.last = top;
-      if (J.still >= 6) {
-        const r = rects[J.i];
-        if (r && Math.abs(r.top + r.height / 2 - line) > 6 && J.tries < 2) {
-          J.tries++; J.still = 0;
-          R.steps[J.i].scrollIntoView({ block: 'center', inline: 'nearest', behavior: this.reduced ? 'auto' : 'smooth' });
-        } else R.jump = null;
+    // the glide (rail / zone / cue clicks): ease scrollTop toward the step's
+    // centre-on-the-line position — the same *Target/*Offset idea as the
+    // rest of the site, the target re-derived from this frame's rect
+    if (R.glide) {
+      const r = rects[R.glide.i];
+      if (!r) R.glide = null;
+      else {
+        const goal = Math.max(0, Math.min(maxTop, top + (r.top + r.height / 2 - line)));
+        const kg = this.reduced ? 1 : 1 - Math.pow(1 - 0.14, (dt || 1 / 60) * 60);
+        const next = Math.abs(goal - top) < 1 ? goal : top + (goal - top) * kg;
+        doc.scrollTop = next;
+        if (Math.abs(goal - next) < 1) R.glide = null;
+        if (R.key === 'portfolio') this._lockUntil = performance.now() + 120;
       }
     }
     // header: collapse on the way down, restore on the way up (8px hysteresis)
@@ -2425,6 +2483,12 @@ class Component extends DCLogic {
       R.split.style.setProperty('--au-track-top', track.top + 'px');
       R.split.style.setProperty('--au-track-h', Math.max(0, track.h) + 'px');
     }
+    // MAGNETISM — the "stop" at each tile, as easing: the closer the scroll
+    // sits to a station's centre, the softer the instruments' per-frame
+    // lerp, so they settle and hold instead of sliding on (the hero's own
+    // vocabulary: a damped lerp factor, never a snap)
+    const frac = progress < 0 ? 1 : Math.abs(progress - Math.round(progress));
+    this.magnet = 1 - smoothstep(0.04, 0.22, frac);
     // the choreography is desktop-only; on mobile the stages just sit still
     if (!this.isMobile()) {
       if (R.key === 'proces') this.pathTarget = this.pathUFromProgress(progress);
@@ -2465,10 +2529,10 @@ class Component extends DCLogic {
     const f = this.state.form;
     const navLink = {
       fontSize: 'clamp(11px, 0.95vw, 15px)', fontWeight: 300, letterSpacing: '0.3em',
-      color: '#a8c4d2', textShadow: '0 0 16px rgba(110,180,215,0.28)',
+      color: 'var(--au-link)', textShadow: 'var(--au-nav-glow)',
       transition: 'color 220ms ease, text-shadow 220ms ease'
     };
-    const activeLink = Object.assign({}, navLink, { color: '#e6f6fd', textShadow: '0 0 22px rgba(160,220,245,0.6)' });
+    const activeLink = Object.assign({}, navLink, { color: 'var(--au-link-hover)', textShadow: 'var(--au-nav-glow-on)' });
     const contactHas = !!(CONTACT.company || CONTACT.email || CONTACT.phone);
     return {
       canvasRef: this.canvasRef,
@@ -2487,10 +2551,10 @@ class Component extends DCLogic {
       },
       // route switch: out (blur + lift away) → parked on the far side → glide in
       mainStyle: this.state.switching
-        ? { opacity: 0, filter: 'blur(10px)', transform: 'translateY(' + (-28 * (this.starDir || 1)) + 'px) scale(0.985)',
+        ? { opacity: 0, filter: 'blur(10px)', willChange: 'transform, opacity, filter', transform: 'translateY(' + (-28 * (this.starDir || 1)) + 'px) scale(0.985)',
             transition: 'opacity 300ms ease-in, filter 300ms ease-in, transform 300ms cubic-bezier(0.55,0,1,0.45)' }
         : this.state.swapIn
-        ? { opacity: 0, filter: 'blur(10px)', transform: 'translateY(' + (34 * (this.starDir || 1)) + 'px) scale(0.985)', transition: 'none' }
+        ? { opacity: 0, filter: 'blur(10px)', willChange: 'transform, opacity, filter', transform: 'translateY(' + (34 * (this.starDir || 1)) + 'px) scale(0.985)', transition: 'none' }
         : { opacity: 1, filter: 'none', transform: 'none',
             transition: 'opacity 520ms ease-out, filter 640ms ease-out, transform 760ms var(--au-ease)',
             animation: open && this._entering ? 'auMainIn 560ms var(--au-ease) 820ms both' : 'none' },
@@ -2680,6 +2744,7 @@ class Component extends DCLogic {
         toggle: this.faqTogglers[i],
         btnId: 'au-faq-b' + i, panelId: 'au-faq-p' + i
       })),
+      socials: SOCIALS.map(so => ({ key: so.key, name: so.name, label: so.label, href: so.href, d: so.d })),
       contact: {
         has: contactHas,
         hasCompany: !!CONTACT.company, company: CONTACT.company,
@@ -2710,15 +2775,15 @@ class Component extends DCLogic {
          pose (open = false) keeps the original values, byte for byte. */
       barTopStyle: {
         position: 'absolute', top: 0, left: 0, right: 0, height: open ? '0px' : '13vh',
-        zIndex: 4, background: '#010307', borderBottom: '1px solid ' + (open ? 'transparent' : 'rgba(140,200,230,0.10)'),
+        zIndex: 4, background: 'var(--au-bar)', borderBottom: '1px solid ' + (open ? 'transparent' : 'rgba(140,200,230,0.10)'),
         pointerEvents: 'none', transition: 'height 620ms cubic-bezier(0.22,0.61,0.36,1), border-color 620ms ease'
       },
       barBottomStyle: {
         position: 'absolute', bottom: 0, left: 0, right: 0, height: open ? '0px' : '13vh',
-        zIndex: 4, background: '#010307', borderTop: '1px solid ' + (open ? 'transparent' : 'rgba(140,200,230,0.10)'),
+        zIndex: 4, background: 'var(--au-bar)', borderTop: '1px solid ' + (open ? 'transparent' : 'rgba(140,200,230,0.10)'),
         pointerEvents: 'none', transition: 'height 620ms cubic-bezier(0.22,0.61,0.36,1), border-color 620ms ease'
       },
-      linkHover: { color: '#e6f6fd' },
+      linkHover: { color: 'var(--au-link-hover)' },
       heroStyle: {
         position: 'absolute', inset: 0, zIndex: 1,
         opacity: open ? 0 : 1,
@@ -3219,6 +3284,7 @@ class Component extends DCLogic {
       new THREE.ShaderMaterial({
         uniforms: {
           uProgress: { value: 0 }, uTime: { value: 0 }, uStage: this.stageU, uRect: this.stageRectU, uCut: this.stageCutU,
+          uSpeed: { value: 0 }, uArrive: { value: 0 }, uFire: { value: new THREE.Color(CONFIG.burst.fireColor) },
           uIdle: { value: new THREE.Color(STAGE_COLOR.road) }, uLit: { value: new THREE.Color(STAGE_COLOR.accent) }
         },
         transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
@@ -3226,17 +3292,27 @@ class Component extends DCLogic {
           varying vec2 vUv;
           void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
         fragmentShader: STAGE_EDGE_GLSL + `
-          uniform float uProgress, uTime, uStage;
-          uniform vec3 uIdle, uLit;
+          uniform float uProgress, uTime, uStage, uSpeed, uArrive;
+          uniform vec3 uIdle, uLit, uFire;
           varying vec2 vUv;
           void main(){
-            // behind the traveller: lit accent with slow dashes running forward;
-            // ahead: a faint hairline; at the traveller: a soft glowing head
+            // behind the traveller: the travelled road, carrying packets of
+            // energy that FLOW toward the head. The lane is anchored to the
+            // eased progress, so the packets ride with it; they run faster and
+            // brighter while pathOffset is actually moving (uSpeed) and slow to
+            // a calm drift when it settles — the line confirms the value.
             float done = 1.0 - smoothstep(uProgress - 0.004, uProgress + 0.004, vUv.x);
-            float dash = 0.72 + 0.28 * sin(vUv.x * 70.0 - uTime * 1.6);
+            float lane = fract((vUv.x - uProgress) * 6.0 - uTime * (0.3 + uSpeed * 2.6));
+            float packet = pow(lane, 6.0);                      // sharp front, soft tail
+            float nearHead = smoothstep(uProgress - 0.6, uProgress, vUv.x);
             float head = exp(-pow((vUv.x - uProgress) * 34.0, 2.0));
-            vec3 c = mix(uIdle * 0.45, uLit * dash, done) + uLit * head * 1.2;
-            float a = mix(0.32, 0.85, done) + head * 0.8;
+            // ahead: the route still to go, a faint hairline
+            vec3 c = mix(uIdle * 0.42, uLit * 0.72, done);
+            c += uLit * packet * done * (0.35 + 0.65 * nearHead) * (1.0 + uSpeed * 1.4);
+            c += uLit * head * (1.1 + uSpeed * 0.8);
+            // arrived at the last station: the head burns with the burst's fire
+            c = mix(c, uFire * (head * 1.3 + done * 0.25), uArrive * (head * 0.85 + done * 0.2));
+            float a = mix(0.3, 0.78, done) + packet * done * (0.35 + 0.65 * nearHead) * 0.45 + head * 0.8;
             gl_FragColor = vec4(c, clamp(a, 0.0, 1.0) * uStage * stageEdge());
           }`
       })
@@ -3278,9 +3354,15 @@ class Component extends DCLogic {
     const O = this.PATH;
     if (!O) return;
     O.time += this.reduced ? 0 : dt;
-    const k = this.reduced ? 1 : 1 - Math.pow(1 - 0.06, dt * 60);
+    // 0.06 in free travel, easing down to 0.03 as the scroll nears a station
+    const k = this.reduced ? 1 : 1 - Math.pow(1 - (0.06 - 0.03 * (this.magnet || 0)), dt * 60);
     this.pathOffset += (this.pathTarget - this.pathOffset) * k;
     const u = clamp01(this.pathOffset);
+    // how fast the eased progress is moving right now (0..1) — feeds the
+    // road's energy flow; eased itself so it swells and fades smoothly
+    const vel = Math.min(1, Math.abs(u - (O.lastU == null ? u : O.lastU)) / Math.max(dt, 1e-3) * 2.2);
+    O.lastU = u;
+    O.speed = (O.speed || 0) + (vel - (O.speed || 0)) * (this.reduced ? 1 : 1 - Math.pow(1 - 0.12, dt * 60));
 
     // trail the traveller: behind along the tangent, lifted, looking at it
     O.curve.getPointAt(u, O.look);
@@ -3296,20 +3378,31 @@ class Component extends DCLogic {
     const stage = this.stageU ? this.stageU.value : 1;
     O.road.material.uniforms.uProgress.value = clamp01(u / O.uEnd);
     O.road.material.uniforms.uTime.value = O.time;
+    O.road.material.uniforms.uSpeed.value = this.reduced ? 0 : O.speed;
+    // "arrived": the last stage is active and the traveller has reached it
+    const arrived = this.state.stepActive === O.count - 1 && u >= O.stepU[O.count - 1] - 0.012 ? 1 : 0;
+    O.arrive = (O.arrive || 0) + (arrived - (O.arrive || 0)) * (this.reduced ? 1 : 1 - Math.pow(1 - 0.05, dt * 60));
+    O.road.material.uniforms.uArrive.value = O.arrive;
 
     const kl = this.reduced ? 1 : 1 - Math.pow(1 - 0.1, dt * 60);
     const active = this.state.stepActive;
-    const breathe = this.reduced ? 0 : Math.sin(O.time * 1.6) * 0.04;
+    // the hero sphere's own breath (CONFIG.breath, read only): same period,
+    // doubled amplitude so it registers on a marker this small
+    const B = CONFIG.breath;
+    const breath = this.reduced ? 0 : Math.sin(O.time / B.periodS * Math.PI * 2) * B.amp * 2;
     O.stations.forEach(s => {
       s.lit += ((s.i === active ? 1 : 0) - s.lit) * kl;
       const ou = s.orb.uniforms;
       ou.uTime.value = O.time;
-      ou.uFade.value = stage * (0.28 + 0.72 * s.lit);
-      ou.uBurst.value = s.lit * 0.25;
-      s.orb.group.scale.setScalar(0.8 + s.lit * 0.45);
+      // inactive: opacity 0.4 + grayscale 0.5 — the 2D zones' exact language
+      ou.uFade.value = stage * (0.4 + 0.6 * s.lit) * (1 + breath * 1.5 * s.lit);
+      ou.uSat.value = 0.5 + 0.5 * s.lit;
+      // the burst's green fire only where the hero reserves it: arrival
+      ou.uBurst.value = s.i === O.count - 1 ? O.arrive * 0.9 : 0;
+      s.orb.group.scale.setScalar((0.8 + s.lit * 0.45) * (1 + breath * s.lit));
       if (!this.reduced) s.orb.group.rotation.y += dt * 0.3;
       s.ring.lookAt(O.camera.position);
-      s.ring.scale.setScalar(1 + s.lit * (0.35 + breathe));
+      s.ring.scale.setScalar(1 + s.lit * (0.35 + breath * 2));
       s.ring.material.opacity = stage * (0.1 + 0.75 * s.lit);
     });
   }
@@ -3340,9 +3433,10 @@ class Component extends DCLogic {
     // size, plus another +25% on the whole idle composition
     const geo = new THREE.PlaneGeometry(1.94, 1.22, 1, 1);
     const shardFrag = STAGE_EDGE_GLSL + `
-      uniform float uTime, uFocus, uDim, uSeed, uStage;
+      uniform float uTime, uFocus, uDim, uSeed, uStage, uBreath;
       uniform sampler2D uMap;
-      varying vec2 vUv; varying float vDepth;
+      uniform vec3 uGlowA, uGlowB;
+      varying vec2 vUv; varying float vDepth; varying float vRim;
       float rrect(vec2 p, vec2 b, float r){
         vec2 q = abs(p) - b + r;
         return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
@@ -3368,15 +3462,32 @@ class Component extends DCLogic {
 
         float a = tex.a * depthFactor * (1.0 - uDim * 0.65) * (0.92 + uFocus * 0.08);
         a += line * 0.65 * (1.0 - uDim * 0.55);
+
+        // LIT FROM WITHIN — light caught inside the glass edge, in this
+        // study's own swatch pair (A → B across the card), plus a faint core
+        // behind the baked type; both swell with focus and breathe with the
+        // hero's period (uBreath). Fresnel on the edge: the hero's rim idea
+        // on a flat pane — edges catch more light the more the pane turns.
+        vec3 glowCol = mix(uGlowA, uGlowB, vUv.x);
+        float inner = step(d, 0.0) * (1.0 - smoothstep(0.0, 0.07, -d));
+        float lit = (0.12 + 0.88 * uFocus) * (1.0 + uBreath) * (1.0 - uDim * 0.7);
+        c += glowCol * inner * lit * 0.85;
+        float core = 1.0 - smoothstep(0.0, 0.6, length(p * vec2(1.0, 1.6)));
+        c += glowCol * core * uFocus * 0.08;
+        c += lineCol * pow(vRim, 2.2) * 0.4 * (1.0 - uDim * 0.6);
+        a += inner * lit * 0.35 + pow(vRim, 2.2) * 0.15;
         // uStage: the whole stage fades with the page it belongs to
         gl_FragColor = vec4(c, clamp(a, 0.0, 1.0) * uStage * stageEdge());
       }`;
     const shardVert = `
-      varying vec2 vUv; varying float vDepth;
+      varying vec2 vUv; varying float vDepth; varying float vRim;
       void main(){
         vUv = uv;
         vec4 mv = modelViewMatrix * vec4(position, 1.0);
         vDepth = -mv.z;
+        // fresnel term of a flat pane: 0 facing the camera, → 1 edge-on
+        vec3 n = normalize(normalMatrix * vec3(0.0, 0.0, 1.0));
+        vRim = 1.0 - abs(dot(n, normalize(-mv.xyz)));
         gl_Position = projectionMatrix * mv;
       }`;
 
@@ -3395,7 +3506,9 @@ class Component extends DCLogic {
       const mat = new THREE.ShaderMaterial({
         uniforms: {
           uTime: { value: 0 }, uFocus: { value: 0 }, uDim: { value: 0 }, uSeed: { value: i * 0.53 },
-          uStage: this.stageU, uRect: this.stageRectU, uCut: this.stageCutU, uMap: { value: makeShardTexture(THREE, item, texScale) }
+          uStage: this.stageU, uRect: this.stageRectU, uCut: this.stageCutU, uMap: { value: makeShardTexture(THREE, item, texScale) },
+          uBreath: { value: 0 },
+          uGlowA: { value: new THREE.Color(item.swatch[0]) }, uGlowB: { value: new THREE.Color(item.swatch[1]) }
         },
         transparent: true, depthWrite: false, side: THREE.DoubleSide,
         extensions: { derivatives: true },
@@ -3498,6 +3611,7 @@ class Component extends DCLogic {
       else s.mesh.scale.setScalar(s.mesh.scale.x + (targetScale - s.mesh.scale.x) * kPos);
       const u = s.mesh.material.uniforms;
       u.uTime.value = O.time;
+      u.uBreath.value = this.reduced ? 0 : Math.sin(O.time / CONFIG.breath.periodS * Math.PI * 2) * CONFIG.breath.amp * 4;
       u.uFocus.value += ((isFocus ? 1 : 0) - u.uFocus.value) * kPos;
       u.uDim.value += (targetDim - u.uDim.value) * kPos;
     });
@@ -3531,7 +3645,9 @@ class Component extends DCLogic {
     this.teardownRing();
     const items = SECTIONS.uslugi.items;
     const count = items.length;
-    const radius = 2.2;
+    // the ring grows with its card count so eight services keep the same
+    // breathing room six had (chord between neighbours stays ≈ 2.2)
+    const radius = Math.max(2.2, count * 0.37);
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(44, 1, 0.1, 30);
@@ -3542,7 +3658,8 @@ class Component extends DCLogic {
     const ringFrag = STAGE_EDGE_GLSL + `
       uniform float uTime, uFocus, uDim, uSeed, uStage;
       uniform sampler2D uMap;
-      varying vec2 vUv; varying float vDepth;
+      uniform vec3 uSw;
+      varying vec2 vUv; varying float vDepth; varying float vRim;
       float rrect(vec2 p, vec2 b, float r){
         vec2 q = abs(p) - b + r;
         return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
@@ -3566,25 +3683,39 @@ class Component extends DCLogic {
 
         float a = tex.a * depthFactor * (1.0 - uDim * 0.6) * (0.9 + uFocus * 0.1);
         a += line * 0.6 * (1.0 - uDim * 0.5);
+
+        // RIM LIGHT — a band just inside the edge, tinted with the service's
+        // own swatch, brightening with the pane's fresnel term (vRim): cards
+        // turned away along the ring catch light on their edges, the way the
+        // hero sphere's rim does
+        float inner = step(d, 0.0) * (1.0 - smoothstep(0.0, 0.055, -d));
+        vec3 rimCol = mix(lineCol, uSw, 0.55);
+        c += rimCol * inner * (0.18 + 1.1 * vRim) * (1.0 - uDim * 0.55);
+        a += inner * (0.1 + 0.4 * vRim) * (1.0 - uDim * 0.5);
         gl_FragColor = vec4(c, clamp(a, 0.0, 1.0) * uStage * stageEdge());
       }`;
     const ringVert = `
-      varying vec2 vUv; varying float vDepth;
+      varying vec2 vUv; varying float vDepth; varying float vRim;
       void main(){
         vUv = uv;
         vec4 mv = modelViewMatrix * vec4(position, 1.0);
         vDepth = -mv.z;
+        vec3 n = normalize(normalMatrix * vec3(0.0, 0.0, 1.0));
+        vRim = 1.0 - abs(dot(n, normalize(-mv.xyz)));
         gl_Position = projectionMatrix * mv;
       }`;
 
-    const texScale = this.lowPower ? 0.55 : 1;
+    // eight cards on the texture budget six had: 8 × 0.8² ≈ 5.1 full-size
+    // textures; the pinned column never shows a card wider than ~600 px
+    const texScale = this.lowPower ? 0.55 : 0.8;
     const cards = [];
     for (let i = 0; i < count; i++) {
       const item = Object.assign({ num: pad2(i + 1) }, items[i]);
       const mat = new THREE.ShaderMaterial({
         uniforms: {
           uTime: { value: 0 }, uFocus: { value: 0 }, uDim: { value: 0 }, uSeed: { value: i * 0.53 },
-          uStage: this.stageU, uRect: this.stageRectU, uCut: this.stageCutU, uMap: { value: makeServiceTexture(THREE, item, texScale) }
+          uStage: this.stageU, uRect: this.stageRectU, uCut: this.stageCutU, uMap: { value: makeServiceTexture(THREE, item, texScale) },
+          uSw: { value: new THREE.Color(item.swatch || '#35c8f0') }
         },
         transparent: true, depthWrite: false, side: THREE.DoubleSide,
         extensions: { derivatives: true },
@@ -3606,7 +3737,45 @@ class Component extends DCLogic {
     track.position.y = -0.95;
     scene.add(track);
 
-    this.RING = { anchor, count, radius, scene, camera, cards, track, raycaster: new THREE.Raycaster(), time: 0 };
+    // STAR-DUST TRAIL — a thin band of motes along the ring path, drawn with
+    // the hero star field's own rules: the same twinkle formula, point-size
+    // law and colour, coupled to the ring's rotation by the stars' rotFactor
+    // and drifting at the stars' drift rate (CONFIG.stars, read only).
+    const DN = this.lowPower ? 110 : 280;
+    const dp = new Float32Array(DN * 3), ds = new Float32Array(DN);
+    for (let i = 0; i < DN; i++) {
+      const t = Math.random() * Math.PI * 2, rr = radius + (Math.random() - 0.5) * 0.28;
+      dp[i * 3] = Math.sin(t) * rr; dp[i * 3 + 1] = -0.95 + (Math.random() - 0.5) * 0.16 + Math.pow(Math.random(), 3) * 0.3; dp[i * 3 + 2] = Math.cos(t) * rr;
+      ds[i] = Math.random();
+    }
+    const dg = new THREE.BufferGeometry();
+    dg.setAttribute('position', new THREE.BufferAttribute(dp, 3));
+    dg.setAttribute('aSeed', new THREE.BufferAttribute(ds, 1));
+    const dust = new THREE.Points(dg, new THREE.ShaderMaterial({
+      uniforms: { uTime: { value: 0 }, uRadius: { value: radius }, uStage: this.stageU, uRect: this.stageRectU, uCut: this.stageCutU,
+        uAccent: { value: new THREE.Color(STAGE_COLOR.accent) } },
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      vertexShader: `
+        attribute float aSeed; uniform float uTime, uRadius; varying float vTw; varying float vFront;
+        void main(){
+          vTw = 0.35 + 0.65 * (0.5 + 0.5 * sin(uTime * (0.4 + aSeed) + aSeed * 30.0));
+          vFront = clamp((modelMatrix * vec4(position, 1.0)).z / uRadius * 0.5 + 0.5, 0.0, 1.0);
+          vec4 mv = modelViewMatrix * vec4(position, 1.0);
+          gl_PointSize = (0.5 + aSeed * 0.9) * (34.0 / -mv.z) * 0.45;
+          gl_Position = projectionMatrix * mv;
+        }`,
+      fragmentShader: STAGE_EDGE_GLSL + `
+        uniform float uStage; uniform vec3 uAccent; varying float vTw; varying float vFront;
+        void main(){
+          float d = length(gl_PointCoord - 0.5);
+          if (d > 0.5) discard;
+          vec3 c = mix(vec3(0.62, 0.74, 0.94), uAccent, vFront * 0.6);
+          gl_FragColor = vec4(c, smoothstep(0.5, 0.0, d) * vTw * (0.25 + 0.45 * vFront) * uStage * stageEdge());
+        }`
+    }));
+    scene.add(dust);
+
+    this.RING = { anchor, count, radius, scene, camera, cards, track, dust, raycaster: new THREE.Raycaster(), time: 0, drift: 0 };
     const O = this.RING;
     O.onClick = e => this.ringClick(e);
     anchor.addEventListener('click', O.onClick);
@@ -3642,13 +3811,20 @@ class Component extends DCLogic {
     const O = this.RING;
     if (!O) return;
     O.time += dt;
-    const k = this.reduced ? 1 : 1 - Math.pow(1 - 0.08, dt * 60);
+    const k = this.reduced ? 1 : 1 - Math.pow(1 - (0.08 - 0.04 * (this.magnet || 0)), dt * 60);
     this.ringOffset += (this.ringTarget - this.ringOffset) * k;
 
     // the pinned column is narrower than the old full-width stage: back the
     // camera off until the ring's full width fits the anchor's aspect
     const fitZ = Math.max(O.radius + 2.3, (O.radius + 0.9) / (TAN_HALF_FOV44 * Math.max(0.4, O.camera.aspect)));
     O.camera.position.z += (fitZ - O.camera.position.z) * k;
+    // PARALLAX — the camera leans with the pointer at the hero's own follow
+    // ease, so cards at different depths on the ring slide past each other
+    const kf = this.reduced ? 1 : 1 - Math.pow(1 - CONFIG.follow.positionEase * 2, dt * 60);
+    const pmx = this.reduced || !this.mouse ? 0 : this.mouse.x, pmy = this.reduced || !this.mouse ? 0 : this.mouse.y;
+    O.camera.position.x += (pmx * 0.55 - O.camera.position.x) * kf;
+    O.camera.position.y += (0.12 + pmy * 0.22 - O.camera.position.y) * kf;
+    O.camera.lookAt(0, 0, 0);
 
     // a slow sway instead of the old endless drift: scroll owns the index
     // now, and an accumulating spin would walk the front card off it
@@ -3682,6 +3858,11 @@ class Component extends DCLogic {
     if (O.track) {
       O.track.rotation.z = rot * 0.3;
       O.track.material.opacity = 0.22 * (this.stageU ? this.stageU.value : 1);
+    }
+    if (O.dust) {
+      O.drift += this.reduced ? 0 : dt * CONFIG.stars.drift;
+      O.dust.rotation.y = rot * CONFIG.stars.rotFactor + O.drift;
+      O.dust.material.uniforms.uTime.value = this.reduced ? 0 : O.time;
     }
   }
 
@@ -3786,7 +3967,7 @@ class Component extends DCLogic {
     // SUB-PAGES — appended after the hero's own frame; nothing above this
     // line changed. The scroll driver reads this frame's layout once, then
     // the per-route stages draw into scissored rectangles of this canvas.
-    this.safeUpdate('scroll', () => this.updateScroll());
+    this.safeUpdate('scroll', () => this.updateScroll(dt));
     this.safeUpdate('stages', () => this.renderStages(dt));
   }
 }
